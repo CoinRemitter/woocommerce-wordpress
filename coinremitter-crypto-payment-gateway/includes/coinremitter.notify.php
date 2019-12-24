@@ -4,14 +4,13 @@ if(!defined("COINREMITTER_WORDPRESS")) define("COINREMITTER_WORDPRESS", true);
 
 if (!COINREMITTER_WORDPRESS) require_once( "coinremitter.class.php" ); 
 elseif (!defined('ABSPATH')) exit; // Exit if accessed directly in wordpress
-$param = $_POST;
+$param['invoice_id'] = sanitize_text_field($_POST['invoice_id']);
+$param['coin'] = sanitize_text_field($_POST['coin']);
+
 if(!$param){
     die('only post method allowed.');
 }
 if(!defined('COINREMITTER_PRIVATE_KEYS')) die('no direct access allowed.');
-
-
-
 
 $coinremiter_url = COINREMITTER_API_URL;
 

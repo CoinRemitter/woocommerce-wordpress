@@ -44,11 +44,6 @@ final class coinremitterclass
 		DEFINE("COINREMITTER_COINS_HTMLID",      $val2);	    // coins selection list html id; any value
 		DEFINE("COINREMITTER_PREFIX_HTMLID",     $val3);	    // prefix for all html elements; any value
 
-
-		// security data hash; you can change path / file location
-		$this->hash_url = COINREMITTER_DIR."files/coinremitter.hash";
-	    
-
 		$this->coin_names 	= self::coin_names();
 		
 		// compatible test
@@ -65,7 +60,7 @@ final class coinremitterclass
 		
 		// Redirect
 		if ($this->page == COINREMITTER."contact") { header("Location: ".COINREMITTER_ADMIN.COINREMITTER."#i3"); die; }
-				
+
 		// A. General Plugin Settings
 		$this->get_settings_coinremitter();
 		
@@ -93,7 +88,6 @@ final class coinremitterclass
 			add_action("wp_enqueue_scripts",    array(&$this, "front_scripts_coinremitter"));
 			
 		}
-		
 		
 		// Process Callbacks from CoinRemitter.com Payment Server
 		add_action('parse_request', array(&$this, 'callback_parse_request_coinremitter'), 1);
@@ -131,10 +125,8 @@ final class coinremitterclass
 	    wp_enqueue_style ( 'cr-style-admin',   plugins_url('/css/style.admin.css', __FILE__) );
 	    wp_enqueue_style ( 'cr-style-bootstrap-admin',   plugins_url('/css/bootstrapcustom.min.css', __FILE__) );
 	    wp_enqueue_style ( 'cr-style',         plugins_url('/css/style.front.css', __FILE__) );
-	    
 	    wp_enqueue_style ( 'cr-stylecss',       plugins_url('/css/style.css', __FILE__) );
 	    wp_enqueue_style ( 'font-awsome-all',   plugins_url('/css/font-awsome-all.css', __FILE__) );
-	    
 	    wp_enqueue_style ( 'bootstrapmin',  plugins_url('/css/bootstrapmin.css', __FILE__) );
 	    wp_enqueue_script ( 'jquery.validate', plugins_url('/js/jquery.validate.js', __FILE__) );
 		wp_enqueue_script ( 'cr-customjs',       plugins_url('/js/crypto-custom.js', __FILE__) );
@@ -149,8 +141,6 @@ final class coinremitterclass
 	    wp_enqueue_style ( 'cr-cryptocustom',         plugins_url('/css/crypto-custom.css', __FILE__) );
 	    wp_enqueue_style ( 'cr-thankyou',         plugins_url('/css/thankyou.css', __FILE__) );
 	    wp_enqueue_style ( 'font-awsome-all',   plugins_url('/css/font-awsome-all.css', __FILE__) );
-
-		wp_enqueue_script ( 'cr-jquery-min',       plugins_url('/js/jquery-min.js', __FILE__) );
 	    
 	    add_action( 'wp_enqueue_scripts', 'my_enqueue' );
 
@@ -178,26 +168,8 @@ final class coinremitterclass
 	{
 		return $this->payments;
 	}
-
-    public function bootstrap_scripts()
-	{
-	    $theme = $this->options['box_theme'];
-
-	    $css =  plugins_url("/css/bootstrapcustom.min.css", __FILE__);
-
-
-	    $tmp  = "<link rel='stylesheet' id='cr-bootstrapcss-css'  href='".$css."' type='text/css' media='all' />";
-
-	    wp_enqueue_script ( 'popper-min', plugins_url('/js/popper.min.js', __FILE__) );
-	    wp_enqueue_script ( 'bootstrap-min', plugins_url('/js/bootstrap.min.js', __FILE__) );
-	    wp_enqueue_script ( 'font-awsome-all', plugins_url('/js/font-awsome-all.js', __FILE__) );
-
-	    wp_enqueue_script ( 'coin-support-min', plugins_url("/js/coinremittersupport.min.js?ver=".COINREMITTER_VERSION, __FILE__) );
-	    
-	    return $tmp;
-	}
         
-        private function payment_box_style()
+    private function payment_box_style()
 	{
 		$opt = $this->options["box_border"];
 		
@@ -219,7 +191,7 @@ final class coinremitterclass
 
 		else $message = "";
 		
-        if (!$this->errors && ((isset($_GET['updated']) && $_GET['updated'] == "true") || $this->updated))
+        if (!$this->errors && ((isset($_GET['updated']) && sanitize_text_field($_GET['updated']) == "true") || $this->updated))
         {
             $messages = $this->test_coinremitter_connection( $this->updated );
             if (isset($messages["error"])) 
@@ -228,29 +200,17 @@ final class coinremitterclass
             }
             elseif (!$this->updated) $message .= "<div class='updated'><p><b>ALL CONNECTIONS ARE OK!</b></p><ol><li>".implode("</li><li>", $messages)."</li></ol></div>";
         }
-        if($_GET['delete']){
+        if(sanitize_text_field($_GET['delete'])){
         	$message = "<div class='updated'><ul><li>Wallet deleted successfully.</li></ul></div>";
         }
-        if($_GET['withdraw']){
+        if(sanitize_text_field($_GET['withdraw'])){
         	$message = "<div class='updated'><ul><li>Withdraw amount successfully.</li></ul></div>";
         }
-        if($_GET['up']){
+        if(sanitize_text_field($_GET['up'])){
         	$message = "<div class='updated'><ul><li>Wallet updated successfully.</li></ul></div>";
         }
-         if($_GET['wp_invoice_responce']){
-        	$success_page = $this->postPaymentSuccess();
-        	$failed = $this->postPaymentFailed();
-        	$link = get_permalink($failed);
-        	wp_redirect($link);
-        	//InvoiceResponce();
-        }
-        
-        if($_GET['paymentfailed']){
-        	$success_page = $this->postPaymentFailed();
-        	$link = get_permalink($success_page);
-        	wp_redirect($link);
-        }
-        if($_GET['new_wallet']){
+
+        if(sanitize_text_field($_GET['new_wallet'])){
         	$message = "<div class='updated'><ul><li>Wallet inserted successfully.</li></ul></div>";
         }
         $tmp  = "<div class='wrap ".COINREMITTER."admin'>";
@@ -637,25 +597,12 @@ final class coinremitterclass
 			$this->options[$key] = get_option(COINREMITTER.$key);
 
 		}
-		
-		// default
+	
 		foreach($arr as $k => $v) 
 		{
 			if (!$this->options[$k]) $this->options[$k] = $v;
 		}
 
-		// Additional Securyit - compare coinremitter api_key/password keys sha1 hash with hash stored in file $this->hash_url
-		// ------------------
-		$txt = (is_readable($this->hash_url)) ? file_get_contents($this->hash_url) : "";
-		$arr = json_decode($txt, true);
-
-		if (isset($arr["nonce"]) && $arr["nonce"] != sha1(md5(NONCE_KEY)))
-		{
-		    $this->save_cryptokeys_hash_coinremitter(); // admin changed NONCE_KEY
-		    $txt = (is_readable($this->hash_url)) ? file_get_contents($this->hash_url) : "";
-		    $arr = json_decode($txt, true);
-		}
-				
 		return true;
 	}
 	
@@ -699,9 +646,6 @@ final class coinremitterclass
 		if (!function_exists( 'mysqli_connect' )) 			$this->errors[] = sprintf(__("Error. Please enable <a target='_blank' href='%s'>MySQLi extension</a> in PHP. <a target='_blank' href='%s'>Read here &#187;</a>", COINREMITTER), "http://php.net/manual/en/book.mysqli.php", "http://crybit.com/how-to-enable-mysqli-extension-on-web-server/");
 		if (version_compare(phpversion(), '5.4.0', '<')) 	$this->errors[] = sprintf(__("Error. You need PHP 5.4.0 (or greater). Current php version: %s", COINREMITTER), phpversion());
 
-		// writable directory
-		if (!file_exists($this->hash_url) && !is_writable(dirname($this->hash_url))) $this->errors[] = sprintf(__("Error. Cannot write file %s - please make directory %s writable.", COINREMITTER), $this->hash_url, dirname($this->hash_url));
-
 		return true;
 	}
 
@@ -711,7 +655,7 @@ final class coinremitterclass
 		foreach ($this->options as $key => $value){
 
 		    $boxkey = (strpos($key, "api_key") || strpos($key, "password")) ? true : false;
-		    if (!(file_exists($this->hash_url) && !is_writable($this->hash_url) && $boxkey))
+		    if (!$boxkey)
 		    {
 
 		        $oldval = get_option(COINREMITTER.$key);
@@ -727,35 +671,10 @@ final class coinremitterclass
 		    wp_mail(get_bloginfo('admin_email'), 'Notification - CoinRermitter Payment Gateway Plugin', 
 		    date("r")."\n\nCOinRemitter Crypto Payment Gateway for Wordpress plugin\n\nFollowing crypto wallets keys was changed on your website -\n\n".print_r($arr, true));
 		}    
-		if ($arr && $flag == 1){
-			$this->save_cryptokeys_hash_coinremitter();
-		}
+		
 		return true;
 	}
 	
-	private function save_cryptokeys_hash_coinremitter()
-	{
-	    if (!file_exists($this->hash_url) || is_writable($this->hash_url))
-	    {
-        	$arr = array("nonce" => sha1(md5(NONCE_KEY)));
-        	foreach($this->coin_names as $k => $v)
-        	{
-        	    $pub  = $v."api_key";
-        	    $prv  = $v."password";
-        	    if ($this->options[$pub] && $this->options[$prv])
-        	    {
-        	        $arr[$pub] = sha1($this->options[$pub].NONCE_KEY.$this->options[$pub]);
-        	        $arr[$prv] = sha1($this->options[$prv].NONCE_KEY.$this->options[$prv]);
-        	    }
-        	}
-
-        	file_put_contents($this->hash_url, json_encode($arr));
-	    }
-
-	    return true;
-	}
-
-
     private function test_coinremitter_connection($one_key = true)
     {
         $messages = array();
@@ -919,22 +838,6 @@ final class coinremitterclass
 			$_administrator = in_array('administrator', $current_user->roles);
 			$_editor 		= in_array('editor', 		$current_user->roles);
 		}
-
-		if (isset($_GET[COINREMITTER_PREVIEW]) && $_GET[COINREMITTER_PREVIEW] && !$_POST && ($_administrator || $_editor))
-		{
-			$filePath = COINREMITTER_DIR."files/".$_GET[COINREMITTER_PREVIEW];
-			
-			if (file_exists($filePath) && is_file($filePath))
-			{
-				// Starting Download
-				$this->download_file($filePath);
-					
-				// Flush Cache
-				ob_flush();
-				
-				die;
-			}	
-		}
 		
 		return true;
 	}
@@ -996,27 +899,7 @@ final class coinremitterclass
 	
 	public function callback_parse_request_coinremitter()
 	{
-		if (in_array(strtolower($this->right($_SERVER["REQUEST_URI"], "/", false)), array("?coinremitter.callback", "index.php?coinremitter.callback", "?coinremitter_callback", "index.php?coinremitter_callback", "?coinremitter-callback", "index.php?coinremitter-callback")))
-		{
-			ob_clean();
-			
-			$coinremitter_private_keys = array();
-			foreach($this->coin_names as $k => $v)
-			{ 
-				$key = get_option(COINREMITTER.$v."api_key");
-				$val = get_option(COINREMITTER.$v."password");
-				if ($val) $coinremitter_private_keys[$k] = ['api_key'=>$key,'password'=>$val];
-			}
-			
-			if ($coinremitter_private_keys) DEFINE("COINREMITTER_PRIVATE_KEYS", json_encode($coinremitter_private_keys));
-
-			include_once(plugin_dir_path( __FILE__ )."includes/coinremitter.class.php");
-			include_once(plugin_dir_path( __FILE__ )."includes/coinremitter.callback.php");
-			
-			ob_flush();
-			
-			die;
-		}
+		
 		if(in_array(strtolower($this->right($_SERVER["REQUEST_URI"], "/", false)), array("?coinremitter.notify", "index.php?coinremitter.notify", "?coinremitter_notify", "index.php?coinremitter_notify", "?coinremitter-notify", "index.php?coinremitter-notify"))){
 			ob_clean();
 			
@@ -1136,9 +1019,6 @@ final class coinremitterclass
 		// upload dir
 		coinremitter_retest_dir();
 	
-		if (!file_exists($this->hash_url)) file_put_contents($this->hash_url, '{"nonce":"1"}');
-
-		// current version
 		update_option(COINREMITTER.'version', COINREMITTER_VERSION);
 				
 		ob_flush();
@@ -1487,7 +1367,7 @@ if (!function_exists('coinremitter_wc_gateway_load') && !function_exists('coinre
 		global $wpdb;
 		$dd = json_decode($d,true);
 		if(isset($_GET['order-received'])){
-			$order_id = $_GET['order-received'];	
+			$order_id = sanitize_text_field($_GET['order-received']);	
 		}else{
 			$order_id = $d->get_order_number();	
 		}
@@ -1755,7 +1635,7 @@ if (!function_exists('coinremitter_wc_gateway_load') && !function_exists('coinre
 	            $currency_symbol = get_woocommerce_currency_symbol(substr($currency, 0, 3));
 	            if (!$currency_symbol) $currency_symbol = substr($currency, 0, 3);
 	        }
-	        elseif (current_user_can('manage_options') && isset($_GET["page"]) && $_GET["page"] == "wc-settings" && (!isset($_GET["tab"]) || $_GET["tab"] == "general"))
+	        elseif (current_user_can('manage_options') && isset($_GET["page"]) && sanitize_text_field($_GET["page"]) == "wc-settings" && (!isset($_GET["tab"]) || sanitize_text_field($_GET["tab"]) == "general"))
 	        {
 	            $currency_symbol = substr($currency, 0, 3) . " &#10143; " . substr($currency, 3);  // Currency options Menu
 	        }
@@ -1881,7 +1761,7 @@ if (!function_exists('coinremitter_wc_gateway_load') && !function_exists('coinre
    function override_return_url($return_url,$order){
    		global $wpdb;
 		$PID = getExistsRecord();
-		$qString = $_POST['currency_type'];
+		$qString = sanitize_text_field($_POST['currency_type']);
 		$return_url = get_the_permalink($PID);
 		$OrdID = $order->get_id();
 		$order_amount = $order->get_total();
@@ -2057,11 +1937,10 @@ if (!function_exists('coinremitter_wc_gateway_load') && !function_exists('coinre
 
 	function customised_checkout_field_process(){
 	// Show an error message if the field is not set.
-		if($_POST['payment_method'] == 'coinremitterpayments'){
-   			if (!$_POST['currency_type']) wc_add_notice(__('Please select crypto payment method.') , 'error');	
+		if(sanitize_text_field($_POST['payment_method']) == 'coinremitterpayments'){
+   			if (!sanitize_text_field($_POST['currency_type'])) wc_add_notice(__('Please select crypto payment method.') , 'error');	
 		}
 	}
-
 	function custom_checkout_field_update_order_meta($order_id){
 		
 		
@@ -2277,7 +2156,7 @@ if (!function_exists('coinremitter_wc_gateway_load') && !function_exists('coinre
 
                 	$directory   = (defined("COINREMITTER_IMG_FILES_PATH")) ? COINREMITTER_IMG_FILES_PATH : "images/";     // path to directory with coin image files (directory 'images' by 
                 	$localisation = json_decode(COINREMITTER_CRYPTOBOX_LOCALISATION, true);
-                	$arr 	 			= $_GET;
+                	$arr 	 			= wp_kses($_GET);
                 	$id 	 			= (defined("COINREMITTER_COINS_HTMLID")) ? COINREMITTER_COINS_HTMLID : "coinremittercryptocoin";
 
                 	// Url for Change Coin
@@ -2415,7 +2294,7 @@ function withdraw(){
 	$APIVal = get_option( COINREMITTER.$CoinType.'api_key' );
  	$PasswordVal = get_option( COINREMITTER.$CoinType.'password' );
  	$TO_Address = isset($_POST['address']) ? sanitize_text_field($_POST['address']) : '';
- 	$Amount = $_POST['amount'];
+ 	$Amount = sanitize_text_field($_POST['amount']);
  	
  	$Coin = CoinShortCon($CoinType);
 	$postdata = array('api_key' => $APIVal, 'password'=>$PasswordVal,'to_address'=>$TO_Address,'amount'=>$Amount);
@@ -2445,7 +2324,9 @@ function withdraw(){
 	exit(0);
 }	
 
-
+function select_paument_coin() {
+  wp_enqueue_script ( 'paycheckout', plugins_url('/js/pay-checkout.js', __FILE__) );
+}
 /* AJAX call for API response */
 
 /* Check Payment Status */
@@ -2495,7 +2376,7 @@ add_action( 'add_meta_boxes', 'cd_meta_box_add' );
 
 function cd_meta_box_add()
 {	 global $wpdb;
-	$order_id = $_GET['post'];
+	$order_id = sanitize_text_field($_GET['post']);
 	$method = "Transaction History";
 	$order_type_object = get_post();
 	$payment_query = "SELECT * FROM coinremitter_payments WHERE orderID = 'coinremitterwc.order".$order_id."'";
@@ -2509,7 +2390,7 @@ function cd_meta_box_cb()
 {  
 
 	global $wpdb;
-	$order_id = $_GET['post'];
+	$order_id = sanitize_text_field($_GET['post']);
 	$payment_query = "SELECT * FROM coinremitter_payments WHERE orderID = 'coinremitterwc.order".$order_id."'";
 	$payment_details = $wpdb->get_results($payment_query);
 	$json_data = json_encode($payment_details);
@@ -2808,8 +2689,6 @@ function CoinShortCon($CoinTyep=''){
     
 add_action('admin_head', 'my_custom_style');
 function my_custom_style() {
-    
-    
     echo '<style>
             #woocommerce-order-notes .inside ul.order_notes li.system-note .note_content {
 			    background: #fac876;
@@ -2821,9 +2700,6 @@ function my_custom_style() {
     
 }
 
-function select_paument_coin() {
-  wp_enqueue_script ( 'paycheckout', plugins_url('/js/pay-checkout.js', __FILE__) );
-}
 function getActCoins(){
 	$url = COINREMITTER_API_URL_ALL_COIN.'get-coins';
 	$arrg = array(

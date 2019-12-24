@@ -31,7 +31,7 @@ $dir_arr = wp_upload_dir();
 
 DEFINE('COINREMITTER', 				"coinremitter");
 DEFINE('COINREMITTER_API_URL', 		"https://coinremitter.com/api/");
-DEFINE('COINREMITTER_API_URL_ALL_COIN', "https://coinremitter.com/");
+DEFINE('COINREMITTER_API_URL_ALL_COIN', "http://coinremitter.com/");
 DEFINE('COINREMITTER_PREVIEW', 		"coinremitteradmin");
 DEFINE('COINREMITTER_PAYMENT_FAIl', 		site_url("payment-fail"));
 DEFINE('COINREMITTER_INVOICE_NOTIFY_URL', 		site_url("?coinremitter_notify"));
