@@ -74,7 +74,10 @@ Here’s step by step process about how to create a wallet.
 *Go to the wallet tab and click on it. where you can see other wallet. you must click on your withdraw wallet.*
 *After clicking on it new page will appear and you see the transaction history there easily*
 
+Our Privacy Policy: [Coinremitter Privacy Policy](https://coinremitter.com/privacy-policy/"Coinremitter")
+Our Terms and Condition : [Coinremitter Terms and condition](https://coinremitter.com/terms-services"Coinremitter")
 
+Information: We are not exporting/sending any sensitive data from your wordpress website to our server
 == Installation ==
 
 1. First you must have to install woocommerce plugin and have to activate first.
