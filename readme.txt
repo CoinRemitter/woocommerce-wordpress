@@ -74,8 +74,8 @@ Here’s step by step process about how to create a wallet.
 *Go to the wallet tab and click on it. where you can see other wallet. you must click on your withdraw wallet.*
 *After clicking on it new page will appear and you see the transaction history there easily*
 
-Our Privacy Policy: [Coinremitter Privacy Policy](https://coinremitter.com/privacy-policy/"Coinremitter")
-Our Terms and Condition : [Coinremitter Terms and condition](https://coinremitter.com/terms-services"Coinremitter")
+Our Privacy Policy: [Coinremitter Privacy Policy](https://coinremitter.com/privacy-policy/)
+Our Terms and Condition : [Coinremitter Terms and condition](https://coinremitter.com/terms-services)
 
 Information: We are not exporting/sending any sensitive data from your wordpress website to our server
 == Installation ==
@@ -121,11 +121,11 @@ Information: We are not exporting/sending any sensitive data from your wordpress
 	Yes! we are offering withdraw functionality in this plugin.
 
 =Can I accept crypto currency without registering my self on coinremitter ?=
-	No, you can not. You have to register account on our official website and have to create wallet. If you want to register yourself then click on this link [Coinremitter](https://blog.coinremitter.com/a-brief-knowledge-about-coinremitter/"Coinremitter")
+	No, you can not. You have to register account on our official website and have to create wallet. If you want to register yourself then click on this link [Coinremitter blog](https://blog.coinremitter.com/a-brief-knowledge-about-coinremitter)
 
 
 =What credentials do i need to accpet coin on my wordpress website?=
-	All you have to do is to fill up the apikey and password in order to accept coin in your wordpress website. if you don't know how to create apikey and password then click on this link [Coinremitter](https://blog.coinremitter.com/how-to-get-api-key-and-password-of-coinremitter-wallet/ "Coinremitter")
+	All you have to do is to fill up the apikey and password in order to accept coin in your wordpress website. if you don't know how to create apikey and password then click on this link [How to get API key and Password of coinremitter](https://blog.coinremitter.com/how-to-get-api-key-and-password-of-coinremitter-wallet/)
 
 =Do I need to install woocommerce plugin to this plugin ?=
 	Yes! you have to install woocommerce before  using / installing coinremitter plugin 
