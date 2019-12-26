@@ -75,7 +75,56 @@ Here’s step by step process about how to create a wallet.
 * Therefore, after the update you will use your updated API key on your every transaction.
 * It shows you how simple It would be If you choose Coinremitter crypto payment  gateway as your plugin.
 
+**How to withdraw coin ?**
+
+*When you click on coinremitter plugin, the wallet page appear. where you can see your several wallet*
+*Now select one of your address (ex. bitcoin wallet)*
+*On your bitcoin waller you will see withdraw button click on it.*
+*After clicking on it popup box will appear. which shows two boxes.*
+    1) Wallet address
+    2) Amount
+
+*Click on address and fill up your wallet address.*
+*Enter your appropriate amount. which you wanted to withdraw.*
+*As below in this option you will see processing fees, transaction fees,and total amount.*
+*After filling all the option click on withdraw button.*
+*If you want see the history of your withdraw amount then, you can see it coinremitter's official website*
+*Go to the wallet tab and click on it. where you can see other wallet. you must click on your withdraw wallet.*
+*After clicking on it new page will appear and you see the transaction history there easily*
 
 
 
+Screenshots
+----------------
 
+**Add Wallet**
+
+# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-1.png)
+
+# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-2.png)
+
+**Update Wallet**
+
+# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-4.png)
+
+**Withdraw Wallet**
+
+# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-3.png)
+
+**Pay Using Cryptocurrency**
+
+# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-7.png)
+
+# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-8.png)
+
+**Order Pay Successfully**
+
+# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-9.png)
+
+**Admin side Order**
+
+# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-5.png)
+
+**Order Detail**
+
+# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-6.png)

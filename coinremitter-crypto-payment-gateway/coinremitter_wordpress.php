@@ -31,7 +31,7 @@ $dir_arr = wp_upload_dir();
 
 DEFINE('COINREMITTER', 				"coinremitter");
 DEFINE('COINREMITTER_API_URL', 		"https://coinremitter.com/api/");
-DEFINE('COINREMITTER_API_URL_ALL_COIN', "http://coinremitter.com/");
+DEFINE('COINREMITTER_API_URL_ALL_COIN', "https://coinremitter.com/");
 DEFINE('COINREMITTER_PREVIEW', 		"coinremitteradmin");
 DEFINE('COINREMITTER_PAYMENT_FAIl', 		site_url("payment-fail"));
 DEFINE('COINREMITTER_INVOICE_NOTIFY_URL', 		site_url("?coinremitter_notify"));
@@ -44,11 +44,11 @@ DEFINE('COINREMITTER_BASENAME', 		plugin_basename(__FILE__));
 DEFINE("COINREMITTER_PERMISSION", 		"add_users");
 DEFINE('COINREMITTER_WORDPRESS',	true);
 DEFINE('COINREMITTER_RATES', json_encode(array("USD" => "US Dollar")));
-DEFINE('INV_PENDING', 0);
-DEFINE('INV_PAID', 1);
-DEFINE('INV_UNDER_PAID', 2);
-DEFINE('INV_OVER_PAID', 3);
-DEFINE('INV_EXPIRED', 4);
+DEFINE('COINREMITTER_INV_PENDING', 0);
+DEFINE('COINREMITTER_INV_PAID', 1);
+DEFINE('COINREMITTER_INV_UNDER_PAID', 2);
+DEFINE('COINREMITTER_INV_OVER_PAID', 3);
+DEFINE('COINREMITTER_INV_EXPIRED', 4);
 unset($dir_arr);
 
 

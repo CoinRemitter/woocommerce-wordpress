@@ -11,7 +11,7 @@ define("COINREMITTER_CRYPTOBOX_VERSION", "0.1");
 define("COINREMITTER_CRYPTOBOX_COINS", json_encode(array('bitcoin', 'bitcoincash', 'litecoin', 'ethereum', 'dogecoin', 'tether', 'dash')));
 
 class CoinRemitterCrypto{
-        private $api_key 	= "";		
+    private $api_key 	= "";		
 	private $password 	= "";		
 	
 	private $amount 		= 0;	
@@ -76,69 +76,69 @@ class CoinRemitterCrypto{
 		if (!$this->orderID || strlen($this->orderID) > 50) die("Invalid Order ID - $this->orderID. Max: 50 symbols");
 		
 		
-		$this->check_payment();
+		$this->coinremitter_check_payment();
 		
 		return true;
 	}
         
-        public function is_paid($remotedb = false)
+        public function coinremitter_is_paid($remotedb = false)
 	{
 		if (!$this->paymentID && $remotedb) $this->check_payment($remotedb);
 		if ($this->paid) return true;
 		else return false;
 	}
         
-        public function is_confirmed()
+        public function coinremitter_is_confirmed()
 	{
 		if ($this->confirmed) return true;
 		else return false;
 	}
         
-        public function amount_paid()
+        public function coinremitter_amount_paid()
 	{
 		if ($this->paid) return $this->amountPaid; 
 		else return 0;
 	}
         
-        public function is_processed()
+        public function coinremitter_is_processed()
 	{
 		if ($this->paid && $this->processed) return true;
 		else return false;
 	}
-        public function cryptobox_type()
+        public function coinremitter_cryptobox_type()
 	{
 		return $this->boxType;
 	}
-        public function payment_id()
+        public function coinremitter_payment_id()
 	{
 		return $this->paymentID;
 	}
-        public function payment_date()
+        public function coinremitter_payment_date()
 	{
 		return $this->paymentDate;
 	}
-        public function coin_name()
+        public function coinremitter_coin_name()
 	{
 		return $this->coinName;
 	}
-        public function coin_label()
+        public function coinremitter_coin_label()
 	{
 		return $this->coinLabel;
 	}
-        public function payment_status_text()
+        public function coinremitter_payment_status_text()
 	{
         if ($this->paid) $txt = str_replace(array("%coinName%", "%coinLabel%", "%amountPaid%"), array($this->coinName, $this->coinLabel, $this->amountPaid), ($this->boxType=="paymentbox"?"%coinName% Payment System received %amountPaid% %coinLabel% successfully !":"<b>%coinNames% have not yet been received.</b><br>If you have already sent %coinNames% (the exact %coinName% sum in one payment as shown in the box below), please wait a few minutes to receive them by %coinName% Payment System. If you send any other sum, Payment System will ignore the transaction and you will need to send the correct sum again, or contact the site owner for assistance."));
         else $txt = str_replace(array("%coinName%", "%coinNames%", "%coinLabel%"), array($this->coinName, (in_array($this->coinLabel, array('BCH', 'DASH'))?$this->coinName:$this->coinName.'s'), $this->coinLabel), "<b>%coinNames% have not yet been received.</b><br>If you have already sent %coinNames% (the exact %coinName% sum in one payment as shown in the box below), please wait a few minutes to receive them by %coinName% Payment System. If you send any other sum, Payment System will ignore the transaction and you will need to send the correct sum again, or contact the site owner for assistance.");
 	             
 	    return $txt;        
 	}
-        public function payment_info()
+        public function coinremitter_payment_info()
 	{
 		$obj = ($this->paymentID) ? run_sql_coinremitter("SELECT * FROM coinremitter_payments WHERE paymentID = $this->paymentID LIMIT 1") : false;
 		
 		return $obj;
 	}
-        public function set_status_processed()
+        public function coinremitter_set_status_processed()
 	{
 		if ($this->paymentID && $this->paid)
 		{
@@ -153,9 +153,9 @@ class CoinRemitterCrypto{
 		else return false;
 	}
     
-    public function getCoinShortName(){
+    public function coinremitter_getCoinShortName(){
 
-    	$CoinArr = getActCoins();
+    	$CoinArr = coinremitter_getActCoins();
     	
 		if(is_array($CoinArr) && sizeof($CoinArr)){
 			foreach($CoinArr as $k => $v){
@@ -179,15 +179,15 @@ class CoinRemitterCrypto{
 
 			$this->longname = $queries['vcni'];
 		}
-		$this->coinLabel = $this->getCoinShortName();
-		$ApiCoin = $this->getCoinShortName();
+		$this->coinLabel = $this->coinremitter_getCoinShortName();
+		$ApiCoin = $this->coinremitter_getCoinShortName();
 	    $url = COINREMITTER_API_URL.$ApiCoin.'/';
 	    return $url;
 	}
     
    
         
-    public function get_balance($coinArr)
+    public function coinremitter_get_balance($coinArr)
     {
     	
         $url = $this->coinremitter_cryptobox_json_url($coinArr['coinLabel']);
@@ -198,11 +198,11 @@ class CoinRemitterCrypto{
             'api_key'=> $coinArr['api_key'],//$this->api_key,
             'password'=> $coinArr['password'],//$this->password,
         ];
-        $bal = $this->exec_url($url,$param);
+        $bal = $this->coinremitter_exec_url($url,$param);
         return $bal;
     }
         
-        public function exec_url($url,$post='')
+        public function coinremitter_exec_url($url,$post='')
 	{
 		$header[] = "Accept: application/json";
         $curl = $url;
@@ -230,7 +230,7 @@ class CoinRemitterCrypto{
         
     
 	
-	private function check_payment($remotedb = false)
+	private function coinremitter_check_payment($remotedb = false)
 	{
 		static $already_checked = false;
 	    

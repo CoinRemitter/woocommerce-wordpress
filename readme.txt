@@ -1,8 +1,10 @@
 === CoinRemitter Crypto Payment Gateway ===
+
 Contributors: coinremitter
 Plugin Name: CoinRemitter Crypto Payment Gateway
 Plugin URI: https://coinremitter.com/bitcoin-php-api
 Author URI: https://coinremitter.com/ 
+Requires PHP: 5.6
 Tags: bitcoin, accept bitcoin, bitcoin payments, bitcoin woocommerce, bitcoin wordpress plugin, bitcoin wordpress, bitcoin payments, bitcoincash, bitcoin cash, bitcoin sv, bitcoins, cryptocurrency, altcoins, bitpay, btc, marketpress, coinbase, e-commerce, currency, payment, dash, dogecoin, e-store, universalcurrency, gateway, litecoin, payment gateway, paypal, protection, restrict access, restrict content, usd, virtual currency, woocommerce, authorize, shop, wp e-commerce, bitcoin donations, charity, crowdfunding, fundraiser, fundraising, gifts, stripe, bitcoin, payments, payment gateway, digital downloads, e-commerce, e-downloads, e-store, ecommerce, eshop, selling, wp ecommerce, litecoin, dogecoin, dash
 Requires at least: 3.5
 Tested up to: 5.2
@@ -10,10 +12,9 @@ Stable Tag: 1.0
 License: GNU Version 2 or Any Later Version
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Coinremitter Official Bitcoin/Altcoin Payment Gateway for Wordpress. Accept Bitcoin, BitcoinCash, Ethereum, Litecoin, Dogecoin, Ripple, Tether, Dash etc.
-   
-
 == Description ==
+
+Coinremitter Official Bitcoin/Altcoin Payment Gateway for WordPress. Accept Bitcoin, BitcoinCash, Ethereum, Litecoin, Dogecoin, Ripple, Tether, Dash etc.	
 
 = What Is Crypto Payment Gateway? =
 
@@ -24,11 +25,10 @@ Apart from centralized currencies this option creates a traffic for sellers who 
 = What kind of services we are providing on our plugin? =
 
 * 100% free plugin on **COINREMITTER.COM**
-* No bank account, no monthly fees and no Id require with lowest transaction fees 0.23%
+* No bank account
 * Globally secure, and no chargebacks held do transactions freely all over the world.
 * Accept all major cryptocurrencies like Bitcoin, Bitcoin cash, litecoin, Ethereum, Ripple, DOGE, USDT, DASH and many more on crypto payment gateway.
 * Users can check the statistics from both sites **CREMITTER.COM & WORDPRESS.COM**
-* It displays Crypto price with fiat price. Like how much It will cost in BITCOIN / LITECOIN from USD / EUR.
 * Get all cryptocurrency payments straight Into your crypto wallet. 
 * If you have multiple wallet which contains multifarious coins then you will get multi optional service where you can select one of coins in which you want to do payment. Like whether you can select BITCOIN / LITECOIN for payment.
 * Free customer support for users.
@@ -57,6 +57,23 @@ Here’s step by step process about how to create a wallet.
 * Therefore, after the update you will use your updated API key on your every transaction.
 * It shows you how simple It would be If you choose Coinremitter crypto payment  gateway as your plugin.
 
+=How to withdraw coin ?=
+
+*When you click on coinremitter plugin, the wallet page appear. where you can see your several wallet*
+*Now select one of your address (ex. bitcoin wallet)*
+*On your bitcoin waller you will see withdraw button click on it.*
+*After clicking on it popup box will appear. which shows two boxes.*
+    1) Wallet address
+    2) Amount
+
+*Click on address and fill up your wallet address.*
+*Enter your appropriate amount. which you wanted to withdraw.*
+*As below in this option you will see processing fees, transaction fees,and total amount.*
+*After filling all the option click on withdraw button.*
+*If you want see the history of your withdraw amount then, you can see it coinremitter's official website*
+*Go to the wallet tab and click on it. where you can see other wallet. you must click on your withdraw wallet.*
+*After clicking on it new page will appear and you see the transaction history there easily*
+
 
 == Installation ==
 
@@ -77,17 +94,46 @@ Here’s step by step process about how to create a wallet.
 
 == Screenshots ==
 
-1. List of added wallet.
-2. Add new wallet.
-3. Update  and delete wallet information.
-4. List of all paid payments.
-5. Crypto payment option on check-out page.
-6. Pay using generated address.
-7. Pay using generated QR Code.
-8. Payment Message.
+1. Add new wallet.
+2. Update  and delete wallet information.
+3. Withdraw Wallet.
+4. Crypto payment option on check-out page.
+5. Pay using generated Invoice address.
+6. Pay using generated Invoice QR Code.
+7. Order Pay Successfully.
+8. Admin side Order list.
+9. Order Detail.
+
+
+== Frequently Asked Questions ==
+
+=Which crypto currencies supported in this plugin ? = 
+	Bitcoin,Tether(USDT), Litecoin, Bitcoin Gold, Ethereum, Ripple, Dogecoin, Dash, Testcoin.
+
+=Can I accept multiple coin in my wordpress website?=
+	Yes! you can accept multiple coin  in your wordpress websites. As per your  different coin wallets which you have created in your wordpress website. 
+
+
+=Can I withdraw my coin to my external wallet ?=
+	Yes! we are offering this functionality. All you need to do is to fill the external wallet address. 
+
+=Can I accept crypto currency without registering my self on coinremitter ?=
+	No, you can not. if you want to register yourself then click on this link [Coinremitter](https://blog.coinremitter.com/a-brief-knowledge-about-coinremitter/"Coinremitter")
+
+
+=What credentials do i need to accpet coin on my wordpress website?=
+	All you have to do is to fill up the apikey and password in order to accept coin in your wordpress website. if you don't know how to create apikey and password then click on this link [Coinremitter](https://blog.coinremitter.com/how-to-get-api-key-and-password-of-coinremitter-wallet/ "Coinremitter")
+
+
+=Do I need to install woocommerce plugin to this plugin ?=
+	Yes! you have to install woocommerce before  using / installing coinremitter plugin 
+
 
 
 == Changelog ==
 = 1.0.0 =
 This is the first version of CoinRemitter Crypto Payment Gateway Plugin.
-   
+
+== Upgrade Notice ==    
+= 1.0 =
+This is the first version of CoinRemitter Crypto Payment Gateway Plugin.

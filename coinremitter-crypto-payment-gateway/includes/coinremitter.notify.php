@@ -15,7 +15,7 @@ if(!defined('COINREMITTER_PRIVATE_KEYS')) die('no direct access allowed.');
 $coinremiter_url = COINREMITTER_API_URL;
 
 $coins = json_decode(COINREMITTER_PRIVATE_KEYS,true);
-    function check_callback_validation($param){
+    function coinremitter_check_callback_validation($param){
         if(!isset($param['invoice_id'])){
             return false;
         }elseif(!isset($param['coin'])){
@@ -24,7 +24,7 @@ $coins = json_decode(COINREMITTER_PRIVATE_KEYS,true);
         return true;
     }
 
-    if(!check_callback_validation($param)){
+    if(!coinremitter_check_callback_validation($param)){
         die('something might wrong.');
     }
     
@@ -77,13 +77,13 @@ $coins = json_decode(COINREMITTER_PRIVATE_KEYS,true);
     $total_amount = $check_transaction['total_amount'][$coin];
     $invoice_id = $check_transaction['invoice_id'];
     $t_id = [];
-    $CoinPrice = getActCoins();
+    $CoinPrice = coinremitter_getActCoins();
     foreach($CoinPrice as $k => $v){
         if($coin == $k){
             $coinprice = $v['price'];
         }
     }
-    if($check_transaction['status_code'] == INV_OVER_PAID || $check_transaction['status_code'] == INV_PAID){
+    if($check_transaction['status_code'] == COINREMITTER_INV_OVER_PAID || $check_transaction['status_code'] == COINREMITTER_INV_PAID){
         $addrSql = 'select * from coinremitter_order_address where addr="'.$address.'" && invoice_id ="'.$invoice_id.'"';
         $getData = run_sql_coinremitter($addrSql);
         $order_status = $getData->payment_status;

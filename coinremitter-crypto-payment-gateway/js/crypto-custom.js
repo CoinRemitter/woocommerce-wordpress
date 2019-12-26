@@ -11,7 +11,6 @@ jQuery(window).load(function(){
 	jQuery('.OpenPopup').click(function(e){
 		e.preventDefault();
 	    jQuery('.VerifyBtn').attr("disabled", false);
-
 		jQuery('.AddWalletPopup').fadeIn('slow');
 	});//jQuery('.OpenPopup')
 
@@ -38,18 +37,19 @@ jQuery(window).load(function(){
 		var cointype = jQuery('.CoinOptList').val();
 		jQuery('#WalletFrm #currency_type').val(cointype);
 		var frmData = {
-	      'action': 'add_wallet',
+	      'action': 'coinremitter_add_wallet',
 	      'cointype': jQuery('.CoinOptList').val(),
 	      'coinapikey': jQuery('#coinremitter'+cointype+'api_key').val(),
 	      'coinpass': jQuery('#coinremitter'+cointype+'password').val(),
 	      'frm_type': jQuery('#frm_type').val(),
 	     };
-	  
+	    
 	    var succ=false;
 	    var res;
 	    jQuery('.VerifyBtn').attr("disabled", true);
 	    jQuery.ajax({
 	        type: "post",
+	        /*dataType: 'json',*/
 	        url: ajaxurl,
 	        data: frmData,
 	        error: function (jqXHR, exception) {
@@ -76,8 +76,7 @@ jQuery(window).load(function(){
 	        success: function(html){
 	    		jQuery('.VerifyBtn').attr("disabled", false);
 	        	var response = JSON.parse(html);
-	        	
-	            if(response.flag === 0){
+	        	if(response.flag === 0){
 	            	jQuery('.frmError').html(response.msg);
 	            }else{	
 	            	jQuery('.frmError').html(''); 
@@ -98,7 +97,7 @@ jQuery(window).load(function(){
 	    var api_key_value = jQuery('#frmupdate #coinremitter'+cointyp+'api_key').val();
 	    var api_password_value = jQuery('#frmupdate #coinremitter'+cointyp+'password').val();
 	    var frmData = {
-	      'action': 'verifyApi',
+	      'action': 'coinremitter_verifyApi',
 	      'cointype': cointyp,
 	      'coinapikey':api_key_value,
 	      'coinpass': api_password_value,
@@ -108,6 +107,7 @@ jQuery(window).load(function(){
 	    var res;
 	    jQuery.ajax({
 	        type: "post",
+	        /*dataType: 'json',*/
 	        url: ajaxurl,
 	        data: frmData,
 	        error: function (jqXHR, exception) {
@@ -131,7 +131,7 @@ jQuery(window).load(function(){
 	        },
 	        success: function(html){
 	        	var response = JSON.parse(html);
-	            if(response.flag === 1){
+	        	if(response.flag === 1){
 	            	jQuery('.frmUpdateError').html(''); 
 	            	window.location.href = reloadurl;
 	            	
@@ -162,7 +162,7 @@ jQuery(window).load(function(){
 			}
 		}
 	    var frmData = {
-	      'action': 'withdraw',
+	      'action': 'coinremitter_withdraw',
 	      'cointype': cointyp,
 	      'address':address,
 	      'amount': amount,
@@ -245,7 +245,6 @@ jQuery(window).load(function(){
         jQuery('#frmwithdraw #withtotal').html(parseFloat(total_amount).toFixed(8));
     });
 
-
 	jQuery('.ClosePopup').click(function(){
 		jQuery('.AddWalletPopup').fadeOut('fast');
 		jQuery('#pum_trigger_add_type_modal2').fadeOut('fast');
@@ -257,8 +256,8 @@ jQuery(window).load(function(){
 
 	jQuery('.EditOpenPopup').click(function(){
 		var coinDiv = jQuery(this).attr('data-rel');
-
 		jQuery('#pum_trigger_add_type_modal2 #withdraw').val(1);
+		jQuery('.CurrencyName').html('withdraw '+coinDiv);
 		jQuery('#cointy_in_update').val(coinDiv.toLowerCase());
 		jQuery('#pum_trigger_add_type_modal2 .allDiv').hide();
 		jQuery('#pum_trigger_add_type_modal2 .div'+coinDiv).show();
@@ -266,7 +265,7 @@ jQuery(window).load(function(){
 		jQuery('#pum_trigger_add_type_modal2').fadeIn('slow');
 
 
-	});//jQuery('.OpenPopup')
+	});
 
 	jQuery('.WithdrawOpenPopup').click(function(){
 		var coinDiv = jQuery(this).attr('data-rel');
@@ -310,15 +309,14 @@ if (confirm('Are you sure you want to delete wallet?')) {
 	jQuery('#pum_trigger_add_type_modal2 #delete_wallet').val(coinDiv);
 	jQuery('#pum_trigger_add_type_modal2 #update_wallet').val('');
 	
-	//return false;
 	var datarel = jQuery('#delete_wallet').val();
-	
+
 	jQuery('#pum_trigger_add_type_modal2 #coinremitter'+datarel+'api_key').val('');
 	jQuery('#pum_trigger_add_type_modal2 #coinremitter'+datarel+'password').val('');
 
 	setTimeout(function(){
 		var frmData = {
-	      'action': 'deleteCoinData',
+	      'action': 'coinremitter_deleteCoinData',
 	      'cointype': datarel,
 	    };
 	    
@@ -327,8 +325,8 @@ if (confirm('Are you sure you want to delete wallet?')) {
 	        dataType: 'json',
 	        url: ajaxurl,
 	        data: frmData,
-	          success: function(html){
-	            if(html['flag'] == 1){
+	        success: function(html){
+	             if(html['flag'] == 1){
 	            	location.href=html['redirect'];
 	            }else{
 	            	alert('Something went wrong please try after sometime.');
@@ -336,7 +334,7 @@ if (confirm('Are you sure you want to delete wallet?')) {
 	      }
 	    });//jQuery.ajax
 	},1000);
-	
+		    
 		} else {
 		    return false;
 
@@ -345,6 +343,7 @@ if (confirm('Are you sure you want to delete wallet?')) {
 	}//deletWallete
 	
 	function addCryptoCurr(Verify){
+		//return false;
 		var idxVal= jQuery('#CoinOpt').val();
 		var frmdata = {
 			'action': '__construct',
@@ -353,10 +352,9 @@ if (confirm('Are you sure you want to delete wallet?')) {
 			'auth_key': jQuery('#coinremitter'+idxVal+'api_key').val(),
 			'auth_pass': jQuery('#coinremitter'+idxVal+'password').val(),
 		};
-
 		jQuery.ajax({
 		    type: "post",
-		     url: ajaxurl,
+		    url: ajaxurl,
 		    data: frmdata,
 		    error: function (jqXHR, exception) {
 		        var msg = '';
@@ -379,7 +377,8 @@ if (confirm('Are you sure you want to delete wallet?')) {
 		        alert(jqXHR.status);
 		    },
 		    success: function(html){
-		    	jQuery('.ErrMsg').html(html.msg);
+		    
+				jQuery('.ErrMsg').html(html.msg);
 				if(html.data ==1){
 					jQuery('#WalletAuthSbt').show();
 				}
@@ -395,7 +394,7 @@ if (confirm('Are you sure you want to delete wallet?')) {
 	}//addCryptoCurr
 	function getTransactionfees(Coin){
 		var frmdata = {
-			'action': 'transactionfees',
+			'action': 'coinremitter_transactionfees',
 			'cointype': Coin,
 			};
 		var res;
