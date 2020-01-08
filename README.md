@@ -1,5 +1,6 @@
 CoinRemitter Crypto Payment Gateway
 -----------------------------------------------------------
+Wordpress Woocommerce Plugin URL: [https://wordpress.org/plugins/coinremitter-crypto-payment-gateway/](https://wordpress.org/plugins/coinremitter-crypto-payment-gateway/)
 
 Version 1.0
 
