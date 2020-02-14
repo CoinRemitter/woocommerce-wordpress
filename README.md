@@ -28,7 +28,7 @@ Apart from centralized currencies this option creates a traffic for sellers who 
 * No bank account, no monthly fees and no Id require with lowest transaction fees 0.23%
 * Globally secure, and no chargebacks held do transactions freely all over the world.
 * Accept all major cryptocurrencies like Bitcoin, Bitcoin cash, litecoin, Ethereum, Ripple, DOGE, USDT, DASH and many more on crypto payment gateway.
-* Users can check the statistics from both sites **CREMITTER.COM & WORDPRESS.COM**
+* Users can check the statistics from both sites **COINREMITTER.COM & WORDPRESS.COM**
 * It displays Crypto price with fiat price. Like how much It will cost in BITCOIN / LITECOIN from USD / EUR.
 * Get all cryptocurrency payments straight Into your crypto wallet. 
 * If you have multiple wallet which contains multifarious coins then you will get multi optional service where you can select one of coins in which you want to do payment. Like whether you can select BITCOIN / LITECOIN for payment.
