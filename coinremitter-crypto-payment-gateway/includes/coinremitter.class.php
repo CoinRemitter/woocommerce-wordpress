@@ -5,7 +5,7 @@ if(!defined("COINREMITTER_CRYPTOBOX_WORDPRESS")) define("COINREMITTER_CRYPTOBOX_
 elseif (!defined('ABSPATH')) exit; // Wordpress
 
 
-define("COINREMITTER_CRYPTOBOX_VERSION", "0.1");
+define("COINREMITTER_CRYPTOBOX_VERSION", "1.0.3");
 
 // CoinRemitter supported crypto currencies
 define("COINREMITTER_CRYPTOBOX_COINS", json_encode(array('bitcoin', 'bitcoincash', 'litecoin', 'ethereum', 'dogecoin', 'tether', 'dash')));
@@ -196,7 +196,7 @@ class CoinRemitterCrypto{
 
         $param = [
             'api_key'=> $coinArr['api_key'],//$this->api_key,
-            'password'=> $coinArr['password'],//$this->password,
+            'password'=>  $coinArr['password'],//$this->password,
         ];
         $bal = $this->coinremitter_exec_url($url,$param);
         return $bal;
@@ -205,15 +205,17 @@ class CoinRemitterCrypto{
         public function coinremitter_exec_url($url,$post='')
 	{
 		$header[] = "Accept: application/json";
+		$userAgent = 'CR@'.COINREMITTER_API_VERSION.',wordpress worwoocommerce-wordpress-master@'.COINREMITTER_VERSION;
         $curl = $url;
 	    $body = array(
 	        'api_key' => $post['api_key'],
-	        'password' => $post['password'],
+	        'password' => decrypt($post['password']),
 	    );
 	    $args = array(
 	        'method'      => 'POST',
 	        'timeout'     => 45,
 	        'sslverify'   => false,
+	        'user-agent' => $userAgent,
 	        'headers'     => array(
 	            'Content-Type'  => 'application/json',
 	        ),
@@ -282,8 +284,7 @@ class CoinRemitterCrypto{
 	}
 	
 }
-
-    
+ 
     function run_sql_coinremitter($sql)
 	{
 		static $mysqli;
@@ -323,41 +324,27 @@ class CoinRemitterCrypto{
             if (!COINREMITTER_CRYPTOBOX_WORDPRESS && stripos(str_replace('"', '', str_replace("'", "", $mysqli->error)), "coinremitter_payments doesnt exist"))
             {
                 // Try to create new table - https://github.com/cryptoapi/Payment-Gateway#mysql-table
-                $mysqli->query("CREATE TABLE `coinremitter_payments` (
-			  `paymentID` int(11) unsigned NOT NULL AUTO_INCREMENT,
+                $mysqli->query("CREATE TABLE `coinremitter_order_address` (
+			  `addrID` int(11) unsigned NOT NULL AUTO_INCREMENT,
 			  `orderID` varchar(50) NOT NULL DEFAULT '',
 			  `userID` varchar(50) NOT NULL DEFAULT '',
-			  `coinLabel` varchar(8) NOT NULL DEFAULT '',
+			  `invoice_id` varchar(50) NOT NULL DEFAULT '', 
+			  `coinLabel` varchar(20) NOT NULL DEFAULT '',
 			  `amount` double(20,8) NOT NULL DEFAULT '0.00000000',
 			  `amountUSD` double(20,8) NOT NULL DEFAULT '0.00000000',
-			  `unrecognised` tinyint(1) unsigned NOT NULL DEFAULT '0',
 			  `addr` varchar(255) NOT NULL DEFAULT '',
-			  `txID` char(255) NOT NULL DEFAULT '',
-			  `crID` char(255) NOT NULL DEFAULT '',
-			  `txDate` datetime DEFAULT NULL,
-			  `txConfirmed` tinyint(1) unsigned NOT NULL DEFAULT '0',
-			  `txCheckDate` datetime DEFAULT NULL,
-			  `processed` tinyint(1) unsigned NOT NULL DEFAULT '0',
-			  `processedDate` datetime DEFAULT NULL,
+			  `payment_status` tinyint(1) NOT NULL DEFAULT '0',
+			  `paymentDate` datetime DEFAULT NULL,
 			  `createdAt` datetime DEFAULT NULL,
-			  PRIMARY KEY (`paymentID`),
-			  KEY `cruserID` (`userID`),
-			  KEY `crorderID` (`orderID`),
-			  KEY `cramount` (`amount`),
-			  KEY `cramountUSD` (`amountUSD`),
-			  KEY `crcoinLabel` (`coinLabel`),
-			  KEY `crunrecognised` (`unrecognised`),
-			  KEY `craddr` (`addr`),
-			  KEY `crtxID` (`txID`),
-			  KEY `crCrID` (`crID`),
-			  KEY `crtxDate` (`txDate`),
-			  KEY `crtxConfirmed` (`txConfirmed`),
-			  KEY `crtxCheckDate` (`txCheckDate`),
-			  KEY `crprocessed` (`processed`),
-			  KEY `crprocessedDate` (`processedDate`),
-			  KEY `crcreatedAt` (`createdAt`),
-			  KEY `crkey1` (`orderID`,`userID`),
-			  KEY `crkey2` (`orderID`,`userID`,`txID`)
+			  PRIMARY KEY (`addrID`),
+			  KEY `crAddruserID` (`userID`),
+			  KEY `crAddrorderID` (`orderID`),
+			  KEY `crAddramount` (`amount`),
+			  KEY `crAddramountUSD` (`amountUSD`),
+			  KEY `crAddrcoinLabel` (`coinLabel`),
+			  KEY `crAddraddr` (`addr`),
+			  KEY `crAddrcreatedAt` (`createdAt`),
+			  KEY `crAddrkey1` (`orderID`,`userID`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
 
                 $query = $mysqli->query($sql);  // re-run previous query
@@ -369,6 +356,9 @@ class CoinRemitterCrypto{
 		{
 			while($row = $query->fetch_object())
 			{
+				// echo "<pre>";
+				// print_r($row);
+				// echo "</pre>";
 				if ($f)
 				{
 					if (property_exists($row, "idx")) $x = true;

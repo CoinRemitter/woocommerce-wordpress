@@ -2,8 +2,8 @@
 /*
 Plugin Name: 		CoinRemitter Crypto Payment Gateway
 Plugin URI: 		https://coinremitter.com/bitcoin-php-api
-Description: 		<a href="https://coinremiiter.com">coinremitter.com</a> CoinRemitter Crypto Payment Gateway. 
-Version: 		1.0.0
+Description: 		<a href="https://coinremitter.com">coinremitter.com</a> CoinRemitter Crypto Payment Gateway. 
+Version: 		1.0.4
 Author: 		CoinRemitter
 Author URI: 		https://coinremitter.com
 WC requires at least: 	3.5
@@ -30,12 +30,15 @@ if (!defined( 'ABSPATH' )) exit; // Exit if accessed directly
 $dir_arr = wp_upload_dir();
 
 DEFINE('COINREMITTER', 				"coinremitter");
+DEFINE('COINREMITTER_DIR_PATH', 	plugin_dir_path( __FILE__ ));
 DEFINE('COINREMITTER_API_URL', 		"https://coinremitter.com/api/");
+DEFINE('COINREMITTER_API_VERSION', 		"v3");
 DEFINE('COINREMITTER_API_URL_ALL_COIN', "https://coinremitter.com/");
 DEFINE('COINREMITTER_PREVIEW', 		"coinremitteradmin");
 DEFINE('COINREMITTER_PAYMENT_FAIl', 		site_url("payment-fail"));
-DEFINE('COINREMITTER_INVOICE_NOTIFY_URL', 		site_url("?coinremitter_notify"));
-DEFINE('COINREMITTER_VERSION', 		"0.1");
+// DEFINE('COINREMITTER_INVOICE_NOTIFY_URL', 		site_url("?coinremitter_notify"));
+DEFINE('COINREMITTER_WEBHOOK_URL', 		site_url("?coinremitter_webhook"));
+DEFINE('COINREMITTER_VERSION', 		"1.0.4");
 DEFINE('COINREMITTER_ADMIN', 			admin_url("admin.php?page="));
 DEFINE('COINREMITTER_DIR',  			$dir_arr["basedir"]."/".COINREMITTER.'/');
 DEFINE('COINREMITTER_DIR2', 			$dir_arr["baseurl"]."/".COINREMITTER.'/');
@@ -49,8 +52,11 @@ DEFINE('COINREMITTER_INV_PAID', 1);
 DEFINE('COINREMITTER_INV_UNDER_PAID', 2);
 DEFINE('COINREMITTER_INV_OVER_PAID', 3);
 DEFINE('COINREMITTER_INV_EXPIRED', 4);
+DEFINE('ECR_SKEY', "coinremitter");
+DEFINE('ECR_CIPHERING', "AES-256-CBC");
+DEFINE('ECR_OPTIONS', 0);
+DEFINE('ECR_IV', "Coinremitter__iv");
 unset($dir_arr);
-
 
 require_once(plugin_dir_path( __FILE__ )."/coinremitter.php");
 

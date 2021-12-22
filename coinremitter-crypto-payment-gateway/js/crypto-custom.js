@@ -15,7 +15,6 @@ jQuery(window).load(function(){
 	});//jQuery('.OpenPopup')
 
 	jQuery('.VerifyBtn').click(function(){
-		
 		var pathname = window.location.pathname; 
 		var url = window.location.origin;
 		var reloadurl = url+pathname+'?page=coinremitter&new_wallet=true'
@@ -33,14 +32,27 @@ jQuery(window).load(function(){
 			alert('Please insert password');
 			return false;
 		}
+		if(jQuery('#coinremitter'+cointyp+'minInvoiceValue').val() == ''){
+			alert('Please insert minimum invoice value');
+			return false;
+		}
+		if(jQuery('#coinremitter'+cointyp+'exchangeRateMultiplier').val() == ''){
+			alert('Please insert exchange rate multiplier');
+			return false;
+		}
+		jQuery(this).prop('disabled',true);
+		jQuery('.add_spinner').addClass('is-active');
 		jQuery('#add_new').val('1');
 		var cointype = jQuery('.CoinOptList').val();
 		jQuery('#WalletFrm #currency_type').val(cointype);
+		var coin = jQuery('.CoinOptList').val().toUpperCase();
 		var frmData = {
 	      'action': 'coinremitter_add_wallet',
-	      'cointype': jQuery('.CoinOptList').val(),
+	      'cointype': coin,
 	      'coinapikey': jQuery('#coinremitter'+cointype+'api_key').val(),
 	      'coinpass': jQuery('#coinremitter'+cointype+'password').val(),
+	      'coinmininvoicevalue': jQuery('#coinremitter'+cointyp+'minInvoiceValue').val(),
+	      'coinexchangeratemult': jQuery('#coinremitter'+cointyp+'exchangeRateMultiplier').val(),
 	      'frm_type': jQuery('#frm_type').val(),
 	     };
 	    
@@ -82,25 +94,34 @@ jQuery(window).load(function(){
 	            	jQuery('.frmError').html(''); 
 	            	window.location.href = reloadurl;
 	            }
+				jQuery(this).prop('disabled',false);
+				jQuery('.add_spinner').removeClass('is-active');
+
 	      	}
 	    });
 	});
 
 	jQuery('.UpdateBtn').on('click', function () {
+		jQuery(this).prop('disabled',true);
 		jQuery('#update_wallet').val('1');
 		jQuery('#add_new').val('');
 		//return false;
+		jQuery('.update_spinner').addClass('is-active');
 		var pathname = window.location.pathname; 
 		var url = window.location.origin;
 		var reloadurl = url+pathname+'?page=coinremitter&up=true'
 	    var cointyp = jQuery('#cointy_in_update').val();
 	    var api_key_value = jQuery('#frmupdate #coinremitter'+cointyp+'api_key').val();
 	    var api_password_value = jQuery('#frmupdate #coinremitter'+cointyp+'password').val();
+	    var min_invoice_value = jQuery('#frmupdate #coinremitter'+cointyp+'minInvoiceValue').val();
+	    var exchange_rate_mul = jQuery('#frmupdate #coinremitter'+cointyp+'exchangeRateMultiplier').val();
 	    var frmData = {
 	      'action': 'coinremitter_verifyApi',
-	      'cointype': cointyp,
+	      'cointype': cointyp.toUpperCase(),
 	      'coinapikey':api_key_value,
 	      'coinpass': api_password_value,
+	      'coinmininvoicevalue': min_invoice_value,
+	      'coinexchangeratemult': exchange_rate_mul,
 	      'frm_type': jQuery('#frm_type').val(),
 	    };
 		var succ=false;
@@ -138,13 +159,17 @@ jQuery(window).load(function(){
 	            }else{	
 	            	jQuery('#frmupdate .frmUpdateError').html(response.msg);	
 	            }
+				jQuery(this).prop('disabled',false);
+				jQuery('.update_spinner').removeClass('is-active');
+
 	      	}
 	    });
 	});
 	jQuery('.WithdrawBtn').on('click', function () {
+
 		var pageURL = jQuery(location).attr("href");
 		var redirect = pageURL+'&withdraw=true';
-	    var cointyp = jQuery('#frmwithdraw #currency_type').val();
+	    var cointyp = jQuery('#frmwithdraw #currency_type').val().toUpperCase();
 	    var address = jQuery('#frmwithdraw #address').val();
 	    var amount = jQuery('#frmwithdraw #amount').val();
 
@@ -206,44 +231,7 @@ jQuery(window).load(function(){
 	    });
 	});
 
-	jQuery('#amount').keyup(function(event){
-		var coinDiv = jQuery('#frmwithdraw #currency_type').val();
-		var rate = getTransactionfees(coinDiv);
-		var processing_fees = parseFloat(rate.data.processing_fees);
-    	var transaction_fees = parseFloat(rate.data.transaction_fees);
-    	var processing_fees_type = rate.data.processing_fees_type;
-    	var transaction_fees_type = rate.data.transaction_fees_type;
-    	var fees_flat = 0;
-    	var fees_percentage = 1;
-        var amount = parseFloat(jQuery(this).val());
-       
-        if(processing_fees_type == 0){
-            var prc_fees = processing_fees ;
-            if(isNaN(prc_fees)){
-                prc_fees = processing_fees;
-            }
-        }else if(processing_fees_type == 1){
-            var prc_fees = amount*processing_fees/100 ;
-            prc_fees =prc_fees;
-            if(isNaN(prc_fees)){
-                prc_fees = processing_fees+' %';
-            }
-        }
-        if(transaction_fees_type==fees_flat){
-            var trn_fees = transaction_fees ;
-        }else if(transaction_fees_type==fees_percentage){
-            var trn_fees = amount*transaction_fees/100 ;
-        }else{
-            var trn_fees = 0 ;
-        }
-        jQuery('#frmwithdraw #withprocessing').html(prc_fees);
-        jQuery('#frmwithdraw #withpp').html('');
-        var total_amount = amount+prc_fees+trn_fees;
-        if(isNaN(total_amount)){
-        	total_amount = 0;
-        }
-        jQuery('#frmwithdraw #withtotal').html(parseFloat(total_amount).toFixed(8));
-    });
+	
 
 	jQuery('.ClosePopup').click(function(){
 		jQuery('.AddWalletPopup').fadeOut('fast');
@@ -257,7 +245,7 @@ jQuery(window).load(function(){
 	jQuery('.EditOpenPopup').click(function(){
 		var coinDiv = jQuery(this).attr('data-rel');
 		jQuery('#pum_trigger_add_type_modal2 #withdraw').val(1);
-		jQuery('.CurrencyName').html('withdraw '+coinDiv);
+		jQuery('.CurrencyName').html('Wallet '+coinDiv.toUpperCase());
 		jQuery('#cointy_in_update').val(coinDiv.toLowerCase());
 		jQuery('#pum_trigger_add_type_modal2 .allDiv').hide();
 		jQuery('#pum_trigger_add_type_modal2 .div'+coinDiv).show();
@@ -267,23 +255,10 @@ jQuery(window).load(function(){
 
 	});
 
-	jQuery('.WithdrawOpenPopup').click(function(){
+	jQuery('.deleteBtn').click(function(){
 		var coinDiv = jQuery(this).attr('data-rel');
-		var rate = getTransactionfees(coinDiv);
-		jQuery('#frmwithdraw #withprocessing').html(rate.data.processing_fees);
-		jQuery('#frmwithdraw #withtransaction').html(rate.data.transaction_fees);
-		jQuery('#frmwithdraw .withtp').html('');
-	    jQuery('#frmwithdraw .withpp').html('');
-		if(rate.data.transaction_fees_type == 1){
-			jQuery('#frmwithdraw #withtp').html('%');
-		}else{
-
-		}
-		if(rate.data.processing_fees_type == 1){
-			jQuery('#frmwithdraw #withpp').html('%');
-		}
-		jQuery('#frmwithdraw #withtotal').html('0');
 		jQuery('#frmwithdraw #currency_type').val(coinDiv.toLowerCase());
+		jQuery('.wallet_coin').text(coinDiv.toUpperCase());
 		jQuery('#pum_trigger_add_type_modal3 .allDiv').hide();
 		jQuery('#pum_trigger_add_type_modal3 .div'+coinDiv).show();
 		jQuery('#pum_trigger_add_type_modal3').fadeIn('slow');
@@ -301,19 +276,15 @@ jQuery(window).load(function(){
 		jQuery('#curren_type').val(idxVal);
 	});//jQuery('.OpenPopup')
 });//jQuery(window).load
-function deleteWallete(){
-if (confirm('Are you sure you want to delete wallet?')) {
-	
+function deleteWallete(e){
+
+	jQuery('.delete_spinner').addClass('is-active');
+	jQuery(e).prop('disabled', true);
 	var coinDiv = jQuery('.CoinOpt').val();
 	jQuery('#add_new').val('');
 	jQuery('#pum_trigger_add_type_modal2 #delete_wallet').val(coinDiv);
 	jQuery('#pum_trigger_add_type_modal2 #update_wallet').val('');
-	
-	var datarel = jQuery('#delete_wallet').val();
-
-	jQuery('#pum_trigger_add_type_modal2 #coinremitter'+datarel+'api_key').val('');
-	jQuery('#pum_trigger_add_type_modal2 #coinremitter'+datarel+'password').val('');
-
+	var datarel = jQuery('#frmwithdraw #currency_type').val();
 	setTimeout(function(){
 		var frmData = {
 	      'action': 'coinremitter_deleteCoinData',
@@ -329,18 +300,16 @@ if (confirm('Are you sure you want to delete wallet?')) {
 	             if(html['flag'] == 1){
 	            	location.href=html['redirect'];
 	            }else{
-	            	alert('Something went wrong please try after sometime.');
+	            	alert(html.msg);
 	            }
+	            jQuery(e).prop('disabled', false);
+				jQuery('.delete_spinner').removeClass('is-active');
+
 	      }
 	    });//jQuery.ajax
 	},1000);
 		    
-		} else {
-		    return false;
-
-		}
-		
-	}//deletWallete
+}//deletWallete
 	
 	function addCryptoCurr(Verify){
 		//return false;
@@ -382,30 +351,12 @@ if (confirm('Are you sure you want to delete wallet?')) {
 				if(html.data ==1){
 					jQuery('#WalletAuthSbt').show();
 				}
-
 				if(html.data ==2){
 					disWallets();
-
 					jQuery('#WalletAuth').trigger('reset');
 					openAuthFrm();
 				}	
 			}
 		});//jQuery.ajax
 	}//addCryptoCurr
-	function getTransactionfees(Coin){
-		var frmdata = {
-			'action': 'coinremitter_transactionfees',
-			'cointype': Coin,
-			};
-		var res;
-		res = jQuery.ajax({
-	      type: "Post",
-	      url: ajaxurl,
-	      data: frmdata,
-	      async: false,
-	      success: function(data){
-	        return data;
-	      }
-	    });
-	    return jQuery.parseJSON(res.responseText);
-	}
+	
