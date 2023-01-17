@@ -1,131 +1,105 @@
-CoinRemitter Crypto Payment Gateway
+CoinRemitter Crypto Payment Processor
 -----------------------------------------------------------
 Wordpress Woocommerce Plugin URL: [https://wordpress.org/plugins/coinremitter-crypto-payment-gateway/](https://wordpress.org/plugins/coinremitter-crypto-payment-gateway/)
 
-Version 1.0
+Version 1.0.5
 
-Coinremitter Official Bitcoin/Altcoin Payment Gateway for Wordpress. Accept Bitcoin, BitcoinCash, Ethereum, Litecoin, Dogecoin, Ripple, Tether, Dash etc.
+Coinremitter is [crypto payments](http://coinremitter.com) service for Wordpress. Accept Bitcoin, Tron, Binance (BEP20), BitcoinCash, Ethereum, Litecoin, Dogecoin, Tether, Dash etc.
 
-* Author URI: [https://coinremitter.com](http://coinremitter.com)
-* Requires at least: Wordpress 3.5 and WooCommerce 2.1
-* Tested up to: 5.2
-* Stable Tag: 1.0
+* Author URI: https://coinremitter.com
+* Requires at least: Wordpress 6.0 and WooCommerce 3.5
+* Tested up to: 6.1
+* Stable Tag: 1.0.4
 * License: GNU Version 2 or Any Later Version
 * License URI: http://www.gnu.org/licenses/gpl-2.0.html
-.
 
 
-**What Is Crypto Payment Gateway? -**
+**What Is Crypto Payment Processor?**
 
-There are ample of Crypto Coins are available on crypto payment gateways you can pick one of them and create a wallet of that coins and purchase things from Individual’s websites who are accepting payment in crypto coins though. Regardless, All these websites have their own API in order to accept payment from buyers.
-
-Apart from centralized currencies this option creates a traffic for sellers who are willing to do payments In crypto coins. In contrast, doing a payment in crypto coins offer buyers a great market  reputation and has left a foremost Impact on sellers and It will also benefit to buyers & sellers If they choose **Coinremitter: Crypto Payment Gateway** as their payment method In doing a business in crypto coins.
+Crypto Payment Processor acts as a bridge between the merchant’s website and the cryptocurrency network, allowing the merchant to receive payments in the form of cryptocurrency.
 
 
 **What kind of services we are providing on our plugin?**
 
-* 100% free plugin on **COINREMITTER.COM**
-* No bank account, no monthly fees and no Id require with lowest transaction fees 0.23%
-* Globally secure, and no chargebacks held do transactions freely all over the world.
-* Accept all major cryptocurrencies like Bitcoin, Bitcoin cash, litecoin, Ethereum, Ripple, DOGE, USDT, DASH and many more on crypto payment gateway.
-* Users can check the statistics from both sites **COINREMITTER.COM & WORDPRESS.COM**
-* It displays Crypto price with fiat price. Like how much It will cost in BITCOIN / LITECOIN from USD / EUR.
-* Get all cryptocurrency payments straight Into your crypto wallet. 
-* If you have multiple wallet which contains multifarious coins then you will get multi optional service where you can select one of coins in which you want to do payment. Like whether you can select BITCOIN / LITECOIN for payment.
-* Free customer support for users.
-
+* 100% free plugin
+* No bank account requires
+* No chargebacks
+* Accept crypto payments from all over the world
+* Accept all major cryptocurrencies
+* Multiple wallets support
+* Free customer support
+* Low transaction fee
 
 **Installation**
-
-1. First you must have to install woocommerce plugin and have to activate first.
-
-2. Click on **PLUGIN** option (you will find It In sidebar). 	
-
-3. Then select on **ADD NEW** option (you will find on the top of page)
-
-4. After selecting that option new page will pop up and iIt shows you different plugins. In contrast, you must click on search option and type **COINREMITTER CRYPTO PAYMENT GATEWAY**.
-
-5. After finding plugin click on the **INSTALL NOW** and Install it.
-
-6. After the completion of plugin, click on **ACTIVATE**. When you activate our plug in you will see **COINREMITTER** appear in sidebar.
-
+1. First you must have to install woocommerce plugin and have to activate it first.
+2. Click on the **PLUGIN** option (you will find It In the sidebar). 	
+3. Then select on **ADD NEW** option (you will find it on the top of the page)
+4. After selecting that option new page will pop up and it shows you different plugins. You must click on the search option and type **Coinremitter Crypto Payment Processor**.
+5. After finding the plugin click on the **INSTALL NOW** and Install it.
+6. After the completion of the plugin, click on **ACTIVATE**. When you activate our plugin you will see **COINREMITTER** appear in the sidebar.
 7. Congratulations! You have successfully installed our plugin on your website.
 
-**How to create wallet on Coinremitter plugin?**
- 
-After successfully Installation of plugin now It’s time to create a wallet on coinremitter plugin.
 
-Here’s step by step process about how to create a wallet.
-
-
-* Firstly, click on the **ADD NEW** as a first step.
-* You will find coins options to select one of these. You will see coins like **BITCOIN, BITCOINCASH, ETHEREUM, DOGECOIN, TETHER, DASH, LITECOIN, RIPPLE** etc.
-* The box will appear on screen which asks you to select one of coins to create a wallet of that coin.
-* Then, fill  the correct Information of API key and password. You can get API key and password from your [coinremitter](https://coinremitter.com/) account. [How to create wallet in coinremitter ?](https://coinremitter.com/)
-* Make sure you will fill the correct Information otherwise, you will fail at creating your wallet.
-* After, fill all correct Information then, click on **VERIFY & ADD**.
-* Congratulations! You have successfully created your wallet on Coinremitter plugin.
-* Now you can accept and receive payments in your wallet.
-* You can also create multiple wallet here with Multifarious coins.
-* If you ever wish to delete or update one of your wallet then, click on the **EDIT** option which you will find on your every wallet.
-* When you click one box will appear on your screen and It ask you whether If you want to delete your wallet or want to update?
-* Fill up an appropriate details like your API key and password.
-* If you want to delete your wallet then click on delete. After deleting It not no longer be seen on your plugin desk. It will disconnect your wallet in your wordpress but you can still use the same credential in future.
-* If you ever think that your API credentials are not safe then you can simply change it.
-* If you want to change your credential on your API then make an appropriate change In your API key and click on update. It will suddenly change your API key.
-* Therefore, after the update you will use your updated API key on your every transaction.
-* It shows you how simple It would be If you choose Coinremitter crypto payment  gateway as your plugin.
-
-**How to withdraw coin ?**
-
-*When you click on coinremitter plugin, the wallet page appear. where you can see your several wallet*
-*Now select one of your address (ex. bitcoin wallet)*
-*On your bitcoin waller you will see withdraw button click on it.*
-*After clicking on it popup box will appear. which shows two boxes.*
-    1) Wallet address
-    2) Amount
-
-*Click on address and fill up your wallet address.*
-*Enter your appropriate amount. which you wanted to withdraw.*
-*As below in this option you will see processing fees, transaction fees,and total amount.*
-*After filling all the option click on withdraw button.*
-*If you want see the history of your withdraw amount then, you can see it coinremitter's official website*
-*Go to the wallet tab and click on it. where you can see other wallet. you must click on your withdraw wallet.*
-*After clicking on it new page will appear and you see the transaction history there easily*
+**Configuration of Plugin**
+1. Go to the sidebar of wordpress’s admin panel.
+2. Click the **Woocommerce** option and select Settings.
+3. Now, you will need to locate the **Payments** section in the Settings.
+4. You’ll find a **Coinremitter plugin** there.
+5. Click **Manage** at the end of the same line.
+![Setup Coinremitter’s WooCommerce plugin](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/configure_1.png)
+6. The configure settings page will be opened.
+![Setup Coinremitter’s WooCommerce plugin](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-5.png)
+* **TITLE:** The title written by you will appear on the checkout page.
+* **DESCRIPTION:** You can add a few details to tell the customer something important before the customer takes any step during checkout.
+* **ORDER STATUS:** Set the order status, when customers successfully make a payment using cryptocurrency.
+* **INVOICE EXPIRY TIME IN MINUTES:** If you’ve set the value to 30 then the generated invoice will expire after 30 minutes.
+* That’s all, save the setting.
 
 
+**How to link a Coinremitter wallet on your website?**
 
-Screenshots
-----------------
+1. First you install and activate this plugin. [Read installation instructions](#installation) first
+2. click on the sidebar menu name "Coinremitter"
+3. Click on **Add Wallet**. It will open a popup
+![Add a crypto wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-1.png)
+4. You need to select a coin. Options will be like **BITCOIN, ETHEREUM, TRON, USDT ERC20, DASH**, etc.
+5. For **API key** and **Password** You can get it from your coinremitter account. Please follow this instruction to create a wallet. [How to create a wallet in Coinremitter ?](https://blog.coinremitter.com/how-to-create-a-wallet-on-coinremitter)
+6. Paste the API key and Password from your Coinremitter wallet
+7. **Exchange Rate Multiplier**: We suggest you set it to 1. For instance, if you set it to 1.10, then prices for cryptocurrencies will be increased by 10%, and you can set it to 0.95 in this text box for a 5% discount.
+8. **Minimum Invoice Value**: Setting the minimum invoice limit is necessary, The generated invoice won't be less than the minimum invoice limit.
+![API key & password for Coinremitter’s WordPress plugin](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-2.png)
+9. Now click on **VERIFY & ADD**.
+10. Congratulations! You have successfully linked your wallet. It will display the wallet on the same page
+11. Now you can accept and receive payments in your wallet.
+12. You can also add multiple wallets the same way for other coins
+13. If you want to remove your wallet then click on the Remove button. It will just disconnect your wallet from your WordPress but you can still use the same credential in the future.
+![Remove your crypto wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-4.png)
+14. If you want to change the password of your wallet first you have to change the password of that wallet from your Coinremitter wallet then you can change it on your WordPress site
+![Update your crypto wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-3.png)
 
-**Add Wallet**
 
-# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-1.png)
+**How to make payment**
+* Once a customer fills in the mandatory details and orders a product, the system will take them to the payment page.
+* You will see the option of Pay Using Cryptocurrency. Click it.
+* Select one of your coin wallets from which you want to pay for the product and click place order.
 
-# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-2.png)
+![Checkout page preview](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-7.png)
 
-**Update Wallet**
+* At the very next moment, the system will automatically generate an Invoice which will appear on your screen.
 
-# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-4.png)
+![Invoice preview (sample)](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-8.png)
 
-**Withdraw Wallet**
+* Copy the Payment address from generated invoice and pay the exact amount from your personal wallet. Once you transfer to this address, it requires 3 confirmations to mark the order ‘paid’. It will automatically redirect you to the order summary page once payment is confirmed on the blockchain.
 
-# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-3.png)
+![Order summary with product and payment details](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-9.png)
 
-**Pay Using Cryptocurrency**
+* Congratulations! You have now successfully paid for your product.
 
-# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-7.png)
+**Check order details**
 
-# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-8.png)
+* Go to the sidebar on Admin panel to check your order.
+* Select "Orders" from the order menu, and after clicking it, you will see your complete order list. Click on one of these orders that had been paid with the Coinremitter payment option.
+* Click the order and you will be redirected to the order view page.
+* You will get to see the details of complete orders, conversion rates and history of payments there.
 
-**Order Pay Successfully**
-
-# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-9.png)
-
-**Admin side Order**
-
-# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-5.png)
-
-**Order Detail**
-
-# ![Coinremitter-plugin-add_wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-6.png)
+![Order details from the admin side](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-6.png)

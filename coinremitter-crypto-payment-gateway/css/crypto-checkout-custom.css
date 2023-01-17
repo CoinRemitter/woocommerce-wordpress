@@ -1,5 +1,5 @@
 .entry-content{
-    font-family: 'Roboto', sans-serif !important;   
+    font-family: 'Roboto', sans-serif !important;
 }
 .btc-wallet-box-plugin .btn-group {
     position: relative;
@@ -7,7 +7,7 @@
 .bootstrapiso.btc-wallet-box-plugin .card h1.yzxnz_copy_amount {
     margin-top: 0px !important;
     margin-bottom: 12px !important;
-	font-size: 30px;
+    font-size: 30px;
 }
 .bootstrapiso.btc-wallet-box-plugin .card h1.yzxnz_copy_amount .text-muted {
     font-size: 18px;
@@ -52,11 +52,11 @@
     text-align: left;
     font-size: 20px;
     margin-top: 0px !important;
-	line-height: 1.6;
+    line-height: 1.6;
 }
 .bootstrapiso h4, .bootstrapiso .h4 {
     font-size: 1.5rem;
-	margin: 0px !important;
+    margin: 0px !important;
 }
 .bootstrapiso .btn:not(:disabled):not(.disabled) {
     cursor: pointer;
@@ -122,7 +122,7 @@
 .btc-wallet-address-box .yzxnz_wallet_address {
     color: #6c757d;
 }
-.btc-wallet-address-box .yzxnz_copy_address, 
+.btc-wallet-address-box .yzxnz_copy_address,
 .btc-wallet-address-box .yzxnz_wallet_open {
     color: #6c757d;
     display: inline-block;
@@ -132,11 +132,11 @@
     z-index: 1;
 }
 .btc-wallet-address-box .yzxnz_wallet_open{
-	right: 0px;
+    right: 0px;
 }
 .btc-wallet-address-box .yzxnz_copy_address svg,
 .btc-wallet-address-box .yzxnz_wallet_open svg{
-	width: .875em;
+    width: .875em;
 }
 .btc-wallet-box-plugin .card-body .btc-wallet-address-box > a {
     margin-left: 0px;
@@ -163,7 +163,7 @@
     background: transparent;
     border: 1px solid #6c757d;
     color: #6c757d;
-	font-weight: 600;
+    font-weight: 600;
 }
 .btc-wallet-box-plugin .yzxnz_button_wait:hover {
     background-color: #6c757d;
@@ -195,12 +195,12 @@
     padding: 14px 20px;
     background-color: #6c757d;
     border-color: #6c757d;
-	font-weight: 500;
+    font-weight: 500;
 }
 .btc-confirm-btn {
     max-width: 620px;
     margin: 0px;
-	padding: 0px 15px;
+    padding: 0px 15px;
 }
 .btc-wallet-box-plugin .yzxnz_button_confirm svg {
     width: 16px;
@@ -232,33 +232,33 @@
     display: none;
 }
 @media screen and (max-width: 991px){
-	.btc-wallet-main-box {
-		display: block;
-		width: 100%;
-	}
-	.btc-wallet-main-box > div {
-		display: block;
-		width: 100%;
-		text-align: center;
-	}
-	.btc-wallet-box-plugin .btc-wallet-address-box {
-		margin: 8px auto 0px !important;
-	}
-	.bootstrapiso .card-body p,
-	.btc-confirm-btn{
-		text-align: center;
-	}
-	.bootstrapiso .yzxnz_button_wait.btn-block {
-		margin: 10px auto 15px;
-	}
+    .btc-wallet-main-box {
+        display: block;
+        width: 100%;
+    }
+    .btc-wallet-main-box > div {
+        display: block;
+        width: 100%;
+        text-align: center;
+    }
+    .btc-wallet-box-plugin .btc-wallet-address-box {
+        margin: 8px auto 0px !important;
+    }
+    .bootstrapiso .card-body p,
+    .btc-confirm-btn{
+        text-align: center;
+    }
+    .bootstrapiso .yzxnz_button_wait.btn-block {
+        margin: 10px auto 15px;
+    }
 }
 @media screen and (max-width: 1199px) and (min-width: 992px){
-	.bootstrapiso.btc-wallet-box-plugin .card {
-		max-width: 100% !important;
-	}
-	.btc-confirm-btn {
-		max-width: 100%;
-	}
+    .bootstrapiso.btc-wallet-box-plugin .card {
+        max-width: 100% !important;
+    }
+    .btc-confirm-btn {
+        max-width: 100%;
+    }
 }
 
 /* MM */
@@ -346,7 +346,7 @@
     line-height: 72px;
     margin-right: 15px;
     margin-top: 10px;
-	border: 3px solid transparent;
+    border: 3px solid transparent;
     text-align: center;
     position: relative;
     outline: 0 !important;
@@ -356,7 +356,6 @@
 }
 .wc_payment_method .payment_box.payment_method_coinremitterpayments a.crpObj.active::before {
     content: "";
-    background-image: url(http://192.168.0.104/wordpress/wp-content/uploads/2019/10/checkout.png);
     height: 25px;
     width: 25px;
     background-size: contain;
@@ -417,7 +416,8 @@ img {
     margin-top: 30px;
 }
 .cr-plugin-shadow {
-    box-shadow: 0px 0px 15px #eee;
+    background-color: #FFF;
+    box-shadow: 0px 0px 15px #EEE;
     border-radius: 15px 15px;
 }
 .cr-plugin-main-box {
@@ -759,7 +759,7 @@ img {
 .cr-plugin-brand {
     margin-top: 15px;
 }
-.theme-change-content .cr-plugin-main-box > .cr-plugin-left, 
+.theme-change-content .cr-plugin-main-box > .cr-plugin-left,
 .theme-change-content .cr-plugin-main-box > .cr-plugin-right {
     width: 100%;
     float: none;
@@ -777,7 +777,7 @@ img {
     text-align: left;
 }
 .order_details,
-.order_details tr > th, 
+.order_details tr > th,
 .order_details tr > td{
     background: transparent !important;
     border: 1px solid #eee !important;
@@ -809,7 +809,7 @@ img {
     }
 }
 @media screen and (max-width: 767px){
-    .cr-plugin-shipping > div, 
+    .cr-plugin-shipping > div,
     .cr-plugin-main-box > div {
         width: 100% !important;
     }
@@ -866,14 +866,14 @@ img {
     }
 }
 @media screen and (max-width: 991px) and (min-width: 768px){
-    .cr-plugin-main-box > .cr-plugin-left, 
+    .cr-plugin-main-box > .cr-plugin-left,
     .cr-plugin-main-box > .cr-plugin-right {
         width: 100%;
         float: none;
     }
 }
 @media screen and (max-width: 1199px) and (min-width: 992px){
-    .cr-plugin-shipping .cr-plugin-shipping-address, 
+    .cr-plugin-shipping .cr-plugin-shipping-address,
     .cr-plugin-shipping .cr-plugin-billing-address {
         width: 100%;
         padding: 0px;
@@ -896,7 +896,7 @@ img {
     .cr-plugin-billing-box {
         display: block;
     }
-    .cr-plugin-billing-box .cr-plugin-billing-code, 
+    .cr-plugin-billing-box .cr-plugin-billing-code,
     .cr-plugin-billing-box .cr-plugin-billing-amount {
         width: 100%;
         display: block;

@@ -1,3 +1,3 @@
-jQuery(document).ready(function(){
-	alert('Hiii');
+jQuery(document).ready(function () {
+    alert('Hiii');
 });
