@@ -1,15 +1,15 @@
 CoinRemitter Crypto Payment Processor
 -----------------------------------------------------------
-Wordpress Woocommerce Plugin URL: [https://wordpress.org/plugins/coinremitter-crypto-payment-gateway/](https://wordpress.org/plugins/coinremitter-crypto-payment-gateway/)
+WordPress Woocommerce Plugin URL: [https://wordpress.org/plugins/coinremitter-crypto-payment-gateway/](https://wordpress.org/plugins/coinremitter-crypto-payment-gateway/)
 
-Version 1.0.5
+Version 1.0.8
 
-Coinremitter is [crypto payments](http://coinremitter.com) service for Wordpress. Accept Bitcoin, Tron, Binance (BEP20), BitcoinCash, Ethereum, Litecoin, Dogecoin, Tether, Dash etc.
+Coinremitter is [crypto payments](http://coinremitter.com) service for WordPress. Accept Bitcoin, Tron, Binance (BEP20), USDT TRC20, USDT ERC20, Ethereum, Litecoin, Dogecoin, Tether, Dash, etc.
 
 * Author URI: https://coinremitter.com
-* Requires at least: Wordpress 6.0 and WooCommerce 3.5
-* Tested up to: 6.1
-* Stable Tag: 1.0.4
+* Requires at least: WordPress 6.0 and WooCommerce 3.5
+* Tested up to: 6.3.1
+* Stable Tag: 1.0.8
 * License: GNU Version 2 or Any Later Version
 * License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,7 +22,7 @@ Crypto Payment Processor acts as a bridge between the merchant’s website and t
 **What kind of services we are providing on our plugin?**
 
 * 100% free plugin
-* No bank account requires
+* No bank account is required
 * No chargebacks
 * Accept crypto payments from all over the world
 * Accept all major cryptocurrencies
@@ -31,7 +31,7 @@ Crypto Payment Processor acts as a bridge between the merchant’s website and t
 * Low transaction fee
 
 **Installation**
-1. First you must have to install woocommerce plugin and have to activate it first.
+1. First you must install woocommerce plugin and activate it.
 2. Click on the **PLUGIN** option (you will find It In the sidebar). 	
 3. Then select on **ADD NEW** option (you will find it on the top of the page)
 4. After selecting that option new page will pop up and it shows you different plugins. You must click on the search option and type **Coinremitter Crypto Payment Processor**.
@@ -41,7 +41,7 @@ Crypto Payment Processor acts as a bridge between the merchant’s website and t
 
 
 **Configuration of Plugin**
-1. Go to the sidebar of wordpress’s admin panel.
+1. Go to the sidebar of WordPress’s admin panel.
 2. Click the **Woocommerce** option and select Settings.
 3. Now, you will need to locate the **Payments** section in the Settings.
 4. You’ll find a **Coinremitter plugin** there.
@@ -89,7 +89,7 @@ Crypto Payment Processor acts as a bridge between the merchant’s website and t
 
 ![Invoice preview (sample)](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-8.png)
 
-* Copy the Payment address from generated invoice and pay the exact amount from your personal wallet. Once you transfer to this address, it requires 3 confirmations to mark the order ‘paid’. It will automatically redirect you to the order summary page once payment is confirmed on the blockchain.
+* Copy the Payment address from the generated invoice and pay the exact amount from your personal wallet. Once you transfer to this address, it requires 3 confirmations to mark the order ‘paid’. It will automatically redirect you to the order summary page once payment is confirmed on the blockchain.
 
 ![Order summary with product and payment details](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-9.png)
 
@@ -97,9 +97,9 @@ Crypto Payment Processor acts as a bridge between the merchant’s website and t
 
 **Check order details**
 
-* Go to the sidebar on Admin panel to check your order.
+* Go to the sidebar on the Admin panel to check your order.
 * Select "Orders" from the order menu, and after clicking it, you will see your complete order list. Click on one of these orders that had been paid with the Coinremitter payment option.
 * Click the order and you will be redirected to the order view page.
-* You will get to see the details of complete orders, conversion rates and history of payments there.
+* You will get to see the details of complete orders, conversion rates, and history of payments there.
 
 ![Order details from the admin side](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-6.png)
