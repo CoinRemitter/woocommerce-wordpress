@@ -1,8 +1,8 @@
 
-  jQuery(document).ready(function () {
+  // jQuery(document).ready(function () {
     
     jQuery(document).on("click",".crpObj", function (e) {
-        e.preventDefault();
+      e.preventDefault();
         var relVal = jQuery(this).attr('rel');
         console.log(relVal);
         jQuery('.crpObj').removeClass('active');
@@ -12,6 +12,6 @@
       // var data=jQuery('#currency_type').val();
       // alert(data);
     });//jQuery('.crpObj').click
-  });//jQuery(document).ready
+  // });//jQuery(document).ready
 
 

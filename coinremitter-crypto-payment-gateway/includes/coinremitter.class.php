@@ -40,7 +40,6 @@ class CoinRemitterCrypto{
 	public $longname;
 	public function __construct($options = array()) 
 	{
-		
 		// Min requirements
 		if (!function_exists( 'mb_stripos' ) || !function_exists( 'mb_strripos' ))  die(sprintf("Error. Please enable <a target='_blank' href='%s'>MBSTRING extension</a> in PHP. <a target='_blank' href='%s'>Read here &#187;</a>", "http://php.net/manual/en/book.mbstring.php", "http://www.knowledgebase-script.com/kb/article/how-to-enable-mbstring-in-php-46.html"));
 		if (!function_exists( 'curl_init' )) 										die(sprintf("Error. Please enable <a target='_blank' href='%s'>CURL extension</a> in PHP. <a target='_blank' href='%s'>Read here &#187;</a>", "http://php.net/manual/en/book.curl.php", "http://stackoverflow.com/questions/1347146/how-to-enable-curl-in-php-xampp"));
@@ -181,7 +180,7 @@ class CoinRemitterCrypto{
 		}
 		$this->coinLabel = $this->coinremitter_getCoinShortName();
 		$ApiCoin = $this->coinremitter_getCoinShortName();
-		$url = COINREMITTER_API_URL.$ApiCoin.'/';
+		$url = COINREMITTER_URL.'api/'.$ApiCoin.'/';
 		return $url;
 	}
 	
@@ -263,7 +262,8 @@ function run_sql_coinremitter($sql)
 	$f = true;
 	$g = $x = false;
 	$res = array();
-	
+	global $wpdb;
+	// error_log($wpdb->prefix);
 	if (!COINREMITTER_CRYPTOBOX_WORDPRESS && stripos(str_replace('"', '', str_replace("'", "", $mysqli->error)), "coinremitter_payments doesnt exist"))
 	{
             // Try to create new table - https://github.com/cryptoapi/Payment-Gateway#mysql-table
@@ -290,34 +290,46 @@ function run_sql_coinremitter($sql)
 			KEY `crAddrkey1` (`orderID`,`userID`)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
 
-            $query = $mysqli->query($sql);  // re-run previous query
-    }
-    if ($query === FALSE) die("MySQL Error: ".$mysqli->error."; SQL: $sql");
+	}
+	// $query = $mysqli->query($sql);  // re-run previous query
+	$query = $wpdb->get_results($sql);
+	if(empty($query)){
+		$res = $query;
+	}else{
+		$res = (array)$query;
+	}
+    if ($wpdb->last_error != '') die("MySQL Error: ".$wpdb->error."; SQL: $sql");
 
-
-    if (is_object($query) && $query->num_rows)
-    {
-    	while($row = $query->fetch_object())
-    	{
-    		if ($f)
-    		{
-    			if (property_exists($row, "idx")) $x = true;
-    			$c = count(get_object_vars($row));
-    			if ($c > 2 || ($c == 2 && !$x)) $g = true;
-    			elseif (!property_exists($row, "nme")) die("Error in run_sql_coinremitter() - 'nme' not exists! SQL: $sql");
-    			$f = false;
-    		}
+    // if (count(array($query)) && $wpdb->num_rows)
+    // {
+	// 	// error_log('Hello');
+    // 	while($row = $query->fetch_object())
+    // 	{
+    // 		if ($f)
+    // 		{
+    // 			if (property_exists($row, "idx")) $x = true;
+    // 			$c = count(get_object_vars($row));
+    // 			if ($c > 2 || ($c == 2 && !$x)) $g = true;
+    // 			elseif (!property_exists($row, "nme")) die("Error in run_sql_coinremitter() - 'nme' not exists! SQL: $sql");
+    // 			$f = false;
+    // 		}
     		
-    		if (!$g && $query->num_rows == 1 && property_exists($row, "nme")) return $row->nme;
-    		elseif ($x) $res[$row->idx] = ($g) ? $row : $row->nme;
-    		else $res[] = ($g) ? $row : $row->nme;
-    	}
-    }
-    elseif (stripos($sql, "insert ") !== false) $res = $mysqli->insert_id;
-
-    if (is_object($query)) $query->close();
-    if (is_array($res) && count($res) == 1 && isset($res[0]) && is_object($res[0])) $res = $res[0];
+    // 		if (!$g && $query->num_rows == 1 && property_exists($row, "nme")) return $row->nme;
+    // 		elseif ($x) $res[$row->idx] = ($g) ? $row : $row->nme;
+    // 		else $res[] = ($g) ? $row : $row->nme;
+    // 	}
+    // }
+    if (stripos($sql, "insert ") !== false){
+		$res = $wpdb->insert_id;
 		return $res;
+	} 
+
+    if (is_array($res) && count($res) == 1 && isset($res[0])){
+		if(count($res) > 1){
+			$res = $res[0];
+		}
+	}
+	return $res;
    
     
     // en - English

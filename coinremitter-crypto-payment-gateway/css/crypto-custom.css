@@ -994,32 +994,71 @@ img {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
-@media screen and (max-width: 479px){
-    .cr-plugin-payment-history #timer_status_payment {
-        position: static;
-        margin-top: 15px;
-        padding-left: 15px;
-    }
+.invoice-title{
+    font-size:41px;
 }
-@media screen and (max-width: 575px){
-    .cr-plugin-billing-main .cr-plugin-timer {
-        position: static;
+
+
+
+@media screen and (max-width: 1199px) and (min-width: 992px){
+    .cr-plugin-shipping .cr-plugin-shipping-address,
+    .cr-plugin-shipping .cr-plugin-billing-address {
+        width: 100%;
+        padding: 0px;
+    }
+    .cr-plugin-shipping .cr-plugin-shipping-address {
         margin-bottom: 20px;
     }
-    .cr-plugin-history-box .cr-plugin-history {
-        padding-left: 65px;
-        padding-right: 0px;
+    .cr-plugin-cart-table-box {
+        overflow-x: auto;
     }
-    .cr-plugin-main-box {
+    .cr-plugin-cart-table-box table {
+        width: 500px;
+    }
+    .cr-plugin-billing-main .cr-plugin-timer {
+        position: static;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+    }
+    .cr-plugin-billing-box {
+        display: block;
+    }
+    .cr-plugin-billing-box .cr-plugin-billing-code,
+    .cr-plugin-billing-box .cr-plugin-billing-amount {
+        width: 100%;
+        display: block;
+    }
+    .cr-plugin-billing-box .cr-plugin-billing-amount ul li {
+        padding-left: 0px;
+    }
+    .cr-plugin-billing-box .cr-plugin-billing-amount {
+        margin-top: 15px;
+    }
+    .cr-plugin-billing-box {
+        text-align: center;
+    }
+    .cr-plugin-billing-main {
+        padding: 15px 15px;
+    }
+    .cr-plugin-billing-box .cr-plugin-billing-code {
+        border: 0px;
+    }
+    .cr-plugin-billing-box .cr-plugin-billing-code img {
+        margin: 0px auto;
+    }
+    .cr-plugin-history-footer {
+        padding-left: 30px;
+    }
+}
+@media screen and (max-width: 991px) and (min-width: 768px){
+    .cr-plugin-main-box > .cr-plugin-left,
+    .cr-plugin-main-box > .cr-plugin-right {
         width: 100% !important;
+        float: none !important;
     }
 }
-@media screen and (max-width: 767px) and (min-width: 576px){
-    .cr-plugin-main-box .cr-plugin-shipping > div {
-        width: 50% !important;
-        margin: 0px;
-    }
-}
+
 @media screen and (max-width: 767px){
     .cr-plugin-shipping > div,
     .cr-plugin-main-box > div {
@@ -1077,62 +1116,45 @@ img {
         text-align: center;
     }
 }
-@media screen and (max-width: 991px) and (min-width: 768px){
-    .cr-plugin-main-box > .cr-plugin-left,
-    .cr-plugin-main-box > .cr-plugin-right {
-        width: 100% !important;
-        float: none !important;
+@media screen and (max-width: 767px) and (min-width: 576px){
+    .cr-plugin-main-box .cr-plugin-shipping > div {
+        width: 50% !important;
+        margin: 0px;
     }
 }
-@media screen and (max-width: 1199px) and (min-width: 992px){
-    .cr-plugin-shipping .cr-plugin-shipping-address,
-    .cr-plugin-shipping .cr-plugin-billing-address {
-        width: 100%;
-        padding: 0px;
-    }
-    .cr-plugin-shipping .cr-plugin-shipping-address {
-        margin-bottom: 20px;
-    }
-    .cr-plugin-cart-table-box {
-        overflow-x: auto;
-    }
-    .cr-plugin-cart-table-box table {
-        width: 500px;
-    }
+@media screen and (max-width: 575px){
     .cr-plugin-billing-main .cr-plugin-timer {
         position: static;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 15px;
         margin-bottom: 20px;
     }
-    .cr-plugin-billing-box {
-        display: block;
+    .cr-plugin-history-box .cr-plugin-history {
+        padding-left: 65px;
+        padding-right: 0px;
     }
-    .cr-plugin-billing-box .cr-plugin-billing-code,
-    .cr-plugin-billing-box .cr-plugin-billing-amount {
-        width: 100%;
-        display: block;
+    .cr-plugin-main-box {
+        width: 100% !important;
     }
-    .cr-plugin-billing-box .cr-plugin-billing-amount ul li {
-        padding-left: 0px;
+    .cr-plugin-main-box {
+        margin: 0px;
     }
-    .cr-plugin-billing-box .cr-plugin-billing-amount {
+}
+@media screen and (max-width: 479px){
+    .cr-plugin-payment-history #timer_status_payment {
+        position: static;
         margin-top: 15px;
+        padding-left: 15px;
     }
-    .cr-plugin-billing-box {
+    .cr-plugin-history-box .cr-plugin-history{
+        padding-left: 0;
+    }
+    .invoice-title{
+        font-size: 26px;
+    }
+    .cr-plugin-history-footer ul{
+        padding-left: 0 !important;
+    }
+    .cr-plugin-timer {
         text-align: center;
-    }
-    .cr-plugin-billing-main {
-        padding: 15px 15px;
-    }
-    .cr-plugin-billing-box .cr-plugin-billing-code {
-        border: 0px;
-    }
-    .cr-plugin-billing-box .cr-plugin-billing-code img {
-        margin: 0px auto;
-    }
-    .cr-plugin-history-footer {
-        padding-left: 30px;
     }
 }
 @media only screen and (min-width: 768px){

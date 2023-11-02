@@ -31,7 +31,7 @@ jQuery(document).ready(function () {
 var interval = null;
 interval = setInterval("updateTime()", 1000);
 setInterval(function () {
-    makeTimer(); }, 5000);
+    makeTimer(); }, 30000);
 
 function updateTime()
 {

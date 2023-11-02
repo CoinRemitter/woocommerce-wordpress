@@ -4,15 +4,24 @@ if(!defined("COINREMITTER_WORDPRESS")) define("COINREMITTER_WORDPRESS", true);
 
 if (!COINREMITTER_WORDPRESS) require_once( "coinremitter.class.php" ); 
 elseif (!defined('ABSPATH')) exit; // Exit if accessed directly in wordpress
+
+if($_SERVER['REQUEST_METHOD'] != 'POST'){
+    die('only post method allowed.');
+}
+
+if(!(isset($_POST['address']) && isset($_POST['coin_short_name']) && isset($_POST['amount']) && isset($_POST['id']))){
+    exit('Invalid Post data.');
+}
+
 $param['address'] = sanitize_text_field($_POST['address']);
+// $param['address'] = 'dfsfsdf';
 $param['coin'] = sanitize_text_field($_POST['coin_short_name']);
 $param['amount'] = sanitize_text_field($_POST['amount']);
 $param['id'] = sanitize_text_field($_POST['id']);
 
-if(!$param){
-    die('only post method allowed.');
-}
-$coinremiter_url = COINREMITTER_API_URL.COINREMITTER_API_VERSION.'/';
+error_log(print_r($param,true));
+
+$coinremiter_url = COINREMITTER_URL.'api/'.COINREMITTER_API_VERSION.'/';
 function coinremitter_check_callback_validation($param){
     if(!isset($param['address'])){
         return false;
@@ -25,31 +34,40 @@ if(!coinremitter_check_callback_validation($param)){
     die('something might wrong.');
 }
 
-
 $addrSql = 'select * from coinremitter_order_address where addr="'.$param['address'].'" && coinLabel ="'.$param['coin'].'"';
+error_log($addrSql);
+
 $getData = run_sql_coinremitter($addrSql);
 
 if(!$getData){
     exit('no order found with given data.');
-}
-else
-{   
+}else
+{ 
     $sql= "SELECT * FROM `coinremitter_payments` WHERE  `orderID` = '$getData->orderID'";
     $payment_data= run_sql_coinremitter($sql);
-
+	// $o_status = $order_detail->get_status();
+    
     $expiry_date=$payment_data->expiry_date;
+    
+    $order_id =  str_replace("coinremitterwc.order", "",$getData->orderID);
+    $order = wc_get_order($order_id);
+    $wcOrderStatus = $order->get_status();
 
     $webhook_data = "SELECT * FROM coinremitter_webhook WHERE `addr` = '".$param['address']."' ";
-    $web_hook =run_sql_coinremitter($webhook_data);
+    $web_hook = (array) run_sql_coinremitter($webhook_data);
+
     if($expiry_date != "" ){
         $diff=strtotime($expiry_date)- strtotime(gmdate('Y-m-d H:i:s'));
     }
-
+    
     if(count($web_hook) == 0  && isset($diff) && $diff <= 0 ){
-        $order->update_status('cancelled');
+        error_log('inside if');
+        if($wcOrderStatus == 'pending'){
+            $order->update_status('cancelled');
+        }
         $order_status_code=COINREMITTER_INV_EXPIRED;
         $order_status='Expired';
-
+        
         $u_order_data="UPDATE `coinremitter_order_address` SET `payment_status` = '$order_status_code' WHERE `addr` = '$address' ";
         $update_order_data = run_sql_coinremitter($u_order_data);
 
@@ -57,7 +75,6 @@ else
         
         $update_payment_data = run_sql_coinremitter($payment_data);
     }
-        // write_log('get data');
     if($payment_data->status_code == COINREMITTER_INV_PENDING || $payment_data->status_code == COINREMITTER_INV_UNDER_PAID )
     {
         $callback_coin = strtoupper($param['coin']);
@@ -70,7 +87,7 @@ else
         $curl = $trx_url;
         $body = array(
             'api_key' => $trx_param['api_key'], 
-            'password'=>decrypt($trx_param['password']),
+            'password'=>coinremitter_decrypt($trx_param['password']),
             'id'=> $trx_param['id'],
         );  
         $userAgent = 'CR@'.COINREMITTER_API_VERSION.',wordpress worwoocommerce-wordpress-master@'.COINREMITTER_VERSION;
@@ -108,7 +125,6 @@ else
                 $web_hook=(array)run_sql_coinremitter($sql);
 
 
-                
                 if($confirmations < 3){
                     $confirmations_order=$confirmations;
                 }else{
@@ -132,8 +148,8 @@ else
                 $total_paid=0;
 
                 if($webhook_data_amount){
-                    if(count($webhook_data_amount) == 1){
-                        $total_paid = $webhook_data_amount->paid_amount;
+                    if(count((array)$webhook_data_amount) == 1){
+                        $total_paid = $webhook_data_amount[0]->paid_amount;
                     }else{
                         foreach ($webhook_data_amount as $web) {
                             $total_paid = $total_paid + $web->paid_amount;
@@ -154,26 +170,30 @@ else
                 
                 $order_status="";
                 $order_status_code="";
-                $order_id = mb_substr($getData->orderID, mb_strpos($getData->orderID, ".") + 1);
-                $order_id =  str_replace("order","",$order_id);
-                $order = wc_get_order( $order_id );
 
                 $option_data = get_option('woocommerce_coinremitterpayments_settings');
                 $ostatus = $option_data['ostatus']; 
                 if($total_paidamount == 0){
+                    if($wcOrderStatus == 'pending'){
+                        $order->update_status('pending');
+                    }
                     $order_status="Pending";
-                    $order->update_status('pending');
                     $order_status_code=COINREMITTER_INV_PENDING;
                 }else if($total_amount > $total_paidamount ){
-                    $order_status="Under paid";
-                    $order->update_status('pending');
+                    if($wcOrderStatus == 'pending'){
+                        $order->update_status('pending');
+                    }
                     $order_status_code=COINREMITTER_INV_UNDER_PAID;
                 }else if($total_amount < $total_paidamount){
-                    $order->update_status('wc-'.$ostatus);
+                    if($wcOrderStatus == 'pending'){
+                        $order->update_status('wc-'.$ostatus);
+                    }
                     $order_status="Over paid";
                     $order_status_code=COINREMITTER_INV_OVER_PAID;
                 }else if($total_amount == $total_paidamount){
-                    $order->update_status('wc-'.$ostatus);
+                    if($wcOrderStatus == 'pending'){
+                        $order->update_status('wc-'.$ostatus);
+                    }
                     $order_status="Paid";
                     $order_status_code=COINREMITTER_INV_PAID;
                 }

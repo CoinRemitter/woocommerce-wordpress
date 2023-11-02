@@ -66,6 +66,7 @@ jQuery(window).load(function () {
             data: frmData,
             error: function (jqXHR, exception) {
                 var msg = '';
+                console.log(jqXHR);
                 if (jqXHR.status === 0) {
                     msg = 'Not connect.\n Verify Network.';
                 } else if (jqXHR.status == 404) {
@@ -88,6 +89,7 @@ jQuery(window).load(function () {
             success: function (html) {
                 jQuery('.VerifyBtn').attr("disabled", false);
                 var response = JSON.parse(html);
+                console.log("response",response);
                 if (response.flag === 0) {
                     jQuery('.frmError').html(response.msg);
                 } else {
@@ -158,9 +160,8 @@ jQuery(window).load(function () {
                 } else {
                     jQuery('#frmupdate .frmUpdateError').html(response.msg);
                 }
-                jQuery(this).prop('disabled',false);
+                jQuery('.UpdateBtn').prop('disabled',false);
                 jQuery('.update_spinner').removeClass('is-active');
-
             }
         });
     });

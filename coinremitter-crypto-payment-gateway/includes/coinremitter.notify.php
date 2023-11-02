@@ -16,7 +16,7 @@ if(!$param){
     die('only post method allowed.');
 }
 
-$coinremiter_url = COINREMITTER_API_URL.COINREMITTER_API_VERSION.'/';
+$coinremiter_url = COINREMITTER_URL.'api/'.COINREMITTER_API_VERSION.'/';
 function coinremitter_check_callback_validation($param){
     if(!isset($param['invoice_id'])){
         return false;
@@ -82,12 +82,12 @@ $status_code = $check_transaction['status_code'];
 $url = $check_transaction['url'];
 $dt = gmdate('Y-m-d H:i:s');
 
-$CoinPrice = coinremitter_getActCoins();
-foreach($CoinPrice as $k => $v){
-    if($coin == $k){
-        $coinprice = $v['price'];
-    }
-}
+// $CoinPrice = coinremitter_getActCoins();
+// foreach($CoinPrice as $k => $v){
+//     if($coin == $k){
+//         $coinprice = $v['price'];
+//     }
+// }
 if($check_transaction['status_code'] == COINREMITTER_INV_OVER_PAID || $check_transaction['status_code'] == COINREMITTER_INV_PAID){
     $addrSql = 'select * from coinremitter_order_address where addr="'.$address.'" && invoice_id ="'.$invoice_id.'"';
     $getData = run_sql_coinremitter($addrSql);
