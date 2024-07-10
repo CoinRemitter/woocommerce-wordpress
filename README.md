@@ -1,28 +1,28 @@
-CoinRemitter Crypto Payment Processor
+CoinRemitter Crypto Payment Gateway
 -----------------------------------------------------------
 WordPress Woocommerce Plugin URL: [https://wordpress.org/plugins/coinremitter-crypto-payment-gateway/](https://wordpress.org/plugins/coinremitter-crypto-payment-gateway/)
 
-Version 1.0.8
+Version 1.1.0
 
 Coinremitter is [crypto payments](http://coinremitter.com) service for WordPress. Accept Bitcoin, Tron, Binance (BEP20), USDT TRC20, USDT ERC20, Ethereum, Litecoin, Dogecoin, Tether, Dash, etc.
 
 * Author URI: https://coinremitter.com
 * Requires at least: WordPress 6.0 and WooCommerce 3.5
-* Tested up to: 6.3.1
-* Stable Tag: 1.0.8
-* License: GNU Version 2 or Any Later Version
-* License URI: http://www.gnu.org/licenses/gpl-2.0.html
+* Tested up to: 6.5.5
+* Stable Tag: 1.1.0
+* License: GNU Version 3 or Any Later Version
+* License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 
-**What Is Crypto Payment Processor?**
+**What Is Crypto Payment Gateway?**
 
-Crypto Payment Processor acts as a bridge between the merchant’s website and the cryptocurrency network, allowing the merchant to receive payments in the form of cryptocurrency.
+Crypto Payment Gateway acts as a bridge between the merchant’s website and the cryptocurrency network, allowing the merchant to receive payments in the form of cryptocurrency.
 
 
 **What kind of services we are providing on our plugin?**
 
 * 100% free plugin
-* No bank account is required
+* No bank account requires
 * No chargebacks
 * Accept crypto payments from all over the world
 * Accept all major cryptocurrencies
@@ -31,19 +31,19 @@ Crypto Payment Processor acts as a bridge between the merchant’s website and t
 * Low transaction fee
 
 **Installation**
-1. First you must install woocommerce plugin and activate it.
+1. First you must have to install woocommerce plugin (version 9.0.2) and have to activate it.
 2. Click on the **PLUGIN** option (you will find It In the sidebar). 	
 3. Then select on **ADD NEW** option (you will find it on the top of the page)
-4. After selecting that option new page will pop up and it shows you different plugins. You must click on the search option and type **Coinremitter Crypto Payment Processor**.
+4. Now click on the search option and type **Coinremitter Crypto Payment Gateway**.
 5. After finding the plugin click on the **INSTALL NOW** and Install it.
 6. After the completion of the plugin, click on **ACTIVATE**. When you activate our plugin you will see **COINREMITTER** appear in the sidebar.
 7. Congratulations! You have successfully installed our plugin on your website.
 
 
 **Configuration of Plugin**
-1. Go to the sidebar of WordPress’s admin panel.
+1. Go to the sidebar of wordpress’s admin panel.
 2. Click the **Woocommerce** option and select Settings.
-3. Now, you will need to locate the **Payments** section in the Settings.
+3. Now, you will need to locate the **Payments** section in Settings.
 4. You’ll find a **Coinremitter plugin** there.
 5. Click **Manage** at the end of the same line.
 ![Setup Coinremitter’s WooCommerce plugin](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/configure_1.png)
@@ -66,7 +66,7 @@ Crypto Payment Processor acts as a bridge between the merchant’s website and t
 5. For **API key** and **Password** You can get it from your coinremitter account. Please follow this instruction to create a wallet. [How to create a wallet in Coinremitter ?](https://blog.coinremitter.com/how-to-create-a-wallet-on-coinremitter)
 6. Paste the API key and Password from your Coinremitter wallet
 7. **Exchange Rate Multiplier**: We suggest you set it to 1. For instance, if you set it to 1.10, then prices for cryptocurrencies will be increased by 10%, and you can set it to 0.95 in this text box for a 5% discount.
-8. **Minimum Invoice Value**: Setting the minimum invoice limit is necessary, The generated invoice won't be less than the minimum invoice limit.
+8. **Minimum Invoice Value**: Setting the minimum invoice limit is necessary, This wallet option will not display on checkout page if total order value is less then minimum invoice value.
 ![API key & password for Coinremitter’s WordPress plugin](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-2.png)
 9. Now click on **VERIFY & ADD**.
 10. Congratulations! You have successfully linked your wallet. It will display the wallet on the same page
@@ -74,7 +74,7 @@ Crypto Payment Processor acts as a bridge between the merchant’s website and t
 12. You can also add multiple wallets the same way for other coins
 13. If you want to remove your wallet then click on the Remove button. It will just disconnect your wallet from your WordPress but you can still use the same credential in the future.
 ![Remove your crypto wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-4.png)
-14. If you want to change the password of your wallet first you have to change the password of that wallet from your Coinremitter wallet then you can change it on your WordPress site
+14. If you want to change the password of your wallet, First, you have to change the password of that wallet from your Coinremitter wallet then you can change it on your WordPress site
 ![Update your crypto wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/screenshot-3.png)
 
 

@@ -349,3 +349,5 @@ function run_sql_coinremitter($sql)
     }
     unset($cryptobox_localisation_coinremitter);
 }
+
+

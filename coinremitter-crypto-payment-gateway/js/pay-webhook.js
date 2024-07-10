@@ -1,7 +1,7 @@
 
 jQuery(document).ready(function () {
     makeTimer();
-    updateTime();
+    // updateTime();
     jQuery(".addr_copy").click(function () {
          var value = jQuery(this).attr("data-copy-detail");
          var $temp = jQuery("<input>");
@@ -32,7 +32,7 @@ var interval = null;
 interval = setInterval("updateTime()", 1000);
 setInterval(function () {
     makeTimer(); }, 30000);
-
+    updateTime();
 function updateTime()
 {
     if (jQuery("#expiry_time").val() != '') {
@@ -69,7 +69,15 @@ function funExpire(order_id)
         data :  frmData,
         success: function (html) {
             if (html.flag == 1) {
-                window.location = html.url;
+                // window.location = html.url;  
+                // console.log(html.url);
+                var redirect = html.url.replace(/amp;/g, '');
+                console.log(redirect);
+                setTimeout(function(){
+                    window.location = html.url;
+                }, 1000); 
+                // window.location = html.url;
+                // console.log(html);
             }
         }
     });
