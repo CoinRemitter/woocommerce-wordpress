@@ -1,10 +1,10 @@
 === Coinremitter Crypto Payment Gateway ===
 Contributors: coinremitter
 Tags: best crypto payment gateway,crypto payment processor,blockchain API,crypto API,bitcoin api
-Requires at least: 6.3
+Requires at least: 6.5
 Tested up to: 6.5.5
 Requires PHP: 8.1
-Stable Tag: 1.1.0
+Stable Tag: 1.1.1
 License: GNU Version 3 or Any Later Version
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -141,5 +141,10 @@ Support: Wordpress 6.5.3 and Woocommerce 8.8.5
 
 == Upgrade Notice ==    
 = 1.1.0 =
+Code Optimization and Bug fix
+Support: Wordpress 6.5.5 and Woocommerce 9.0.2
+
+== Upgrade Notice ==    
+= 1.1.1 =
 Code Optimization and Bug fix
 Support: Wordpress 6.5.5 and Woocommerce 9.0.2
