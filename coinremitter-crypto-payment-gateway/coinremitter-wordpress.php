@@ -4,11 +4,11 @@
 Plugin Name:        CoinRemitter Crypto Payment Gateway
 Plugin URI:         https://coinremitter.com/plugins
 Description:        <a href="https://coinremitter.com">coinremitter.com</a> CoinRemitter Crypto Payment Gateway.
-Version:            1.1.1
+Version:            1.1.2
 Author:             CoinRemitter
 Author URI:         https://coinremitter.com
-Requires at least:  6.5
-Tested up to:       6.5.5
+Requires at least:  6.6
+Tested up to:       6.6.1
 
 
  *
@@ -38,7 +38,7 @@ DEFINE('COINREMITTER_API_VERSION', 'v3');
 DEFINE('COINREMITTER_PREVIEW', 'coinremitteradmin');
 DEFINE('COINREMITTER_PAYMENT_FAIL', site_url('payment-fail'));
 DEFINE('COINREMITTER_WEBHOOK_URL', site_url('?coinremitter_webhook'));
-DEFINE('COINREMITTER_VERSION', '1.1.1');
+DEFINE('COINREMITTER_VERSION', '1.1.2');
 DEFINE('COINREMITTER_ADMIN', admin_url('admin.php?page='));
 DEFINE('COINREMITTER_DIR', $dir_arr['basedir'] . '/' . COINREMITTER . '/');
 DEFINE('COINREMITTER_DIR2', $dir_arr['baseurl'] . '/' . COINREMITTER . '/');

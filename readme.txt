@@ -148,3 +148,8 @@ Support: Wordpress 6.5.5 and Woocommerce 9.0.2
 = 1.1.1 =
 Code Optimization and Bug fix
 Support: Wordpress 6.5.5 and Woocommerce 9.0.2
+
+== Upgrade Notice ==    
+= 1.1.2 =
+Code Optimization and Bug fix
+Support: Wordpress 6.6.1 and Woocommerce 9.0.2
