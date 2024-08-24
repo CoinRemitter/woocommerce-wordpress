@@ -1,10 +1,10 @@
 === Coinremitter Crypto Payment Gateway ===
 Contributors: coinremitter
 Tags: best crypto payment gateway,crypto payment processor,blockchain API,crypto API,bitcoin api
-Requires at least: 6.5
-Tested up to: 6.5.5
+Requires at least: 6.6
+Tested up to: 6.6.1
 Requires PHP: 8.1
-Stable Tag: 1.1.1
+Stable Tag: 1.1.2
 License: GNU Version 3 or Any Later Version
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
