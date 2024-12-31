@@ -52,13 +52,12 @@ Coinremitter Official Bitcoin/Altcoin Payment Gateway for WordPress. Accept Cryp
 = How to link a Coinremitter wallet on your website? =
 
 * First you install and activate this plugin. Read installation instructions first
-* click on the sidebar menu name "Coinremitter"
+* Click on the sidebar menu name "Coinremitter"
 * Click on **Add New Wallet**. It will open a popup.
 * Add **API key** and **Password** You can get it from your coinremitter account. If you don't have wallet on coinremitter.com, Please follow this instruction to create a wallet. [How to create a wallet in Coinremitter ?](https://blog.coinremitter.com/how-to-create-a-wallet-on-coinremitter)
 * Paste the API key and Password from your Coinremitter wallet.
 * **Minimum Order Value**: Setting the minimum Order limit is necessary, This wallet option will not display on checkout page if total order value is less then minimum order value.
 * **Order Multiplier**: We suggest you set it to 1. For instance, if you set it to 1.10, then prices for cryptocurrencies will be increased by 10%, and you can set it to 0.95 in this text box for a 5% discount.
-
 * Now click on **Add Wallet**.
 * Congratulations! You have successfully linked your wallet. It will display the wallet on the same page.
 * Now you can accept and receive payments in your wallet.
@@ -76,11 +75,10 @@ Withdrawal is only available on our official website only. You can log in to you
 2. Update Wallet.
 3. Delete Wallet.
 4. Coinremitter Crypto Payment Gateway Settings.
-5. Admin - Order Detail.
-6. Checkout At User Side.
-7. User - Order Detail with QR code.
-8. User - Order Summary.
-
+5. Checkout At User Side.
+6. User - Order Detail with QR code.
+7. User - Order Summary.
+8. Admin - Order Detail.
 
 == Frequently Asked Questions ==
 =Which cryptocurrencies are supported in this plugin? = 
@@ -158,3 +156,4 @@ Code Optimization and compatibility with wordpress 6.7.1 and woocommerce 9.5.1
 We've implemented new API docs with a few advancements.
 Now, the payment section on the checkout page is both shortcode-based as well as block-based.
 The UI designs of the checkout page and the invoice page are changed.
+

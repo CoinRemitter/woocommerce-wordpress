@@ -61,20 +61,20 @@ Crypto Payment Gateway acts as a bridge between the merchant’s website and the
 1. First you install and activate this plugin. [Read installation instructions](#installation) first
 2. click on the sidebar menu name "Coinremitter"
 3. Click on **Add New Wallet**. It will open a popup
-![Add a crypto wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/3_Add wallet.png)
+![Add a crypto wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/3_Add_wallet.png)
 4. Add **API key** and **Password** You can get it from your coinremitter account. Please follow this instruction to create a wallet. [How to create a wallet in Coinremitter ?](https://blog.coinremitter.com/how-to-create-a-wallet-on-coinremitter)
 5. Paste the API key and Password from your Coinremitter wallet.
 6. **Minimum Order Value**: Setting the minimum Order limit is necessary, This wallet option will not display on checkout page if total order value is less then minimum Order value.
-![API key & password for Coinremitter’s WordPress plugin]
+![API key & password for Coinremitter’s WordPress plugin](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/4_Api_Key_And_Password.png)
 7. **Order Multiplier**: We suggest you set it to 1. For instance, if you set it to 1.10, then prices for cryptocurrencies will be increased by 10%, and you can set it to 0.95 in this text box for a 5% discount.
 8. Now click on **ADD Wallet**.
 9. Congratulations! You have successfully linked your wallet. It will display the wallet on the same page
 10. Now you can accept and receive payments in your wallet.
 11. You can also add multiple wallets the same way for other coins.
 12. If you want to delete your wallet then click on the Delete button. It will just disconnect your wallet from your WordPress but you can still use the same credential in the future.
-![Remove your crypto wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/4_Remove_Wallet.png)
+![Remove your crypto wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/5_Remove_Wallet.png)
 13. If you want to change the password of your wallet, First, you have to change the password of that wallet from your Coinremitter wallet then you can change it on your WordPress site using Edit button.
-![Update your crypto wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/5_Edit_Wallet.png)
+![Update your crypto wallet](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/6_Edit_Wallet.png)
 
 
 **How to make payment**
@@ -82,15 +82,15 @@ Crypto Payment Gateway acts as a bridge between the merchant’s website and the
 * You will see the option of Pay Using Cryptocurrency. Click it.
 * Select one of your coin wallets from which you want to pay for the product and click place order.
 
-![Checkout page preview](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/6_Check_out.png)
+![Checkout page preview](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/7_Check_out.png)
 
 * At the very next moment, the system will automatically generate an Invoice which will appear on your screen.
 
-![Invoice preview (sample)](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/7_Invoice_Generated.png)
+![Invoice preview (sample)](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/8_Invoice_Generated.png)
 
 * Copy the Payment address from the generated invoice and pay the exact amount from your personal wallet. Once you transfer to this address, it requires 3 confirmations to mark the order ‘paid’. It will automatically redirect you to the order summary page once payment is confirmed on the blockchain.
 
-![Order summary with product and payment details](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/8_Order_summary .png)
+![Order summary with product and payment details](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/9_Order_summary.png)
 
 * Congratulations! You have now successfully paid for your product.
 
@@ -101,4 +101,5 @@ Crypto Payment Gateway acts as a bridge between the merchant’s website and the
 * Click the order and you will be redirected to the order view page.
 * You will get to see the details of complete orders, conversion rates, and history of payments there.
 
-![Order details from the admin side](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/9_Admin_Order_Status.png)
+![Order details from the admin side](https://coinremitter.com/assets/img/screenshots/woocomerce_plugin/10_Admin_Order_Status.png)
+
