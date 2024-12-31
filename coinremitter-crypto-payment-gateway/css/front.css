@@ -1,0 +1,1155 @@
+.crpObj {
+    height: 80px;
+    width: 80px;
+    display: inline-block;
+    background-color: #fff;
+    vertical-align: top;
+    border-radius: 6px;
+    line-height: 72px;
+    margin-right: 15px;
+    margin-top: 10px;
+    border: 3px solid transparent;
+    text-align: center;
+    position: relative;
+    outline: 0 !important;
+    box-shadow: none;
+}
+
+
+.crpObj .active-wallet {
+    width: 50px;
+    max-height: 50px !important;
+    /* margin: 10px 10px !important; */
+    /* padding: 0px !important; */
+    vertical-align: middle;
+    border: 0px !important;
+    background: transparent;
+}
+    
+
+/*  new wallet design */
+
+
+.coins label {
+    width: calc(50% - 3px);
+    background-color: #ffffff;
+    border: 1px solid #C5C5C5;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 0 !important;
+    user-select: none;
+}
+
+.coins {
+    gap: 6px;
+    display: flex;
+}
+
+.pay-box input[type="radio"] {
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border: 1px solid #C5C5C5;
+    border-radius: 50%;
+    display: grid;
+    place-content: center;
+    background-color: transparent;
+}
+
+.coins label:has(input[type="radio"]:checked) {
+    border: 1px solid #F59E0B;
+    background-color: #FFFBEB;
+    cursor: pointer;
+}
+
+input:focus {
+    outline: none;
+}
+
+.coins input[type="radio"]:checked {
+    border: 1px solid #F7931A;
+}
+
+.coins input[type="radio"]:checked::after {
+    content: '';
+    background-color: #F7931A;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: block;
+}
+
+.coins label.py-main {
+    display: block;
+    padding-right: 52px;
+    position: relative;
+}
+
+.py-left {
+    align-items: center;
+    gap: 10px;
+}
+
+.py-main .py-right {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 15px;
+    width: 26px;
+}
+
+.waller_coin_img {
+    display: block;
+}
+
+
+
+#search_wallet {
+    background-color: #f9f9f9;
+    border: 1px solid #dfdfdf;
+    padding: 12px;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.coin_data {
+    display: flex;
+}
+
+/***************************************** order-pay screen  ******************************************************/
+@media only screen and (min-width: 768px) {
+    .entry-content .cr-plugin-main-box {
+        max-width: 100% !important;
+        width: auto !important;
+    }
+}
+
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+.text-pending {
+    color: #F59E0B;
+}
+
+.cr-plugin-timer span {
+    font-size: 15px;
+    color: #666;
+    display: inline-block;
+    margin-right: 4px;
+}
+
+
+
+li {
+    list-style: none;
+    padding: 0px;
+    margin: 0px;
+}
+
+
+.cr-plugin-shipping>div,
+.cr-plugin-main-box .cr-plugin-brand {
+    width: 100%;
+}
+
+
+.cr-plugin-history-box:last-child {
+    border-bottom: 0px;
+}
+
+.cr-plugin-history span {
+    color: #99999f !important;
+    /* font-size: 18px; */
+}
+.cr-plugin-history-list .cr-plugin-history-box {
+    font-size: 16px;
+}
+
+.cr-plugin-history .cr-plugin-history-des span>a {
+    color: #000;
+    text-decoration: underline;
+    font-size: 14px;
+}
+
+.cr-plugin-history .cr-plugin-history-des span {
+    font-size: 14px;
+    color: #000;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 5px;
+    word-break: break-word;
+}
+
+@media screen and (max-width: 520px) {
+    .cr-plugin-history-box .cr-plugin-history {
+        display: block !important;
+    }
+
+    .cr-plugin-history-box .cr-plugin-history .fw-bold {
+        text-align: right;
+    }
+}
+
+@media screen and (max-width: 575px) {
+    tbody, td, tfoot, th, thead, tr {
+        display: block;
+    }
+
+    .cr-plugin-history-box {
+        margin-bottom: 15px;
+    }
+
+    .cr-plugin-history-box:last-child {
+        margin-bottom: 0px;
+    }
+
+    .cr-plugin-billing-main .cr-plugin-timer {
+        position: static;
+        margin-bottom: 20px;
+    }
+
+    .cr-plugin-history-box .cr-plugin-history {
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+
+    .cr-plugin-main-box {
+        width: 100% !important;
+    }
+
+    .cr-plugin-main-box {
+        margin: 0px;
+    }
+
+    .coins label {
+        width: 100%;
+    }
+
+    .i--value .t--value > span {
+        position: relative;
+        font-size: .75em !important;
+        line-height: 0;
+        vertical-align: baseline;
+        bottom: -.25em;
+        vertical-align: text-top;
+        color: #000;
+        display: inline-block;
+    }
+}
+
+
+@media screen and (max-width: 991px) {
+    .btc-wallet-main-box {
+        display: block;
+        width: 100%;
+    }
+
+    .btc-wallet-main-box>div {
+        display: block;
+        width: 100%;
+        text-align: center;
+    }
+
+    .btc-wallet-box-plugin .btc-wallet-address-box {
+        margin: 8px auto 0px !important;
+    }
+
+    .bootstrapiso .card-body p,
+    .btc-confirm-btn {
+        text-align: center;
+    }
+
+    .bootstrapiso .yzxnz_button_wait.btn-block {
+        margin: 10px auto 15px;
+    }
+}
+
+@media screen and (max-width: 1199px) and (min-width: 992px) {
+    .bootstrapiso.btc-wallet-box-plugin .card {
+        max-width: 100% !important;
+    }
+
+    .btc-confirm-btn {
+        max-width: 100%;
+    }
+}
+
+@media screen and (min-width: 992px){
+    .main-payment-info .bg-light.flex-column {
+        flex-direction: inherit !important;
+    }
+    .main-payment-info .bg-light.flex-column > .vr {
+        display: block !important;
+    }
+}
+
+
+@media screen and (max-width: 1199px) and (min-width: 992px) {
+
+    .cr-plugin-shipping .cr-plugin-shipping-address,
+    .cr-plugin-shipping .cr-plugin-billing-address {
+        width: 100%;
+        padding: 0px;
+    }
+
+    .cr-plugin-shipping .cr-plugin-shipping-address {
+        margin-bottom: 20px;
+    }
+
+    .cr-plugin-cart-table-box {
+        overflow-x: auto;
+    }
+
+    .cr-plugin-cart-table-box table {
+        width: 500px;
+    }
+
+    .cr-plugin-billing-main .cr-plugin-timer {
+        position: static;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+    }
+
+    .cr-plugin-billing-box {
+        display: block;
+    }
+
+    .cr-plugin-billing-box .cr-plugin-billing-code,
+    .cr-plugin-billing-box .cr-plugin-billing-amount {
+        width: 100%;
+        display: block;
+    }
+
+    .cr-plugin-billing-box .cr-plugin-billing-amount ul li {
+        padding-left: 0px;
+    }
+
+    .cr-plugin-billing-box .cr-plugin-billing-amount {
+        margin-top: 15px;
+    }
+
+    .cr-plugin-billing-box {
+        text-align: center;
+    }
+
+    .cr-plugin-billing-main {
+        padding: 15px 15px;
+    }
+
+    .cr-plugin-billing-box .cr-plugin-billing-code {
+        border: 0px;
+    }
+
+    .cr-plugin-billing-box .cr-plugin-billing-code img {
+        margin: 0px auto;
+    }
+
+    .cr-plugin-history-footer {
+        padding-left: 30px;
+    }
+}
+
+@media screen and (max-width: 991px) and (min-width: 768px) {
+
+    .cr-plugin-main-box>.cr-plugin-left,
+    .cr-plugin-main-box>.cr-plugin-right {
+        width: 100% !important;
+        float: none !important;
+    }
+    .main-payment-info .bg-light.flex-column {
+        flex-direction: inherit !important;
+    }
+    .main-payment-info .bg-light.flex-column > .vr {
+        display: block !important;
+    }
+}
+
+@media screen and (max-width: 767px) {
+
+    .entry-content .cr-plugin-main-box>div {
+        padding: 0px;
+    }
+
+    .cr-plugin-shipping>div,
+    .cr-plugin-main-box>div {
+        width: 100% !important;
+    }
+
+    .cr-plugin-shipping>div {
+        padding: 0px;
+    }
+
+    .cr-plugin-shipping>.cr-plugin-shipping-address {
+        margin-bottom: 20px;
+    }
+
+    .cr-plugin-cart-table-box table {
+        width: 575px !important;
+    }
+
+    .cr-plugin-history .cr-plugin-history-date {
+        position: static;
+        transform: none;
+    }
+
+    .cr-plugin-history-footer {
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+
+    .cr-plugin-history-footer ul li {
+        text-align: center;
+    }
+
+    .cr-plugin-history-footer ul li span {
+        display: block;
+    }
+
+    .cr-plugin-cart-table-box {
+        overflow-x: auto;
+    }
+
+    .cr-plugin-cart-table-box table {
+        width: 100%;
+    }
+
+    .cr-plugin-billing-box {
+        display: block;
+    }
+
+    .cr-plugin-billing-main {
+        padding: 15px 15px;
+    }
+
+    .cr-plugin-billing-box .cr-plugin-billing-code img {
+        margin: 0px auto;
+    }
+
+    .cr-plugin-billing-box .cr-plugin-billing-code,
+    .cr-plugin-billing-box .cr-plugin-billing-amount {
+        width: 100% !important;
+        display: block;
+        border: 0px;
+        text-align: center;
+    }
+
+    .cr-plugin-billing-box .cr-plugin-billing-amount ul li {
+        padding-left: 0px;
+    }
+
+    .cr-plugin-billing-box .cr-plugin-billing-amount {
+        margin-top: 20px;
+        text-align: center;
+    }
+}
+
+@media screen and (max-width: 767px) and (min-width: 575px) {
+    .cr-plugin-main-box .cr-plugin-shipping>div {
+        width: 50% !important;
+        margin: 0px;
+    }
+    .main-payment-info .bg-light.flex-column {
+        flex-direction: inherit !important;
+    }
+    .main-payment-info .bg-light.flex-column > .vr {
+        display: block !important;
+    }
+}
+
+@media screen and (max-width: 380px) {
+    .thank-page .tpay-statys {
+        display: block;
+    }
+    .tpay-statys .t--value {
+        text-align: left !important;
+        margin-top: 6px;
+    }
+    .tpay-statys {
+        padding-bottom: 10px;
+    }
+}
+
+@media screen and (max-width: 479px) {
+    .thank-page .t--value {
+        font-size: 14px !important;
+    }
+
+    .main-payment-info > h4 {
+        font-size: 15px !important;
+    }
+    body .order-head > h2, .order-head > div {
+        font-size: 12px !important;
+  }
+    .cr-plugin-history .cr-plugin-history-des span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+@media screen and (min-width: 479px) {
+    .paid-amount {
+        width: calc(50% - 1px);
+    }
+}
+
+@media screen and (max-width: 479px) {
+    .cr-plugin-payment-history #timer_status_payment {
+        position: static;
+        margin-top: 15px;
+        padding-left: 15px;
+    }
+
+    .invoice-title {
+        font-size: 26px;
+    }
+
+    .cr-plugin-history-footer ul {
+        padding-left: 0 !important;
+        margin-right: 9px !important;
+        margin-left: 9px !important;
+    }
+
+    .cr-plugin-timer {
+        text-align: center;
+    }
+
+    .coinremitter-invoice-page .order-invoice-data {
+        position: relative;
+    }
+
+    .coinremitter-invoice-page .tooltip-content {
+        top: inherit;
+        bottom: 30px !important;
+    }
+}
+
+@media only screen and (min-width: 768px) {
+    .entry-content .cr-plugin-main-box {
+        max-width: 100% !important;
+        width: auto !important;
+    }
+}
+
+@media screen and (min-width: 48em) {
+    .wrap {
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+    }
+}
+
+
+
+/* **************************************************************************************************************************
+******************************************** new invoice design ************************************************************
+*************************************************************************************************************************** */
+
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
+.wallet_error_checkout {
+    color: red;
+}
+
+.coinremitter-invoice-page .post-content {
+    overflow: inherit;
+}
+
+.coinremitter-invoice-page {
+    word-break: break-word;
+}
+
+.c-flex-wrap {
+    flex-wrap: wrap;
+}
+
+.coinremitter-invoice-page .c-width {
+    width: 90px;
+}
+
+.billing-details .col,
+.main-payment-info .col {
+    padding: 0px;
+    margin: 0px;
+}
+.main-payment-info .paid-amount {
+    padding: 12px;
+}
+.coinremitter-invoice-page .main-payment-info h4,
+.coins h5,
+.coins h6 {
+    color: #000;
+}
+.main-payment-info > h4 {
+    border-bottom: 1px solid #D9D9D9;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    font-size: 20px;
+}
+/* .main_box_invoice :is(h1, h2, h3, h4, h5, h6) {
+    font-family: "Roboto", sans-serif !important;
+} */
+
+.coinremitter-invoice-page,
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+    font-family: "Roboto", sans-serif;
+}
+.coinremitter-invoice-page .main_box_invoice {
+    width: 100%;
+    background: #FFFFFF;
+    /* border: 1px solid #D9D9D9; */
+    padding: 15px 6px 15px 6px;
+    gap: 20px;
+    border-radius: 8px;
+    position: relative;
+    z-index: 999;
+    padding-top: 39px;
+}
+.cr-plugin-history-des {
+    overflow: hidden;
+}
+
+.coinremitter-invoice-page .sub_main_payment {
+    border-radius: 6px;
+}
+
+.coinremitter-invoice-page .main_box_invoice .qr {
+    border: 1px solid #D9D9D9;
+    padding: 6px;
+    border-radius: 6px;
+    width: 160px;
+}
+.coinremitter-invoice-page .main_box_invoice .qr > img {
+    max-width: 100%;
+}
+.payment-info-wrapper span {
+    display: block;
+    font-size: 14px;
+    color: #696969;
+    margin-bottom: 4px;
+}
+.coinremitter-invoice-page .main_box_invoice .payment-info {
+    background-color: #F3F4F6;
+    padding: 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.coinremitter-invoice-page .payment-info h4 {
+    margin: 0px !important;
+    font-size: 16px;
+}
+
+.coinremitter-invoice-page .payment-info.addr_copy h4 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: calc(100% - 26px);
+    font-size: 16px;
+}
+
+.text-ellipsis {
+    text-overflow: ellipsis;
+}
+
+.gap-12 {
+    gap: 12px;
+}
+
+.coinremitter-invoice-page .main-payment-info {
+    border: 1px solid #D9D9D9;
+    border-radius: 8px;
+    width: 100%;
+}
+
+.fs-14 {
+    font-size: 14px;
+}
+
+.border-dashed {
+    border-bottom: 2px dashed #D9D9D9;
+}
+
+.main-payment-info .order-invoice .progress {
+    --bs-progress-height: 4px;
+    --bs-progress-bar-bg: #166534;
+    margin-bottom: 30px
+}
+
+.main-payment-info .order-invoice {
+    /* max-width: 1170px; */
+    margin: 0 auto;
+}
+
+.main-payment-info .payment-info-wrapper,
+.main-payment-info .qr {
+    width: 100%;
+}
+
+.main-payment-info .product_images {
+    max-width: 70px;
+    border: 1px solid #D9D9D9;
+}
+.main-payment-info .product_images > img {
+    height: 68px;
+    width: 68px;
+    object-fit: contain;
+}
+.coinremitter-invoice-page .timing-tooltip-btn {
+    position: relative;
+    border: none !important;
+    padding: 0 !important;
+    background-color: transparent !important;
+    text-align: start;
+    width: auto !important;
+    box-shadow: none;
+    overflow: inherit;
+    background-image: none;
+}
+
+.coinremitter-invoice-page .tooltip-content {
+    opacity: 0;
+    visibility: hidden;
+    position: absolute;
+    bottom: 110%;
+    right: 0;
+    background-color: #000;
+    color: #fff;
+    border-radius: 4px;
+    width: 230px;
+    max-width: 300px;
+    padding: 5px;
+    z-index: 99;
+    font-size: 14px;
+    font-weight: 400;
+}
+.arrow-down::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    right: 3px;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #000;
+}
+
+.timing-tooltip-btn:hover .tooltip-content {
+    opacity: 1;
+    visibility: visible;
+}
+
+
+.coinremitter-invoice-page .cr-plugin-copy {
+    position: fixed;
+    top: 50px;
+    right: 20px;
+    border-radius: 10px;
+    background-color: #16a34a;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 5px 25px;
+    display: none;
+    z-index: 9999;
+}
+
+.coinremitter-invoice-page .cr-plugin-copy div {
+    margin: 0px;
+    margin-bottom: 0 !important;
+    color: #fff !important;
+}
+
+.coinremitter-invoice-page .tooltip-content .span {
+    font-size: 14px;
+}
+
+.coinremitter-invoice-page .invoice-label {
+    color: #212529;
+    font-size: 16px;
+}
+
+.coinremitter-invoice-page .invoice-label-text {
+    font-weight: 400;
+}
+
+.cr-plugin-history-box .cr-plugin-history {
+    flex-wrap: wrap;
+}
+
+@media (min-width: 1200px) {
+    .coinremitter-invoice-page .sub_main_payment {
+        background-color: #F0F0F1;
+    }
+
+    /* .coinremitter-invoice-page .main_box_invoice .qr {
+        width: 170px;
+    } */
+
+    .coinremitter-invoice-page .main_box_invoice .payment-info-wrapper {
+        width: calc(100% - 182px);
+    }
+}
+
+.order-head {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 20px;
+    padding-bottom: 10px;
+}
+.order-head > h2 {
+    margin: 0px;
+    padding: 0px;
+    border: 0px;
+    font-size: 20px !important;
+    color: #000;
+}
+.order-head > div {
+    font-size: 20px;
+}
+
+.order_summary>div:last-child {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+}
+
+.order_summary>div:first-child {
+    padding-top: 0 !important;
+}
+
+.invoice-label {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.coinremitter-invoice-page .payment_history {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+
+}
+
+.coinremitter-invoice-page .invoice_main_total {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    /* gap: 3px; */
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+.coinremitter-invoice-page .invoice_main_total:last-child {
+    margin-bottom: 0px;
+}
+.main-payment-info > .invoice_main_total {
+    font-size: 20px;
+    margin-top: 12px;
+}
+.coinremitter-invoice-page .invoice_main_total::after {
+    display: none;
+}
+
+.coinremitter-invoice-page .product_details {
+    padding: 16px 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 1px solid #000;
+    margin-bottom: 16px;
+}
+
+.coinremitter-invoice-page .product_details_img {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-right: 16px;
+}
+
+.coinremitter-invoice-page .product_sum {
+    display: flex;
+    gap: 16px;
+    justify-content: end;
+    flex-wrap: nowrap;
+    margin-left: auto;
+}
+
+.coinremitter-invoice-page .product_sum span {
+    flex-shrink: 0;
+    font-size: 15px;
+}
+
+/* .addr_copy h4,
+.amount_copy h4 {
+    font-size: 16px !important;
+} */
+
+div::before,
+div::after {
+    display: none !important;
+}
+
+.coinremitter-invoice-page .paid-amount h5 {
+    font-size: 14px;
+    font-weight: 400;
+    color: #696969;
+    margin-bottom: 2px;
+}
+.coinremitter-invoice-page .paid-amount > strong {
+    font-size: 16px;
+    color: #000;
+}
+.coinremitter-invoice-page .main_box_invoice a:hover {
+    color: #000 !important;
+}
+
+.coinremitter-invoice-page .payment-info-sub {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-direction: column;
+}
+
+.coinremitter-invoice-page .billing-details {
+    display: flex;
+    flex-direction: column;
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+.coinremitter-invoice-page .billing-details:last-child {
+    margin-bottom: 0px;
+}
+
+.coinremitter-invoice-page .main_box_invoice .title.paymwnt-history {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #D9D9D9;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+}
+
+.invoice-label {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 300px;
+
+}
+
+.coinremitter-invoice-page .invoice-progress-line {
+    height: 4px;
+    margin-bottom: 30px;
+    margin-top: 10px;
+}
+
+.coinremitter-invoice-page .invoice-progress {
+    background-color: #166534;
+}
+
+.coinremitter-invoice-page .order-invoice-data {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0px;
+    gap: 10px;
+}
+
+.progress-bar-cr {
+    background-color: #166534;
+}
+
+#progressbar {
+    height: 4px;
+    margin-bottom: 30px;
+}
+
+.paid-amount {
+    display: flex;
+    flex-direction: column;
+}
+
+.cr-plugin-copy p{
+    color: #fff;
+    margin-bottom: 0;
+}
+
+.thank-page {
+    margin: 50px 0px;
+}
+.thank-page .alert {
+    font-size: 16px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 6px;
+    display: inline-block;
+    margin: 0px;
+    line-height: 1.3;
+}
+.thank-page .alert.alert-success {
+    background-color: #DCFCE7;
+    border-color: #DCFCE7;
+    color: #16A34A;
+}
+.thank-page .alert.alert-primary {
+    border-color: #cfe2ff;
+    color: #0d6dff;
+}
+.thank-page span {
+    font-size: 14px;
+    color: #696969;
+    display: block;
+    margin-bottom: 2px;
+}
+.thank-page .t--value {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: normal;
+    word-break: break-word;
+    color: #000;
+}
+.thank-page .t--value > span {
+    font-size: 16px;
+    color: #000;
+}
+.thank-page .t--value > sub {
+    vertical-align: text-top;
+}
+.thank-page table {
+    table-layout: fixed;
+    width: 100%;
+}
+.thank-page tr > td {
+    background-color: #ffffff;
+    border: 2px solid #E5E5E5 !important;
+    padding: 12px 15px !important;
+    vertical-align: top;
+    text-align: left;
+}
+.thank-page tr > td > table {
+    border: 0px !important;
+    margin: 0px !important;
+}
+.thank-page tr > td > table > tbody {
+    border: 0px !important;
+}
+.thank-page tr > td > table tr > td {
+    border: 0px !important;
+    border-bottom: 1px solid #E5E5E5 !important;
+    padding: 12px 0px !important;
+}
+.thank-page tr > td > table tr:last-child > td {
+    border: 0px !important;
+}
+.thank-page tr > td > table tr > td > a {
+    color: #1B52CB !important;
+    font-weight: 500;
+    text-decoration: underline;
+    font-size: 14px;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tpay-statys {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 5px;
+}
+.tpay-statys:last-child {
+    margin-bottom: 0px;
+}
+body .tpay-statys p {
+    margin: 0px !important;
+    color: #696969;
+    font-size: 14px !important;
+}
+#timer_status {
+    color: #000;
+}
+
+@media screen and (max-width: 575px) {
+    .thank-page tr > td {
+        display: block;
+        border: 1px solid #eee !important;
+    }
+    tr.i--value {
+        border-bottom: 1px solid #eee;
+    }
+    tr.i--value:last-child {
+        border-bottom: 0px;
+    }
+    .thank-page tr > td > table .i--value > td {
+        border: 0px;
+        padding-bottom: 0px;
+    }
+    .thank-page tr > td > table .i--value > td:last-child {
+        padding-top: 0px;
+        padding-bottom: 12px;
+    }
+    .i--value .t--value {
+        text-align: left !important;
+    }
+    .i--value .t--value br {
+        display: none;
+    }
+}
+@media screen and (max-width: 767px) and (min-width: 575px) {
+    .thank-page span {
+        font-size: 12px;
+    }
+    .thank-page tr > td > table tr > td > a {
+        width: 160px;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+@media screen and (max-width: 991px) and (min-width: 768px) {
+    .thank-page tr > td > table tr > td > a {
+        width: 180px;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .payment_history {
+        align-items: center;
+        flex-wrap: nowrap;
+    }
+
+    .product_details {
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 16px; 
+    }
+}
+ 
+@media screen and (max-width: 991px){
+    .coins label.py-main {
+          width: 100%;
+    }
+}
+.coin_data h3,
+.coin_data h5{
+    font-size: 15px;
+}

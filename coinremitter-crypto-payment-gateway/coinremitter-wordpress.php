@@ -4,11 +4,12 @@
 Plugin Name:        CoinRemitter Crypto Payment Gateway
 Plugin URI:         https://coinremitter.com/plugins
 Description:        <a href="https://coinremitter.com">coinremitter.com</a> CoinRemitter Crypto Payment Gateway.
-Version:            1.1.2
+Version:            1.1.3
 Author:             CoinRemitter
 Author URI:         https://coinremitter.com
-Requires at least:  6.6
-Tested up to:       6.6.1
+Requires Plugins:   woocommerce
+Requires at least:  6.7
+Tested up to:       6.7.1
 
 
  *
@@ -20,112 +21,181 @@ Tested up to:       6.6.1
  * CoinRemitter Crypto Payment Gateway is distributed
  * in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.
+ * FITNESS FOR A PARTICULAR PURPOSE.    
  * See the GNU General Public License for more details.
 */
 
 
-if (! defined('ABSPATH')) {
-    exit;
-}
-
-$dir_arr = wp_upload_dir();
-
-DEFINE('COINREMITTER', 'coinremitter');
-DEFINE('COINREMITTER_DIR_PATH', plugin_dir_path(__FILE__));
-DEFINE('COINREMITTER_URL', 'https://coinremitter.com/');
-DEFINE('COINREMITTER_API_VERSION', 'v3');
-DEFINE('COINREMITTER_PREVIEW', 'coinremitteradmin');
-DEFINE('COINREMITTER_PAYMENT_FAIL', site_url('payment-fail'));
-DEFINE('COINREMITTER_WEBHOOK_URL', site_url('?coinremitter_webhook'));
-DEFINE('COINREMITTER_VERSION', '1.1.2');
-DEFINE('COINREMITTER_ADMIN', admin_url('admin.php?page='));
-DEFINE('COINREMITTER_DIR', $dir_arr['basedir'] . '/' . COINREMITTER . '/');
-DEFINE('COINREMITTER_DIR2', $dir_arr['baseurl'] . '/' . COINREMITTER . '/');
-DEFINE('COINREMITTER_IMG', plugins_url('/images/', __FILE__));
-DEFINE('COINREMITTER_BASENAME', plugin_basename(__FILE__));
-DEFINE('COINREMITTER_PERMISSION', 'add_users');
-DEFINE('COINREMITTER_WORDPRESS', true);
-DEFINE('COINREMITTER_RATES', wp_json_encode(array( 'USD' => 'US Dollar' )));
-DEFINE('COINREMITTER_INV_PENDING', 0);
-DEFINE('COINREMITTER_INV_PAID', 1);
-DEFINE('COINREMITTER_INV_UNDER_PAID', 2);
-DEFINE('COINREMITTER_INV_OVER_PAID', 3);
-DEFINE('COINREMITTER_INV_EXPIRED', 4);
-DEFINE('COINREMITTER_ECR_SKEY', 'coinremitter');
-DEFINE('COINREMITTER_ECR_CIPHERING', 'AES-256-CBC');
-DEFINE('COINREMITTER_ECR_OPTIONS', 0);
-DEFINE('COINREMITTER_ECR_IV', 'Coinremitter__iv');
-DEFINE('WOOCOMMERCE_VERSION', '3.0');
-unset($dir_arr);
-
-require_once plugin_dir_path(__FILE__) . '/coinremitter.php';
-
-
-register_activation_hook(__FILE__, 'coinremitter_activate');
-register_deactivation_hook(__FILE__, 'coinremitter_deactivate');
-
-add_filter('plugin_action_links', 'coinremitter_action_links', 10, 2);
-
-
-if (function_exists('mb_stripos') && function_exists('mb_strripos') && function_exists('curl_init')  && function_exists('mysqli_connect') && version_compare(phpversion(), '5.4.0', '>=')) {
-    $coinremitter = new CoinremitterClass();
-}
+define('COINREMITTER', 'coinremitter');
+define('COINREMITTER_SKEY', 'coinremitterdata');
+define('COINREMITTER_CURL', 'https://api.coinremitter.com/v1');
+DEFINE('COINREMITTER_PLUGIN_VERSION', '1.1.3');
+DEFINE('COINREMITTER_API_VERSION', 'v1');
+define('COINREMITTERWC', 'coinremitter-woocommerce');
+define('COINREMITTERWC_AFFILIATE_KEY',     'coinremitter');
+define('CR_PLUGIN_PATH', plugin_dir_url(__FILE__));
+define('CR_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('COINREMITTER_WORDPRESS', true);
+define('COINREMITTER_INV_PENDING', 0);
+define('COINREMITTER_INV_PAID', 1);
+define('COINREMITTER_INV_UNDER_PAID', 2);
+define('COINREMITTER_INV_OVER_PAID', 3);
+define('COINREMITTER_INV_EXPIRED', 4);
 
 
 
+add_action('init', 'coinre_actions_call');
+function coinre_actions_call()
+{
+    if (is_admin()) {
+        // error_log('admin_data');
+        // admin script
+        add_action('coinremitter_enqueue_script_admin', 'coinremitter_wp_admin_script');
+        // wallet add
+        add_action('wp_ajax_coinremitter_wp_wallet_add', 'coinremitter_wp_wallet_add');
+        add_action('wp_ajax_nopriv_coinremitter_wp_wallet_add', 'coinremitter_wp_wallet_add');
 
+        // wallet edit
+        add_action('wp_ajax_coinremitter_wp_wallet_edit', 'coinremitter_wp_wallet_edit');
+        add_action('wp_ajax_nopriv_coinremitter_wp_wallet_edit', 'coinremitter_wp_wallet_edit');
 
-// Hook the custom function to the 'woocommerce_blocks_loaded' action
-add_action( 'woocommerce_blocks_loaded', 'oawoo_register_order_approval_payment_method_type' );
+        // wallet delete
+        add_action('wp_ajax_coinremitter_wp_wallet_delete', 'coinremitter_wp_wallet_delete');
+        add_action('wp_ajax_nopriv_coinremitter_wp_wallet_delete', 'coinremitter_wp_wallet_delete');
 
-/**
- * Custom function to register a payment method type
+        // admin menu create
+        add_action('admin_menu', 'coinremitter_wp_admin_menu');
 
- */
-function oawoo_register_order_approval_payment_method_type() {
-    // Check if the required class exists
-    if ( ! class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' ) ) {
-        return;
-    }
+        // payment name
+        add_filter('woocommerce_payment_gateways', 'coinremitter_wp_gateway_class');
 
-    // Include the custom Blocks Checkout class
-    require_once plugin_dir_path(__FILE__) . '/class-block.php';
+        add_action('add_meta_boxes', 'coinremitter_cd_meta_box_add');
 
-    // Hook the registration function to the 'woocommerce_blocks_payment_method_type_registration' action
-    add_action(
-        'woocommerce_blocks_payment_method_type_registration',
-        function( Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
-            // Register an instance of My_Custom_Gateway_Blocks
-            $payment_method_registry->register( new My_Custom_Gateway_Blocks );
-        }
-    );
-}
-
-
-
-// add_action('plugins_loaded', 'woocommerce_myplugin', 0);
-// function woocommerce_myplugin(){
-//     if (!class_exists('WC_Payment_Gateway'))
-//         return; // if the WC payment gateway class 
-    
-//     include(plugin_dir_path(__FILE__) . 'includes/class-gateway.php');
-// }
-
-
-// add_filter('woocommerce_payment_gateways', 'add_my_custom_gateway');
-
-// function add_my_custom_gateway($gateways) {
-//   $gateways[] = 'WC_Gateway_CoinRemitter';
-//   return $gateways;
-// }
-function add_custom_class_to_body($classes) {
-    if ( class_exists( 'woocommerce' ) ) {
+        // woocommerce setting page curency update
+        add_action('update_option', 'track_currency_change', 10, 3);
         
-    if (is_wc_endpoint_url('order-pay')) {
-        $classes[] = 'coinremitter-invoice-page';
+    } 
+
+}
+
+add_filter('woocommerce_get_return_url', 'coinremitter_override_return_url', 20, 2);
+add_action('plugins_loaded', 'coinremitter_wp_payment_gateways');   
+
+add_action('wp_enqueue_scripts', 'coinremitter_wp_plugin_scripts', 20);
+add_filter('body_class', 'add_custom_class_to_body');
+
+// Webhook data
+add_action('wc_ajax_coinremitter_webhook_data', 'coinremitter_webhook_data');
+
+// Cancel order action
+add_action('wc_ajax_coinremitter_cancel_order', 'coinremitter_cancel_order');
+
+// Display custom meta data on the Order Received page
+add_action('woocommerce_order_details_after_order_table', 'coinremitter_thank_you_field_display_cust_order_meta', 10, 1);
+add_action('parse_request', 'callback_parse_request_coinremitter', 1);
+add_action('wp_ajax_store_rel_value', 'store_rel_value');
+add_action('wp_ajax_nopriv_store_rel_value', 'store_rel_value');
+add_filter('woocommerce_payment_gateways', 'coinremitter_wp_gateway_class');
+// cron update
+add_action('update_fiat_rate_hook', 'coinremitter_wp_update_fiat_rate');
+add_action('wp', 'coinremitter_wp_schedule_fiat_rate_update');
+
+
+
+
+#--------------------------------------------------------------------------------
+#region coinremitter payment block setting
+#--------------------------------------------------------------------------------
+
+require_once CR_PLUGIN_DIR . '/front/payment-setting.php';
+
+
+#--------------------------------------------------------------------------------
+#region invoice page create
+#--------------------------------------------------------------------------------
+
+
+register_activation_hook(__FILE__, 'cr_create_page');
+function cr_create_page()
+{
+    // Check if the page already exists
+    $page_title = 'Invoice Page';
+    $page_check = get_page_by_title($page_title);
+
+    // If the page doesn't exist, create it
+    if (!isset($page_check->ID)) {
+        $new_page_id = wp_insert_post(array(
+            'post_title' => $page_title,
+            'post_status' => 'publish',
+            'post_type' => 'page',
+        ));
+
+        // Set the custom template for the new page
+        if ($new_page_id) {
+            update_post_meta($new_page_id, '_wp_page_template', 'template-page.php');
+        }
     }
 }
-return $classes;
+// Register the custom template
+function cr_register_template($page_template)
+{
+    if (is_page('invoice-page')) {
+        $page_template = plugin_dir_path(__FILE__) . 'template-page.php';
+    }
+    return $page_template;
 }
-add_filter('body_class', 'add_custom_class_to_body');
+add_filter('page_template', 'cr_register_template');
+
+
+add_filter('theme_page_templates', 'cr_template_to_select', 10, 4);
+function cr_template_to_select($post_templates, $wp_theme, $post, $post_type)
+{
+    $post_templates['template-page.php'] = __('Templateconfigurator');
+
+    return $post_templates;
+}
+
+
+
+
+#--------------------------------------------------------------------------------
+#region plugin activation invoice timer set 
+#--------------------------------------------------------------------------------
+class CoinremitterPlugin
+{
+    // Constructor for CoinremitterPlugin object
+    function __construct()
+    {
+        // Register activation hook
+        register_activation_hook(__FILE__, array($this, 'coinrimitter_plugin_activate'));
+    }
+
+    // Activation function
+    function coinrimitter_plugin_activate()
+    {
+        // Set WooCommerce settings for cryptocurrency payment
+        $woocommerce_setting_data = [
+            'enabled' => 'yes',
+            'title' => 'Pay Using Cryptocurrency',
+            'description' => 'Secure, anonymous payment with cryptocurrency. <a target="_blank" href="https://en.wikipedia.org/wiki/Cryptocurrency">What is it?</a>',
+            'ostatus' => 'Processing',
+            'invoice_expiry' => '30'
+        ];
+
+        // Update the WooCommerce settings
+        update_option('woocommerce_coinremitterpayments_settings', $woocommerce_setting_data);
+        coinremitter_wp_table_create();
+        // Optional: Flush output buffers (not usually necessary here)
+        ob_flush();
+    }
+}
+
+// Instantiate the CoinremitterPlugin class
+if (class_exists('CoinremitterPlugin')) {
+    $my_plugin = new CoinremitterPlugin();
+}
+
+add_action( 'upgrader_process_complete', 'update_cr_tables', 10, 2 );
+function update_cr_tables( $upgrader, $options ) {
+    coinremitter_wp_table_create();
+}
