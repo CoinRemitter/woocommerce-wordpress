@@ -33,9 +33,10 @@ Crypto Payment Gateway acts as a bridge between the merchant’s website and the
 **Installation**
 1. First you must have to install woocommerce plugin (version 9.5.1) and have to activate it.
 2. Click on the **PLUGINS** option (you will find It In the sidebar).
-3. Then select on **ADD NEW PLUGIN** option (you will find it on the top of the page)
-4. Now click on the search option and type **CoinRemitter Crypto Payment Gateway**.
-5. After finding the plugin click on the **INSTALL NOW** and Install it.
+3. Then select on **Add New Plugin** option (you will find it on the top of the page)
+4. Click on **Upload Plugin**
+4. Download zip file from this repo and Upload it
+5. Now click on the **Install Now**.
 6. After the completion of the plugin, click on **ACTIVATE**. When you activate our plugin you will see **COIN REMITTER** appear in the sidebar.
 7. Congratulations! You have successfully installed our plugin on your website.
 
