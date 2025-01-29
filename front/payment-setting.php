@@ -63,9 +63,11 @@ function coinremitter_override_return_url($return_url, $order)
 
         if ($coin) {
             $OrdID = $order->get_id();
-            $order_amount = $order->get_subtotal();
+            $order_amount = $order->get_total();
+            $order_subamount = $order->get_subtotal();
             $shipping = $order->get_shipping_total();
             $tax = $woocommerce->cart->get_shipping_tax();
+            $discount_amount = $order->get_discount_total();
 
             $tablename = $wpdb->prefix . 'coinremitter_wallets';
             $sql = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE coin_symbol = %s", $coin));
@@ -76,11 +78,10 @@ function coinremitter_override_return_url($return_url, $order)
                 $multiplier = $sql->exchange_rate_multiplier;
                 $unit_fiat_amount = $sql->unit_fiat_amount;
 
-                $total_amount = ($order_amount * $multiplier ) + $shipping + $tax;
-                $convert_amount = $total_amount / $unit_fiat_amount;
+                $total_amount = ($order_subamount * $multiplier ) + $shipping + $tax;
+                $Amount = $total_amount - $discount_amount;
+                $convert_amount = $Amount / $unit_fiat_amount;
                 $crypto_amount = number_format($convert_amount,8);
-                // $result_arr = fiat_cryoto($total_amount, $currancy_type, $coin); //api call
-                // $crypto_amount = $result_arr['data'][0]['price'];
               
 
             $wc_gateways = new WC_Payment_Gateways();

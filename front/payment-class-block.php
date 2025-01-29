@@ -80,6 +80,9 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
             $total_amt = WC()->cart->subtotal;
 			$shipping = WC()->cart->get_shipping_total();
             $tax = $woocommerce->cart->get_shipping_tax();
+            $coupons = WC()->cart->get_coupons();
+            $coupon = new WC_Coupon(key( $coupons ));
+            $discount_amount = WC()->cart->get_coupon_discount_amount($coupon->get_code());
         }
         
         $tablename = $wpdb->prefix . 'coinremitter_wallets';
@@ -148,13 +151,15 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
                 }
                 $sql_wallet = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE coin_symbol = %s", $v));
                 $exchange_rate_multiplier = $sql_wallet->exchange_rate_multiplier;
-
+ 
+                
                 $total_amount = ($total_amt * $exchange_rate_multiplier ) + $shipping + $tax;
+                $Amount = $total_amount - $discount_amount;
                 
                 $addrSql = 'select * from wp_coinremitter_wallets where coin_symbol ="' . $v . '"';
                 $getDatas = $wpdb->get_results($addrSql);
                 $unit_fiat_amount = $getDatas[0]->unit_fiat_amount;
-                $convert_amount = $total_amount / $unit_fiat_amount;
+                $convert_amount = $Amount / $unit_fiat_amount;
                 $coin_name = $sql_wallet->coin_name;
                 $usd_am_currency = number_format($convert_amount,8);
                 // }

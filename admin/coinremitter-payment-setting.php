@@ -230,16 +230,20 @@ function coinremitter_wp_payment_gateways()
                         $total_amount = $total_amt;
                         $currancy_type = get_woocommerce_currency();
 
-                        $result_arr = fiat_cryoto($total_amount, $currancy_type, $v); //api call
-                        $crypto_amount = $result_arr['data'][0]['price'];
-
+                        $coupons = WC()->cart->get_coupons();
+                        $coupon = new WC_Coupon(key( $coupons ));
+                        $discount_amount = WC()->cart->get_coupon_discount_amount($coupon->get_code());
+                        $tax = $woocommerce->cart->get_shipping_tax();
                         $sql_wallet = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE coin_symbol = %s", $v));
                         $coin_name = $sql_wallet->coin_name;
+                        $unit_fiat_amount = $sql_wallet->unit_fiat_amount;
                         $exchange_rate_multiplier = $sql_wallet->exchange_rate_multiplier;
-                        $usd_am = $crypto_amount * $exchange_rate_multiplier;
-                        $total = $usd_am + $shipping;
-                        $usd_am_currency = number_format($total, 8);
-                        // }
+                        $total_amount = ($total_amount * $exchange_rate_multiplier ) + $shipping + $tax;
+                        $Amount = $total_amount - $discount_amount;
+                        $convert_amount = $Amount / $unit_fiat_amount;
+                        // echo '<pre>';print_r($convert_amount);die;
+                        
+                        $usd_am_currency = number_format($convert_amount, 8);
                         $tmp .= "
                                     <label for='$v' class='align-items-center gap-3 coin_data py-main' rel='" . $v . "' coin='" . $coin_name . "'>
                                       <div class='py-left d-flex'>

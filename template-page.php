@@ -8,11 +8,13 @@
     $order_key = isset($_GET['key']) ? sanitize_text_field($_GET['key']) : '';
     $order_id = wc_get_order_id_by_order_key($order_key);
     $order = wc_get_order($order_id);
+    $used_coupons = $order->get_used_coupons();
+    // echo 'hyyyyy'; print_r($used_coupons); die;
+
     if ($order && is_object($order)) {
         $items = $order->get_items();
     }
     $order_status = $order->get_status();
-    // echo 'hyyyyy'; print_r($order_status); die;
     $symbol = get_woocommerce_currency_symbol();
     $order_items = '';
     $position = get_option('woocommerce_currency_pos');
@@ -72,13 +74,16 @@
         wp_redirect($url);
     }
 
-
+    $discount_amount = $order->get_discount_total();
+    $dis_price = number_format($discount_amount, $decimals, $decimal_separator, $thousand_separator);
+    $formattedDis_price = $prefix . $dis_price . $suffix;
+    
     $price = floatval($order->get_subtotal());
     $formatted_priceTot = number_format($price, $decimals, $decimal_separator, $thousand_separator);
     $formatted_price_cur = $prefix . $formatted_priceTot . $suffix;
 
     // grand total
-    $pricegrand = floatval(($order->get_subtotal()) + $order->get_shipping_total() + $order->get_shipping_tax());
+    $pricegrand = floatval(($order->get_subtotal()) + $order->get_shipping_total() + $order->get_shipping_tax() - $order->get_discount_total());
     $formatted_priceGrand = number_format($pricegrand, $decimals, $decimal_separator, $thousand_separator);
     $formatted_price_cur_total = $prefix . $formatted_priceGrand . $suffix;
 
@@ -299,6 +304,14 @@
                              <div class=" invoice_main_total">
                                  <span class="text-secondary invoice-label-text">Total</span>
                                  <strong><?php echo $formatted_price_cur ?></strong>
+                             </div>
+                             <div class=" invoice_main_total">
+                                 <span class="text-secondary invoice-label-text">coupon</span>
+                                 <strong><?php if($discount_amount){
+                                        echo '-'.$formattedDis_price;
+                                 } else {
+                                        echo $formattedDis_price;
+                                 } ?> </strong>
                              </div>
                              <div class=" invoice_main_total">
                                  <span class="text-secondary invoice-label-text">Total Taxes</span>
