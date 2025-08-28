@@ -27,7 +27,7 @@ if (isset($_POST['type']) != "receive") {
 
 error_log("webhook recieve" . json_encode($_POST));
 global $wpdb;
-$addrSql = 'select * from wp_coinremitter_orders where payment_address="' . $address . '" && coin_symbol ="' . $coin . '"';
+$addrSql = 'select * from '.$wpdb->prefix.'coinremitter_orders where payment_address="' . $address . '" && coin_symbol ="' . $coin . '"';
 $getDatas = $wpdb->get_results($addrSql);
 $getData = $getDatas[0];
 // print_r($getDatas);
@@ -64,7 +64,7 @@ if ((is_array($getData) || $getData instanceof Countable) && count($getData) == 
     $order_status_code = COINREMITTER_INV_EXPIRED;
     $order_status = 'Expired';
 
-    $payment_data = "UPDATE `wp_coinremitter_transactions` SET `status` = '$order_status_code' WHERE `order_id` = '" . $order_id . "' ";
+    $payment_data = "UPDATE ".$wpdb->prefix."coinremitter_transactions SET `status` = '$order_status_code' WHERE `order_id` = '" . $order_id . "' ";
     $update_payment_data = $wpdb->get_results($payment_data);
 }
 
@@ -113,7 +113,7 @@ $metaTrx = [
     'updated_at'     => $addrTransaction['date'],
 ];
 
-$sql = "SELECT * FROM wp_coinremitter_transactions WHERE order_id = %s";
+$sql = "SELECT * FROM ".$wpdb->prefix."coinremitter_transactions WHERE order_id = %s";
 $existing_order = $wpdb->get_results($wpdb->prepare($sql, $order_id));
 
 
@@ -129,14 +129,14 @@ if (count($existing_order) <= 0) {
         'order_id'       => $order_id,
         'meta'         => $meta_json,
     ];
-    $wpdb->insert('wp_coinremitter_transactions', $data);
+    $wpdb->insert($wpdb->prefix.'coinremitter_transactions', $data);
     exit('Order Entry added intransaction table.');
 }
 $existing_order = $existing_order[0];
 $trxMeta = json_decode($existing_order->meta, true);
 if ($trxMeta) {
 
-    $orderAmount = 'select * from wp_coinremitter_orders where payment_address="' . $address . '" && coin_symbol ="' . $coin . '"';
+    $orderAmount = 'select * from '.$wpdb->prefix.'coinremitter_orders where payment_address="' . $address . '" && coin_symbol ="' . $coin . '"';
     $orderRow = $wpdb->get_results($orderAmount);
     $order_result = $orderRow[0];
     error_log(json_encode($order_result));
@@ -240,7 +240,7 @@ if ($trxMeta) {
                 error_log('Change order data : ' . " trx id : " . $webhook_trxid . " order id : " . $order_id . ' : ' . $paidAmount . ' : ' . $paidFiatAmount . ' : ' . $order_status_code);
 
                 error_log("Status change of trx_id : " . $data_up['trx_id']);
-                $updateOrder = "UPDATE `wp_coinremitter_orders` SET `paid_crypto_amount`='$paidAmount', `paid_fiat_amount`='$paidFiatAmount', `order_status`='$order_status_code' WHERE `order_id`='$order_id'";
+                $updateOrder = "UPDATE ".$wpdb->prefix."coinremitter_orders SET `paid_crypto_amount`='$paidAmount', `paid_fiat_amount`='$paidFiatAmount', `order_status`='$order_status_code' WHERE `order_id`='$order_id'";
                 $data_up['status'] = 1;
                 $wpdb->get_results($updateOrder);
             }
@@ -254,5 +254,5 @@ if ($trxMeta) {
     ];
     error_log(message: "Order transaction meta update successfully. for trx Id : " . $webhook_trxid);
     error_log(json_encode($data));
-    $wpdb->update('wp_coinremitter_transactions', $data, $where);
+    $wpdb->update($wpdb->prefix.'coinremitter_transactions', $data, $where);
 }

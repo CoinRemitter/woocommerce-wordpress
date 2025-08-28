@@ -1,7 +1,7 @@
 jQuery(document).ready(function ($) {
   // coinremitter wallet add
   $("#csf-form").on("submit", function (event) {
-    // $(".add-wallet-btn").prop("disabled", true);
+    $(".add-wallet-btn").prop("disabled", true);
     event.preventDefault();
 
     var api_key = $('input[name="wallet_key"]').val();
@@ -36,7 +36,9 @@ jQuery(document).ready(function ($) {
       },
       success: function (response) {
         console.log(response);
-        
+        if(typeof response == 'string'){
+          response = JSON.parse(response)
+        }
         $("#error-message-wallet").html(response);
         $("#error-message-wallet").empty();
         var msg = response.msg;
@@ -78,7 +80,7 @@ jQuery(document).ready(function ($) {
   // coinremitter wallet Update
   jQuery(".walletUpdateBtn").on("click", function (e) {
     e.preventDefault();
-
+    $(".walletUpdateBtn").prop("disabled", true)
     var coinName = jQuery('input[name="coinName"]').val();
     var coin_id = jQuery('input[name="coin_id"]').val();
     var api_key_value = jQuery('input[name="wallet_key_update"]').val();
@@ -100,6 +102,7 @@ jQuery(document).ready(function ($) {
       $("#error-message-wallet-edit").text(
         "Please fill out all the fields to proceed."
       );
+      $(".walletUpdateBtn").prop("disabled", false)
       return;
     }
 
@@ -120,17 +123,20 @@ jQuery(document).ready(function ($) {
       url: ajaxurl,
       data: frmData,
       success: function (response) {
-        var msg = response.msg;
         console.log(response);
+        if(typeof response == 'string'){
+          response = JSON.parse(response)
+        }
+        var msg = response.msg;
         if (response.flag == 1) {
           var msg = response.msg;
           $("#edit-success-message-wallet").html(
             '<h6 class="success_msg"> wallet updated successfully</h6>'
           );
-          $(".walletUpdateBtn").prop("disabled", true).text("Add Wallet");
           window.location.reload();
         }
         if (response.flag === 0) {
+          $(".walletUpdateBtn").prop("disabled", false)
           $("#error-message-wallet").html("<p>" + msg + "</p>");
           $("#error-message-wallet-edit").html(msg);
         }
@@ -165,6 +171,9 @@ jQuery(document).ready(function ($) {
                     id: id
                 },
                 success: function(response) { 
+                    if(typeof response == 'string'){
+                      response = JSON.parse(response)
+                    }
                     if (response.success) {
                           location.reload();  
                     } else {

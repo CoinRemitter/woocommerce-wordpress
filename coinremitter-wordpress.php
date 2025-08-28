@@ -4,12 +4,12 @@
 Plugin Name:        CoinRemitter Crypto Payment Gateway
 Plugin URI:         https://coinremitter.com/plugins
 Description:        <a href="https://coinremitter.com">coinremitter.com</a> CoinRemitter Crypto Payment Gateway.
-Version:            1.1.3
+Version:            1.1.4
 Author:             CoinRemitter
 Author URI:         https://coinremitter.com
 Requires Plugins:   woocommerce
-Requires at least:  6.7
-Tested up to:       6.7.1
+Requires at least:  6.8
+Tested up to:       6.8.2
 
 
  *
@@ -25,12 +25,14 @@ Tested up to:       6.7.1
  * See the GNU General Public License for more details.
 */
 
-
+$wordpress_version = get_bloginfo('version');
+$woocommerce_version = get_option('woocommerce_version');
 define('COINREMITTER', 'coinremitter');
 define('COINREMITTER_SKEY', 'coinremitterdata');
 define('COINREMITTER_CURL', 'https://api.coinremitter.com/v1');
-DEFINE('COINREMITTER_PLUGIN_VERSION', '1.1.3');
-DEFINE('COINREMITTER_API_VERSION', 'v1');
+DEFINE('COINREMITTER_PLUGIN_VERSION', '1.1.4');
+DEFINE('WORDPRESS_VERSION', $wordpress_version);
+DEFINE('WOOOCOMMERCE_VERSION', $woocommerce_version);
 define('COINREMITTERWC', 'coinremitter-woocommerce');
 define('COINREMITTERWC_AFFILIATE_KEY',     'coinremitter');
 define('CR_PLUGIN_PATH', plugin_dir_url(__FILE__));

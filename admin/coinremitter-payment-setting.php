@@ -227,23 +227,20 @@ function coinremitter_wp_payment_gateways()
                             $minimum_invoice_val = 0.0001;
                         }
 
-                        $total_amount = $total_amt;
-                        $currancy_type = get_woocommerce_currency();
-
-                        $coupons = WC()->cart->get_coupons();
-                        $coupon = new WC_Coupon(key( $coupons ));
-                        $discount_amount = WC()->cart->get_coupon_discount_amount($coupon->get_code());
-                        $tax = $woocommerce->cart->get_shipping_tax();
+                        // $total_amount = $total_amt;
                         $sql_wallet = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE coin_symbol = %s", $v));
                         $coin_name = $sql_wallet->coin_name;
-                        $unit_fiat_amount = $sql_wallet->unit_fiat_amount;
                         $exchange_rate_multiplier = $sql_wallet->exchange_rate_multiplier;
-                        $total_amount = ($total_amount * $exchange_rate_multiplier ) + $shipping + $tax;
-                        $Amount = $total_amount - $discount_amount;
-                        $convert_amount = $Amount / $unit_fiat_amount;
-                        // echo '<pre>';print_r($convert_amount);die;
-                        
-                        $usd_am_currency = number_format($convert_amount, 8);
+                        $total_amount = ($total_amt * $exchange_rate_multiplier) + $shipping;
+                        $currancy_type = get_woocommerce_currency();
+
+                        $result_arr = fiat_cryoto($total_amount, $currancy_type, $v); //api call
+                        $crypto_amount = $result_arr['data'][0]['price'];
+
+                        // $usd_am = $crypto_amount * $exchange_rate_multiplier;
+                        // $total = $usd_am + $shipping;
+                        $usd_am_currency = number_format($crypto_amount, 8);
+                        // }
                         $tmp .= "
                                     <label for='$v' class='align-items-center gap-3 coin_data py-main' rel='" . $v . "' coin='" . $coin_name . "'>
                                       <div class='py-left d-flex'>
@@ -495,7 +492,7 @@ if (!function_exists('coinremitter_cd_meta_box_cb')) {
                 if ($confirmations >= $required_confirmations) {
                     $paid_amount += $amount;
                 }
-                $sql = "SELECT * FROM wp_coinremitter_transactions WHERE order_id = %s";
+                $sql = "SELECT * FROM ".$wpdb->prefix."coinremitter_transactions WHERE order_id = %s";
                 $existing_order = $wpdb->get_results($wpdb->prepare($sql, $order_id));
 
                 if (is_array($existing_order) && count($existing_order) > 0) {
@@ -595,7 +592,7 @@ if (!function_exists('coinremitter_cd_meta_box_cb')) {
                                     }
                                     error_log('webhook Change order data : ' . " trx id : " . $txid . " order id : " . $order_id . ' : ' . $paidAmount . ' : ' . $paidFiatAmount . ' : ' . $order_status_code);
                                     error_log("webhook Status change of trx_id : " . $data_up['trx_id']);
-                                    $updateOrder = "UPDATE `wp_coinremitter_orders` SET `paid_crypto_amount`='$paidAmount', `paid_fiat_amount`='$paidFiatAmount', `order_status`='$order_status_code' WHERE `order_id`='$order_id'";
+                                    $updateOrder = "UPDATE ".$wpdb->prefix."coinremitter_orders SET `paid_crypto_amount`='$paidAmount', `paid_fiat_amount`='$paidFiatAmount', `order_status`='$order_status_code' WHERE `order_id`='$order_id'";
                                     $data_up['status'] = 1;
                                     $wpdb->get_results($updateOrder);
                                 
@@ -610,7 +607,7 @@ if (!function_exists('coinremitter_cd_meta_box_cb')) {
                         'order_id' => $order_id,
                     ];
                     error_log(message: "Order transaction meta update successfully. for trx Id : " . $txid . '' . json_encode($data));
-                    $wpdb->update('wp_coinremitter_transactions', $data, $where);
+                    $wpdb->update($wpdb->prefix.'coinremitter_transactions', $data, $where);
                 }
             }
             if (is_array($existing_order) && count($existing_order) <= 0) {
@@ -621,7 +618,7 @@ if (!function_exists('coinremitter_cd_meta_box_cb')) {
                     'meta' => $meta_json,
                 ];
 
-                $wpdb->insert('wp_coinremitter_transactions', $data);
+                $wpdb->insert($wpdb->prefix.'coinremitter_transactions', $data);
             }
         }
         $expiry_date = $get_order_data[0]->expiry_date;
