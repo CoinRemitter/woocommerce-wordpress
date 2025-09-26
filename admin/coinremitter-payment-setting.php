@@ -840,7 +840,7 @@ if (!function_exists('coinremitter_cd_meta_box_cb')) {
 function fetch_supported_currencies()
 {
     $curl = COINREMITTER_CURL . '/rate/supported-currency';
-    $userAgent = 'CR@' . COINREMITTER_API_VERSION . ',wordpress worwoocommerce-wordpress-master@' . COINREMITTER_PLUGIN_VERSION;
+    $userAgent = 'wordpress@' . WORDPRESS_VERSION . ', Woocommerce@'.WOOOCOMMERCE_VERSION.' crplugin@' . COINREMITTER_PLUGIN_VERSION;
     $args = array(
         'method'    => 'POST',
         'sslverify' => false,
@@ -885,7 +885,7 @@ function calculate_min_invoice_amount($currency_data)
 function fiat_cryoto($amount, $from_currency, $coin_symbol)
 {
     $curl = COINREMITTER_CURL . '/rate/fiat-to-crypto';
-    $userAgent = 'CR@' . COINREMITTER_API_VERSION . ',wordpress worwoocommerce-wordpress-master@' . COINREMITTER_PLUGIN_VERSION;
+    $userAgent = 'wordpress@' . WORDPRESS_VERSION . ', Woocommerce@'.WOOOCOMMERCE_VERSION.' crplugin@' . COINREMITTER_PLUGIN_VERSION;
     $body = array(
         'fiat'        => $from_currency,
         'fiat_amount' => $amount,
@@ -944,7 +944,7 @@ function handle_api_response($response)
 function crypto_to_fiat($currancy_type, $coin_symbol,$crypto_amount=1)
 {
     $crypto_curl =  COINREMITTER_CURL . '/rate/crypto-to-fiat';
-    $userAgent = 'CR@' . COINREMITTER_API_VERSION . ',wordpress worwoocommerce-wordpress-master@' . COINREMITTER_PLUGIN_VERSION;
+    $userAgent = 'wordpress@' . WORDPRESS_VERSION . ', Woocommerce@'.WOOOCOMMERCE_VERSION.' crplugin@' . COINREMITTER_PLUGIN_VERSION;
     $fiat_body = array(
         "fiat" => $currancy_type,
         "crypto_amount" => $crypto_amount,
@@ -972,8 +972,9 @@ function crypto_to_fiat($currancy_type, $coin_symbol,$crypto_amount=1)
 
 // balance api call
 function balance_request($api_key, $password, $body = array())
-{    $api_url = COINREMITTER_CURL . '/wallet/balance';
-    $userAgent = 'CR@' . COINREMITTER_API_VERSION . ',wordpress worwoocommerce-wordpress-master@' . COINREMITTER_PLUGIN_VERSION;
+{   
+    $api_url = COINREMITTER_CURL . '/wallet/balance';
+    $userAgent = 'wordpress@' . WORDPRESS_VERSION . ', Woocommerce@'.WOOOCOMMERCE_VERSION.' crplugin@' . COINREMITTER_PLUGIN_VERSION;
     $args = array(
         'method'    => 'POST',
         'sslverify' => false,
@@ -995,7 +996,7 @@ function balance_request($api_key, $password, $body = array())
 function create_transaction_check($addr, $api_key, $api_password)
 {
     $curl = COINREMITTER_CURL . '/wallet/address/transactions';
-    $userAgent = 'CR@' . COINREMITTER_API_VERSION . ',wordpress worwoocommerce-wordpress-master@' . COINREMITTER_PLUGIN_VERSION;
+    $userAgent = 'wordpress@' . WORDPRESS_VERSION . ', Woocommerce@'.WOOOCOMMERCE_VERSION.' crplugin@' . COINREMITTER_PLUGIN_VERSION;
     $body = array(
         'address' => $addr,
     );
@@ -1027,7 +1028,7 @@ function create_transaction_check($addr, $api_key, $api_password)
 function create_address($coin, $api_key, $api_password)
 {
     $url = COINREMITTER_CURL . '/wallet/address/create';
-    $userAgent = 'CR@' . COINREMITTER_API_VERSION . ',wordpress worwoocommerce-wordpress-master@' . COINREMITTER_PLUGIN_VERSION;
+    $userAgent = 'wordpress@' . WORDPRESS_VERSION . ', Woocommerce@'.WOOOCOMMERCE_VERSION.' crplugin@' . COINREMITTER_PLUGIN_VERSION;
     $body = json_encode(['label' => $coin]);
     $args = [
         'method' => 'POST',
@@ -1051,7 +1052,7 @@ function create_address($coin, $api_key, $api_password)
 function createTransaction($id, $CurrAPIKey, $CurrPassword)
 {
     $trx_url = COINREMITTER_CURL . '/wallet/transaction'; 
-    $userAgent = 'CR@' . COINREMITTER_API_VERSION . ',wordpress worwoocommerce-wordpress-master@' . COINREMITTER_PLUGIN_VERSION;
+    $userAgent = 'wordpress@' . WORDPRESS_VERSION . ', Woocommerce@'.WOOOCOMMERCE_VERSION.' crplugin@' . COINREMITTER_PLUGIN_VERSION;
     $header[] = "Accept: application/json";
     $body = array('id' => $id);
     $args = array(

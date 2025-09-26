@@ -4,7 +4,7 @@ Tags: best crypto payment gateway,crypto payment processor,blockchain API,crypto
 Requires at least: 6.4
 Tested up to: 6.8.2
 Requires PHP: 8.1
-Stable Tag: 1.1.4
+Stable Tag: 1.1.5
 License: GNU Version 3 or Any Later Version
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -119,7 +119,7 @@ We've implemented new API docs with a few advancements.
 Now, the payment section on the checkout page is both shortcode-based as well as block-based.
 The UI designs of the checkout page and the invoice page are changed.
 
-= 1.1.4 =
+= 1.1.5 =
 Code Optimization and compatibility with wordpress 6.8.2
 
 == Upgrade Notice ==    
@@ -172,3 +172,6 @@ The UI designs of the checkout page and the invoice page are changed.
 
 = 1.1.4 =
 Code Optimization and compatibility with wordpress 6.8.2
+
+= 1.1.5 =
+Bug fix and compatibility with wordpress 6.8.2
