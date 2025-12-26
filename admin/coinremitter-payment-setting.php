@@ -40,7 +40,7 @@ function coinremitter_wp_payment_gateways()
             $this->method_title           = __('CoinRemitter Crypto Payment Gateway', COINREMITTERWC);
             $this->method_description      = "<a target='_blank' href='https://coinremitter.com/'></a>";
             $this->has_fields             = false;
-            $this->supports                 = array('subscriptions', 'products');
+            $this->supports                 = array('products', 'refunds', 'pay', 'subscriptions',);
 
             //load the settings
             $this->init_form_fields();
@@ -132,6 +132,38 @@ function coinremitter_wp_payment_gateways()
 
         function coinremitterSetPaymnetOptDesc()
         {
+            //    FIX: ORDER-PAY page custom message 
+            if (is_wc_endpoint_url('order-pay')) {
+
+                global $wpdb;
+
+                // Get order ID
+                $order_id = absint(get_query_var('order-pay'));
+
+                // Fetch stored coin name from your table
+                $table = $wpdb->prefix . 'coinremitter_orders';
+                $coin = $wpdb->get_row(
+                    $wpdb->prepare("SELECT coin_name, coin_symbol FROM $table WHERE order_id = %s", $order_id),
+                    ARRAY_A
+                );
+
+                // If coin is stored → show correct message
+                if (!empty($coin)) {
+                    $coin_name   = esc_html($coin['coin_name']);         // Example: Bitcoin
+                    $coin_symbol = esc_html(strtoupper($coin['coin_symbol'])); // BTC
+
+                    return "<p class='wallet_error_checkout' style='color:#000;font-weight:600;'> 
+                        Pay Using $coin_name ($coin_symbol)
+                    </p>";
+                }
+
+                // If not found, fallback
+                return "<p class='wallet_error_checkout' style='color:#000;font-weight:600;'> 
+                    Pay Using Cryptocurrency
+                </p>";
+            }
+
+
             if (is_checkout()) {
                 coinremitter_wp_plugin_scripts();
 
@@ -311,8 +343,6 @@ function coinremitter_wp_payment_gateways()
             $coinsGet = $this->coinremitterSetPaymnetOptDesc();
             $this->description = $this->description . $coinsGet;
             echo wpautop(wp_kses_post($this->description));
-?>
-<?php
         }
     }
 }

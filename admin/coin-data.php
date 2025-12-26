@@ -297,7 +297,9 @@ function coinremitter_wp_page_summary()
                    
                     if (isset($resultArr['data'])) {
                         $wallet_coin = $resultArr['data'];
-                        $wallet_image = CR_PLUGIN_PATH . 'images/' . strtolower($coin_symbol) . '.png';
+                        //$wallet_image = CR_PLUGIN_PATH . 'images/' . strtolower($coin_symbol) . '.png';
+                        // new functions call to get images 
+                        $wallet_image = cr_get_coin_logo_url($coin_symbol);
                         $wal_img = '<img src="' . esc_url($wallet_image) . '" alt="' . esc_attr($coin_symbol) . '" style="width: 10%;">';
                         $coin_nmame = '<sup> ' . $coin_symbol . '</sup>';
                         $data[] = array(

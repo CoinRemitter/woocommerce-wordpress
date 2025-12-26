@@ -4,12 +4,12 @@
 Plugin Name:        CoinRemitter Crypto Payment Gateway
 Plugin URI:         https://coinremitter.com/plugins
 Description:        <a href="https://coinremitter.com">coinremitter.com</a> CoinRemitter Crypto Payment Gateway.
-Version:            1.1.5
+Version:            1.1.6
 Author:             CoinRemitter
 Author URI:         https://coinremitter.com
 Requires Plugins:   woocommerce
 Requires at least:  6.8
-Tested up to:       6.8.2
+Tested up to:       6.9
 
 
  *
@@ -30,7 +30,7 @@ $woocommerce_version = get_option('woocommerce_version');
 define('COINREMITTER', 'coinremitter');
 define('COINREMITTER_SKEY', 'coinremitterdata');
 define('COINREMITTER_CURL', 'https://api.coinremitter.com/v1');
-DEFINE('COINREMITTER_PLUGIN_VERSION', '1.1.5');
+DEFINE('COINREMITTER_PLUGIN_VERSION', '1.1.6');
 DEFINE('WORDPRESS_VERSION', $wordpress_version);
 DEFINE('WOOOCOMMERCE_VERSION', $woocommerce_version);
 define('COINREMITTERWC', 'coinremitter-woocommerce');
@@ -69,7 +69,7 @@ function coinre_actions_call()
         add_action('admin_menu', 'coinremitter_wp_admin_menu');
 
         // payment name
-        add_filter('woocommerce_payment_gateways', 'coinremitter_wp_gateway_class');
+        // add_filter('woocommerce_payment_gateways', 'coinremitter_wp_gateway_class');
 
         add_action('add_meta_boxes', 'coinremitter_cd_meta_box_add');
 
@@ -88,6 +88,7 @@ add_filter('body_class', 'add_custom_class_to_body');
 
 // Webhook data
 add_action('wc_ajax_coinremitter_webhook_data', 'coinremitter_webhook_data');
+add_action('wc_ajax_nopriv_coinremitter_webhook_data', 'coinremitter_webhook_data');
 
 // Cancel order action
 add_action('wc_ajax_coinremitter_cancel_order', 'coinremitter_cancel_order');
@@ -200,4 +201,31 @@ if (class_exists('CoinremitterPlugin')) {
 add_action( 'upgrader_process_complete', 'update_cr_tables', 10, 2 );
 function update_cr_tables( $upgrader, $options ) {
     coinremitter_wp_table_create();
+}
+
+
+//Get Logo URL Automatically
+function cr_get_coin_logo_url($coin_symbol)
+{
+    $coin_symbol = strtolower(sanitize_text_field($coin_symbol));
+
+    // 1. Plugin folder
+    $plugin_path = CR_PLUGIN_DIR . "images/{$coin_symbol}.png";
+    $plugin_url  = CR_PLUGIN_PATH . "images/{$coin_symbol}.png";
+
+    if (file_exists($plugin_path)) {
+        return $plugin_url;
+    }
+
+    // 2. Uploads folder
+    $upload_dir = wp_upload_dir();
+    $upload_path = $upload_dir["basedir"] . "/coinremitter/{$coin_symbol}.png";
+    $upload_url  = $upload_dir["baseurl"] . "/coinremitter/{$coin_symbol}.png";
+
+    if (file_exists($upload_path)) {
+        return $upload_url;
+    }
+
+    // No image found
+    return '';
 }

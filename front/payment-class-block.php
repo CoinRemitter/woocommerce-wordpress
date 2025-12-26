@@ -19,7 +19,7 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
         $this->settings = get_option('woocommerce_coinremitterpayments_settings', []);
         $this->methods = new WC_Gateway_CoinRemitter();
     }
-    
+
     public function is_active()
     {
         return $this->methods->is_available();
@@ -50,7 +50,7 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
 
     public function get_payment_method_data()
     {
-        
+
         coinremitter_wp_plugin_scripts();
         global $wpdb;
 
@@ -78,10 +78,10 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
         if (isset($woocommerce->cart)) {
             $main_total = $woocommerce->cart->total;
             $total_amt = WC()->cart->subtotal;
-			$shipping = WC()->cart->get_shipping_total();
+            $shipping = WC()->cart->get_shipping_total();
             $tax = $woocommerce->cart->get_shipping_tax();
         }
-        
+
         $tablename = $wpdb->prefix . 'coinremitter_wallets';
         $sql = $wpdb->get_results("SELECT * FROM $tablename");
         foreach ($sql as $row) {
@@ -94,16 +94,16 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
             if ($CurrAPIKey && $CurrPassword) {
                 if ($main_total > 0) {
                     if ($multiplier == 0 || $multiplier == '')
-                    $multiplier = 1;
+                        $multiplier = 1;
 
                     if ($minimum_invoice_val == '' || $minimum_invoice_val == null)
-                    $minimum_invoice_val = 0.0001;
-                
-                if ($main_total >= $minimum_invoice_val) {
-                    $available_coins[] = $coin_symbol;
-                    
-                    $count = 1;
-                    $checkCoin++;
+                        $minimum_invoice_val = 0.0001;
+
+                    if ($main_total >= $minimum_invoice_val) {
+                        $available_coins[] = $coin_symbol;
+
+                        $count = 1;
+                        $checkCoin++;
                     } else {
                         $checkCoin++;
                     }
@@ -121,14 +121,14 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
             return $SetPaymentOpt;
         } else if ($count == 0) {
             $transient_name = 'currency_value';
-			delete_transient($transient_name);
+            delete_transient($transient_name);
             $temp = "<p class='noCoin wallet_error_checkout' >Invoice amount is too low. Choose other payment method !</p>";
             $CryptoOpt = !empty($temp) ? (isset($Script) ? $Script : '') . $temp . '<input type="hidden" name="crpopt" id="crpopt" >' : '';
             $SetPaymentOpt = !empty($CryptoOpt) ? (isset($CoinSript) ? $CoinSript : '') . '<div>' . $CryptoOpt . '</div>' : '';
             return $SetPaymentOpt;
         }
 
-        
+
         $tmp = '';
         $first_coin = true;
         if (is_array($available_coins) && sizeof(value: $available_coins)) {
@@ -137,12 +137,15 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
 
                 $v = trim(strtolower($v));
                 $checked = $first_coin ? ' checked' : '';
-                $wall_Coin_IM =  CR_PLUGIN_PATH . 'images/' . $v . '.png';
+                //$wall_Coin_IM =  CR_PLUGIN_PATH . 'images/' . $v . '.png';
+
+                // new functions call to get images 
+                $wall_Coin_IM = cr_get_coin_logo_url($v);
 
                 if ($multiplier == 0 || $multiplier == '') {
                     $multiplier = 1;
                 }
-    
+
                 if ($minimum_invoice_val == '' || $minimum_invoice_val == null) {
                     $minimum_invoice_val = 0.0001;
                 }
@@ -150,7 +153,7 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
                 $exchange_rate_multiplier = $sql_wallet->exchange_rate_multiplier;
 
                 $total_amount = ($total_amt * $exchange_rate_multiplier ) + $shipping + $tax;
-                
+
                 $addrSql = 'select * from '. $wpdb->prefix . 'coinremitter_wallets where coin_symbol ="' . $v . '"';
                 $getDatas = $wpdb->get_results($addrSql);
                 $unit_fiat_amount = $getDatas[0]->unit_fiat_amount;
@@ -184,7 +187,7 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
         ' . $CryptoOpt . '</div>
         </div>' : '';
 
-        
+
         if (!empty($available_coins[0])) {
             set_transient('currency_value', $available_coins[0], HOUR_IN_SECONDS);
         }

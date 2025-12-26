@@ -57,142 +57,161 @@ function store_rel_value()
 
 function coinremitter_override_return_url($return_url, $order)
 {
+    if (!$order instanceof WC_Order) {
+        return $return_url;
+    }
+
+    // Run invoice page redirect ONLY for coinremitterpayments
+    $payment_method = $order->get_payment_method();
+    if ($payment_method !== 'coinremitterpayments') {
+        return $return_url; // <-- COD, PayPal, Razorpay, etc go to normal thank-you page
+    }
+
     global $wpdb;
     global $woocommerce;
     $coin = get_transient('currency_value');
 
-        if ($coin) {
-            $OrdID = $order->get_id();
-            $order_amount = $order->get_subtotal();
-            $shipping = $order->get_shipping_total();
-            $tax = $woocommerce->cart->get_shipping_tax();
+    if ($coin) {
+        $OrdID = $order->get_id();
+        $order_amount = $order->get_subtotal();
+        $shipping = $order->get_shipping_total();
+        $tax = $woocommerce->cart->get_shipping_tax();
 
-            $tablename = $wpdb->prefix . 'coinremitter_wallets';
-            $sql = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE coin_symbol = %s", $coin));
+        $tablename = $wpdb->prefix . 'coinremitter_wallets';
+        $sql = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE coin_symbol = %s", $coin));
 
-                $currancy_type = get_woocommerce_currency();
-                $CurrAPIKey = decrypt_data($sql->api_key);
-                $CurrPassword = decrypt_data($sql->password);
-                $multiplier = $sql->exchange_rate_multiplier;
-                $unit_fiat_amount = $sql->unit_fiat_amount;
+        $currancy_type = get_woocommerce_currency();
+        $CurrAPIKey = decrypt_data($sql->api_key);
+        $CurrPassword = decrypt_data($sql->password);
+        $multiplier = $sql->exchange_rate_multiplier;
+        $unit_fiat_amount = $sql->unit_fiat_amount;
 
-                $total_amount = ($order_amount * $multiplier ) + $shipping + $tax;
-                $convert_amount = $total_amount / $unit_fiat_amount;
-                $crypto_amount = number_format($convert_amount,8);
-                // $result_arr = fiat_cryoto($total_amount, $currancy_type, $coin); //api call
-                // $crypto_amount = $result_arr['data'][0]['price'];
-              
+        $total_amount = ($order_amount * $multiplier) + $shipping + $tax;
+        $convert_amount = $total_amount / $unit_fiat_amount;
+        $crypto_amount = number_format($convert_amount, 8);
+        // $result_arr = fiat_cryoto($total_amount, $currancy_type, $coin); //api call
+        // $crypto_amount = $result_arr['data'][0]['price'];
 
-            $wc_gateways = new WC_Payment_Gateways();
-            $payment_gateways = $wc_gateways->get_available_payment_gateways();
-            foreach ($payment_gateways as $gateway) {
-                $payment_data = $gateway->id;
-                if($payment_data != 'coinremitterpayments'){
-                    $transient_name = 'currency_value';
-                    delete_transient($transient_name);
-                }
-            }
-            $userID = get_current_user_id();
-            $s_url = site_url();
-            $test_order = new WC_Order($OrdID);
-            $test_order_key = $test_order->get_order_key();
-            $sss_url = $s_url . '/index.php/invoice-page/' . $OrdID . '/?pay_for_order=true&key=' . $test_order_key;
-
-            $currancy_type = get_woocommerce_currency();
-
-            if ($multiplier == 0 && $multiplier == '') {
-                $invoice_exchange_rate = 1;
-            } else {
-                $invoice_exchange_rate = $multiplier;
-            }
-            $multiplier = $sql->exchange_rate_multiplier;
-            $coin_name = $sql->coin_name;
-
-            $result_arr = create_address($coin, $CurrAPIKey, $CurrPassword); //api call address create
-            $result_arrs = $result_arr['success'];
-           $apiMinimum_deposit_amount = $result_arr['data']['minimum_deposit_amount'];
-        //    print_r($apiMinimum_deposit_amount);
-
-            if ($result_arrs == 1) {
-
-                $option_data = get_option('woocommerce_coinremitterpayments_settings');
-                if ($option_data['invoice_expiry'] == 0 || $option_data['invoice_expiry'] == '') {
-                    $invoice_expiry = '';
-                } else {
-                    $invoice_expiry = $option_data['invoice_expiry'];
-                }
-                $expiry_date = null;
-
-                if ($invoice_expiry != "") {
-                    $expiry_date = date("Y/m/d H:i:s", strtotime("+" . $invoice_expiry . " minutes"));
-                }
-                
-                    if ($crypto_amount >= $apiMinimum_deposit_amount) {
-                        $available_coins[] = $coin;
-                        global $wpdb;
-                        $tablename = $wpdb->prefix . 'coinremitter_orders';
-        
-                        $data = array(
-                            'order_id' => $OrdID,
-                            'user_id' => $userID,
-                            'coin_symbol' => sanitize_text_field($coin),
-                            'coin_name' => sanitize_text_field($coin_name),
-                            'crypto_amount' => floatval($crypto_amount),
-                            'fiat_symbol' => sanitize_text_field($currancy_type),
-                            'fiat_amount' => sanitize_text_field($total_amount),
-                            'paid_crypto_amount' => '',
-                            'paid_fiat_amount' => '',
-                            'payment_address' => sanitize_text_field($result_arr['data']['address']),
-                            'qr_code' => sanitize_text_field($result_arr['data']['qr_code']),
-                            'expiry_date' => $expiry_date,
-                            'order_status' => '0',
-                            'created_at' => gmdate("Y-m-d H:i:s"),
-                            'updated_at' => gmdate("Y-m-d H:i:s"),
-                        );
-                        
-                        $inserted = $wpdb->insert($tablename, $data);
-        
-                        if ($inserted === false) {
-                            $error = $wpdb->last_error;
-                            error_log("Failed to insert data into $tablename: $error");
-                        } else {
-                            $address = isset($result_arr['data']['address']) ? $result_arr['data']['address'] : 'N/A';
-                            $qr_code = isset($result_arr['data']['qr_code']) ? $result_arr['data']['qr_code'] : 'N/A';
-                            
-                            // Log the data with proper formatting
-                            error_log(sprintf(
-                                "Data inserted successfully into %s, %d, %s, %s, %f, %s, %f, %s, %s",
-                                $tablename,
-                                $OrdID,
-                                $coin,
-                                $coin_name,
-                                $crypto_amount,
-                                $currancy_type,
-                                $total_amount,
-                                $address,
-                                $qr_code
-                            ));
-                        }
-                        update_post_meta($OrdID, '_order_crypto_price', $crypto_amount);
-                        update_post_meta($OrdID, '_order_crypto_coin', $coin);
-        
-                        if ($payment_data == 'coinremitterpayments') {
-                            $modified_url = $sss_url;
-                            return $modified_url;
-                        }
-                    } else {
-                        // echo 'If the cart total is less than the minimum value';
-                        wc_add_notice(__('If the cart total is less than the minimum value'), 'error');                   
-                        // }
-                        return false;
-                    }
-
-            } else {
-                wp_delete_post($OrdID, force_delete: true);
-                wc_add_notice(__($result_arr['msg']), 'error');
-            }
+        // Delete transient ONLY if the customer did NOT select CoinRemitter
+        if ($order->get_payment_method() !== 'coinremitterpayments') {
+            delete_transient('currency_value');
         }
 
+        // $wc_gateways = new WC_Payment_Gateways();
+        // $payment_gateways = $wc_gateways->get_available_payment_gateways();
+        // foreach ($payment_gateways as $gateway) {
+        //     $payment_data = $gateway->id;
+        //     if ($payment_data != 'coinremitterpayments') {
+        //         $transient_name = 'currency_value';
+        //         delete_transient($transient_name);
+        //     }
+        // }
+
+        $userID = get_current_user_id();
+        $s_url = site_url();
+        $test_order = new WC_Order($OrdID);
+        $test_order_key = $test_order->get_order_key();
+        $sss_url = $s_url . '/index.php/invoice-page/' . $OrdID . '/?pay_for_order=true&key=' . $test_order_key;
+
+        $currancy_type = get_woocommerce_currency();
+
+        if ($multiplier == 0 && $multiplier == '') {
+            $invoice_exchange_rate = 1;
+        } else {
+            $invoice_exchange_rate = $multiplier;
+        }
+        $multiplier = $sql->exchange_rate_multiplier;
+        $coin_name = $sql->coin_name;
+
+        $result_arr = create_address($coin, $CurrAPIKey, $CurrPassword); //api call address create
+        $result_arrs = $result_arr['success'];
+        $apiMinimum_deposit_amount = $result_arr['data']['minimum_deposit_amount'];
+        //    print_r($apiMinimum_deposit_amount);
+
+        if ($result_arrs == 1) {
+
+            $option_data = get_option('woocommerce_coinremitterpayments_settings');
+            if ($option_data['invoice_expiry'] == 0 || $option_data['invoice_expiry'] == '') {
+                $invoice_expiry = '';
+            } else {
+                $invoice_expiry = $option_data['invoice_expiry'];
+            }
+            $expiry_date = null;
+
+            if ($invoice_expiry != "") {
+                $expiry_date = date("Y/m/d H:i:s", strtotime("+" . $invoice_expiry . " minutes"));
+            }
+
+            if ($crypto_amount >= $apiMinimum_deposit_amount) {
+                $available_coins[] = $coin;
+                global $wpdb;
+                $tablename = $wpdb->prefix . 'coinremitter_orders';
+
+                $data = array(
+                    'order_id' => $OrdID,
+                    'user_id' => $userID,
+                    'coin_symbol' => sanitize_text_field($coin),
+                    'coin_name' => sanitize_text_field($coin_name),
+                    'crypto_amount' => floatval($crypto_amount),
+                    'fiat_symbol' => sanitize_text_field($currancy_type),
+                    'fiat_amount' => sanitize_text_field($total_amount),
+                    'paid_crypto_amount' => '',
+                    'paid_fiat_amount' => '',
+                    'payment_address' => sanitize_text_field($result_arr['data']['address']),
+                    'qr_code' => sanitize_text_field($result_arr['data']['qr_code']),
+                    'expiry_date' => $expiry_date,
+                    'order_status' => '0',
+                    'created_at' => gmdate("Y-m-d H:i:s"),
+                    'updated_at' => gmdate("Y-m-d H:i:s"),
+                );
+
+                $inserted = $wpdb->insert($tablename, $data);
+
+                if ($inserted === false) {
+                    $error = $wpdb->last_error;
+                    error_log("Failed to insert data into $tablename: $error");
+                } else {
+                    $address = isset($result_arr['data']['address']) ? $result_arr['data']['address'] : 'N/A';
+                    $qr_code = isset($result_arr['data']['qr_code']) ? $result_arr['data']['qr_code'] : 'N/A';
+
+                    // Log the data with proper formatting
+                    error_log(sprintf(
+                        "Data inserted successfully into %s, %d, %s, %s, %f, %s, %f, %s, %s",
+                        $tablename,
+                        $OrdID,
+                        $coin,
+                        $coin_name,
+                        $crypto_amount,
+                        $currancy_type,
+                        $total_amount,
+                        $address,
+                        $qr_code
+                    ));
+                }
+                update_post_meta($OrdID, '_order_crypto_price', $crypto_amount);
+                update_post_meta($OrdID, '_order_crypto_coin', $coin);
+
+                // Return invoice page only for CoinRemitter
+                if ($payment_method === 'coinremitterpayments') {
+                    return $sss_url;
+                }
+                // if ($payment_data == 'coinremitterpayments') {
+                //     $modified_url = $sss_url;
+                //     return $modified_url;
+                // }
+
+
+            } else {
+                // echo 'If the cart total is less than the minimum value';
+                wc_add_notice(__('If the cart total is less than the minimum value'), 'error');
+                // }
+                return false;
+            }
+        } else {
+            wp_delete_post($OrdID, force_delete: true);
+            wc_add_notice(__($result_arr['msg']), 'error');
+        }
+    }
 }
 
 
@@ -206,6 +225,11 @@ function coinremitter_webhook_data()
     // echo 'coinremitter_webhook_data';
     global $wpdb;
     $addr = isset($_GET['addr']) ? sanitize_text_field($_GET['addr']) : '';
+    if (empty($addr)) {
+        error_log('CoinRemitter Webhook: missing addr parameter');
+        wp_send_json_error(['message' => 'Missing addr'], 400);
+        exit;
+    }
     $orderWtablename = $wpdb->prefix . 'coinremitter_orders';
     $order_query = "SELECT * FROM $orderWtablename WHERE payment_address = '" . $addr . "' ";
     $order_data = $wpdb->get_results($order_query);
@@ -220,7 +244,7 @@ function coinremitter_webhook_data()
         $fiat_amount = $order_data[0]->fiat_amount;
 
         $order = new WC_Order($order_id);
-        
+
         $order_key = $order->get_order_key();
         $wcOrderStatus = $order->get_status();
 
@@ -231,7 +255,7 @@ function coinremitter_webhook_data()
             $api_key = decrypt_data($sql->api_key);
             $api_password = decrypt_data($sql->password);
         }
-        
+
         $transaction_details = create_transaction_check($addr, $api_key, $api_password); //api call
         // echo '<pre>';print_r($transaction_details);echo '</pre>';
 
@@ -273,11 +297,11 @@ function coinremitter_webhook_data()
             if ($confirmations >= $required_confirmations) {
                 $paid_amount += $amount;
             }
-            $sql = "SELECT * FROM ".$wpdb->prefix."coinremitter_transactions WHERE order_id = %s";
+            $sql = "SELECT * FROM " . $wpdb->prefix . "coinremitter_transactions WHERE order_id = %s";
             $existing_order = $wpdb->get_results($wpdb->prepare($sql, $order_id));
 
             if (is_array($existing_order) && count($existing_order) > 0) {
-            
+
                 $fiat_amount = 0.05;       // Amount in fiat (USD)
                 $fiat_currency = 'USD';    // Fiat currency
                 $result_arr = fiat_cryoto($fiat_amount, $fiat_currency, $coin_symbol); //api call
@@ -304,12 +328,12 @@ function coinremitter_webhook_data()
 
                                 $paidAmount +=  $amount;
                                 error_log("webhook New paid amount : " . $paidAmount . " Trx_id : " . $txid);
-                                $walletTotalAmount =  ($amount * $paidFiatAmount) / $paidAmount; 
-                                
+                                $walletTotalAmount =  ($amount * $paidFiatAmount) / $paidAmount;
+
                                 $paidFiatAmount += $walletTotalAmount;
                                 $paidFiatAmtWithTrunc = $paidAmount + $fiat_price;
 
-                                error_log("webhook trucationVal : " . $paidFiatAmtWithTrunc . " walletTotalAmount: " . $walletTotalAmount . "paidFiatAmount". $paidFiatAmount. "confirmations". $confirmations);
+                                error_log("webhook trucationVal : " . $paidFiatAmtWithTrunc . " walletTotalAmount: " . $walletTotalAmount . "paidFiatAmount" . $paidFiatAmount . "confirmations" . $confirmations);
 
                                 $crypto_amount = $order_data[0]->crypto_amount;
                                 $fiat_amount = $order_data[0]->fiat_amount;
@@ -371,16 +395,14 @@ function coinremitter_webhook_data()
 
                                 }
                                 error_log('webhook Change order data : ' . " trx id : " . $txid . " order id : " . $order_id . ' : ' . $paidAmount . ' : ' . $paidFiatAmount . ' : ' . $order_status_code);
-                                
-                                    error_log("webhook Status change of trx_id : " . $data_up['trx_id'] ."confirmations " . $confirmations);
-                                    $updateOrder = "UPDATE ".$wpdb->prefix."coinremitter_orders SET `paid_crypto_amount`='$paidAmount', `paid_fiat_amount`='$paidFiatAmount', `order_status`='$order_status_code' WHERE `order_id`='$order_id'";
-                                    $data_up['status'] = 1;
-                                    $wpdb->get_results($updateOrder);
-                                
+
+                                error_log("webhook Status change of trx_id : " . $data_up['trx_id'] . "confirmations " . $confirmations);
+                                $updateOrder = "UPDATE " . $wpdb->prefix . "coinremitter_orders SET `paid_crypto_amount`='$paidAmount', `paid_fiat_amount`='$paidFiatAmount', `order_status`='$order_status_code' WHERE `order_id`='$order_id'";
+                                $data_up['status'] = 1;
+                                $wpdb->get_results($updateOrder);
                             }
                         }
                     }
-                  
                 }
                 $data = [
                     'meta' => json_encode($meta_data),
@@ -389,7 +411,7 @@ function coinremitter_webhook_data()
                     'order_id' => $order_id,
                 ];
                 error_log(message: "Order transaction meta update successfully. for trx Id : " . $txid . '' . json_encode($data));
-                $wpdb->update($wpdb->prefix.'coinremitter_transactions', $data, $where);
+                $wpdb->update($wpdb->prefix . 'coinremitter_transactions', $data, $where);
             }
         }
         // if (count($existing_order) <= 0) {
@@ -401,21 +423,21 @@ function coinremitter_webhook_data()
                 'meta' => $meta_json,
             ];
 
-            $wpdb->insert($wpdb->prefix.'coinremitter_transactions', $data);
+            $wpdb->insert($wpdb->prefix . 'coinremitter_transactions', $data);
         }
         // awaiting data
 
-        $webhook_data = "SELECT * FROM ".$wpdb->prefix."coinremitter_transactions WHERE order_id = '" . $order_id . "'";
+        $webhook_data = "SELECT * FROM " . $wpdb->prefix . "coinremitter_transactions WHERE order_id = '" . $order_id . "'";
         $web_hook = $wpdb->get_results($webhook_data);
         if (isset($web_hook[0]) && is_object($web_hook[0]) && isset($web_hook[0]->meta)) {
             $meta_data = json_decode($web_hook[0]->meta, true);
         } else {
             $meta_data = null;
         }
-        
+
 
         $web_hook_data = '';
-        $noexpitytime = 0; 
+        $noexpitytime = 0;
         if (count($web_hook) === 1 || $expiry_date == "") {
             $noexpitytime = 1;
         } else {
@@ -601,10 +623,10 @@ if (!function_exists('coinremitter_cancel_order')) {
         $order = wc_get_order($order_id);
         $order_canclled = $order->get_cancel_order_url();
 
-        $tran_data = "SELECT * FROM ".$wpdb->prefix."coinremitter_transactions WHERE order_id = '" . $order_id . "'";
+        $tran_data = "SELECT * FROM " . $wpdb->prefix . "coinremitter_transactions WHERE order_id = '" . $order_id . "'";
         $trnweb_hook = $wpdb->get_results($tran_data);
 
-        $webhook_data = "SELECT * FROM ".$wpdb->prefix."coinremitter_orders WHERE order_id = '$order_id'";
+        $webhook_data = "SELECT * FROM " . $wpdb->prefix . "coinremitter_orders WHERE order_id = '$order_id'";
         $web_hook = $wpdb->get_results($webhook_data);
         $expiry_date = $web_hook[0]->expiry_date;
 
@@ -614,7 +636,7 @@ if (!function_exists('coinremitter_cancel_order')) {
             $order->update_status('cancelled');
             $status_code = COINREMITTER_INV_EXPIRED;
             $status = 'Expired';
-            $sql = "UPDATE ".$wpdb->prefix."coinremitter_orders  SET `order_status`='" . $status_code . "' WHERE  `order_id` = $order_id";
+            $sql = "UPDATE " . $wpdb->prefix . "coinremitter_orders  SET `order_status`='" . $status_code . "' WHERE  `order_id` = $order_id";
             $wpdb->get_results($sql);
         }
         $Result['url'] = $order_canclled;
@@ -633,6 +655,12 @@ function coinremitter_thank_you_field_display_cust_order_meta($d)
 {
     error_log('coinremitter_thank_you_field_display_cust_order_meta');
     global $wpdb;
+
+    // Show ONLY for CoinRemitter payment method
+    if ($d->get_payment_method() !== 'coinremitterpayments') {
+        return;
+    }
+
     $dd = json_decode($d, true);
     if (isset($_GET['order-received'])) {
         $order_id = sanitize_text_field($_GET['order-received']);
@@ -640,11 +668,11 @@ function coinremitter_thank_you_field_display_cust_order_meta($d)
         $order_id = $d->get_order_number();
     }
 
-    $webhook_data = "SELECT * FROM ".$wpdb->prefix."coinremitter_transactions WHERE order_id = '" . $order_id . "'";
+    $webhook_data = "SELECT * FROM " . $wpdb->prefix . "coinremitter_transactions WHERE order_id = '" . $order_id . "'";
     $web_hook = $wpdb->get_results($webhook_data);
     $meta_data = json_decode($web_hook[0]->meta, true);
 
-    $addrSql = 'select * from '.$wpdb->prefix.'coinremitter_orders where order_id ="' . $order_id . '"';
+    $addrSql = 'select * from ' . $wpdb->prefix . 'coinremitter_orders where order_id ="' . $order_id . '"';
     $getDatas = $wpdb->get_results($addrSql);
     $getData = $getDatas[0];
     $coin_type = $getData->coin_symbol;
@@ -656,101 +684,157 @@ function coinremitter_thank_you_field_display_cust_order_meta($d)
     $status = $getData->order_status;
     $pending_amount = $total_amount - $paid_amount;
 
-    if ($status == COINREMITTER_INV_PENDING) {
+    // if ($status == COINREMITTER_INV_PENDING) {
 
-        $order_status = "Pending";
-    } else if ($status == COINREMITTER_INV_UNDER_PAID) {
+    //     $order_status = "Pending";
+    // } else if ($status == COINREMITTER_INV_UNDER_PAID) {
 
-        $order_status = "Under paid";
-    } else if ($status == COINREMITTER_INV_OVER_PAID) {
+    //     $order_status = "Under paid";
+    // } else if ($status == COINREMITTER_INV_OVER_PAID) {
 
-        $order_status = "Over paid";
-    } else if ($status == COINREMITTER_INV_PAID) {
+    //     $order_status = "Over paid";
+    // } else if ($status == COINREMITTER_INV_PAID) {
 
-        $order_status = "Paid";
+    //     $order_status = "Paid";
+    // }
+
+
+    // Get Woo order status
+    $woo_status = $d->get_status(); // e.g., 'completed', 'pending', 'cancelled'
+
+    if ($woo_status === 'cancelled') {
+        $order_status = "Cancelled";
+    } else {
+        // Original CoinRemitter mapping
+        if ($status == COINREMITTER_INV_PENDING) {
+            $order_status = "Pending";
+        } else if ($status == COINREMITTER_INV_UNDER_PAID) {
+            $order_status = "Under paid";
+        } else if ($status == COINREMITTER_INV_OVER_PAID) {
+            $order_status = "Over paid";
+        } else if ($status == COINREMITTER_INV_PAID) {
+            $order_status = "Paid";
+        }
     }
 
 ?>
 
-    <div class="thank-page">
-        <h2>CoinRemitter</h2>
-        <div class="table-responsive">
-            <table>
-                <tbody>
-                    <tr>
-                        <td>
-                            <span>Payment Address</span>
-                            <div class="t--value"><?php echo $address ?></div>
-                        </td>
-                        <td>
-                            <span>Payment Date</span>
-                            <div class="t--value"><?php echo $payments_date ?> (UTC)</div>
-                        </td>
-                        <td>
-                            <span>Payment Status</span>
-                            <?php if($status == 1){ ?>
-                            <div class="alert alert-success" role="alert"><?php echo $order_status ?></div> <?php } else { ?>
-                                <div class="alert alert-primary" role="alert"><?php echo $order_status ?></div>
-                           <?php } ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="pt-0 pb-0" colspan="2">
-                            <table>
-                                <tbody>
-                                    <?php
-                                    foreach ($meta_data as $transaction) {
-                                        $created_at = $transaction['created_at'];
-                                        $trx_id = $transaction['trx_id'];
-                                        $explorer_url = $transaction['explorer_url'];
-                                        $crypto_amount = $transaction['crypto_amount'];
-                                 ?>
-                                            <tr class="i--value">
-                                                <td>
-                                                    <a href="<?php echo $explorer_url; ?>"><?php echo $trx_id; ?></a>
-                                                    <span><?php echo $created_at; ?> (UTC)</span>
-                                                </td>
-                                                <td>
-                                                    <div class="t--value text-end"><?php echo $crypto_amount ?> <br> <span><?php echo $coin_type ?></span></div>
-                                                </td>
-                                            </tr> <?php
-                                    }
-                                    ?>
-                                </tbody>
-                            </table>
-                        </td>
-                        <td class="pt-0 pb-0">
-                            <table>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <div class="tpay-statys">
-                                                <p>Total Amount</p>
-                                                <div class="t--value text-end"><?php echo number_format($total_amount, 8) ?><sub><?php echo $coin_type ?></sub></div>
-                                            </div>
-                                            <div class="tpay-statys">
-                                                <p>Paid Amount</p>
-                                                <div class="t--value text-end"><?php echo number_format($paid_amount, 8) ?><sub><?php echo $coin_type ?></sub></div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                        <div class="tpay-statys">
-                                                <p>Pending Amount</p>
-                                                <div class="t--value text-end"><?php echo number_format($pending_amount, 8) ?><sub><?php echo $coin_type ?></sub></div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    <div class="thank-page container card p-4 border shadow-sm rounded">
+
+        <h2 class="mb-4">CoinRemitter</h2>
+
+        <!-- SECTION 1 → MAIN INFO -->
+        <div class="row g-3 mb-4">
+
+            <div class="col-md-4">
+                <div class="card p-3 h-100 shadow-sm">
+                    <span class="fw-bold">Payment Address</span>
+                    <div class="mt-1 t--value"><?php echo $address ?></div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card p-3 h-100 shadow-sm">
+                    <span class="fw-bold">Payment Date</span>
+                    <div class="mt-1 t--value"><?php echo $payments_date ?> (UTC)</div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card p-3 h-100 shadow-sm">
+                    <span class="fw-bold">Payment Status</span>
+
+                    <?php if ($order_status === "Paid") { ?>
+                        <div class="alert alert-success mt-2 py-1 mb-0"><?php echo $order_status ?></div>
+                    <?php } elseif ($order_status === "Cancelled") { ?>
+                        <div class="alert alert-danger mt-2 py-1 mb-0"><?php echo $order_status ?></div>
+                    <?php } else { ?>
+                        <div class="alert alert-primary mt-2 py-1 mb-0"><?php echo $order_status ?></div>
+                    <?php } ?>
+
+                </div>
+            </div>
+
         </div>
+
+        <!-- NEW 2-COLUMN LAYOUT: LEFT (TRANSACTIONS), RIGHT (TOTALS) -->
+        <div class="row g-4">
+
+            <!-- LEFT COLUMN → TRANSACTIONS -->
+            <div class="col-md-6 d-flex">
+                <div class="card h-100 shadow-sm flex-fill">
+                    <div class="card-body">
+
+                        <h5 class="mb-3">Transactions</h5>
+
+                        <div class="list-group">
+
+                            <?php foreach ($meta_data as $transaction) { ?>
+                                <div class="list-group-item">
+
+                                    <a href="<?php echo $transaction['explorer_url']; ?>"
+                                        class="fw-bold text-break d-block mb-1 text-danger">
+                                        <?php echo $transaction['trx_id']; ?>
+                                    </a>
+
+                                    <span class="text-muted small d-block mb-2">
+                                        <?php echo $transaction['created_at']; ?> (UTC)
+                                    </span>
+
+                                    <div class="d-flex justify-content-between">
+                                        <span class="fw-bold t--value">
+                                            <?php echo $transaction['crypto_amount']; ?>
+                                        </span>
+                                        <span class="text-muted">
+                                            <?php echo $coin_type; ?>
+                                        </span>
+                                    </div>
+
+                                </div>
+                            <?php } ?>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN → TOTALS -->
+            <div class="col-md-6 d-flex">
+                <div class="card h-100 shadow-sm flex-fill p-3 ">
+                    <!-- Pending Amount -->
+
+                    <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-2 border-secondary pb-2">
+                        <span class="fw-semibold">Pending Amount</span>
+                        <span class="t--value text-end fw-bold text-danger">
+                            <?php echo number_format($pending_amount, 8); ?>
+                            <sub><?php echo $coin_type ?></sub>
+                        </span>
+                    </div>
+                    <!-- Paid Amount -->
+                    <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-2 border-secondary pb-2">
+                        <span class="fw-semibold">Paid Amount</span>
+                        <span class="t--value text-end fw-bold">
+                            <?php echo number_format($paid_amount, 8); ?>
+                            <sub><?php echo $coin_type ?></sub>
+                        </span>
+                    </div>
+                    <!-- Total Amount -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold">Total Amount</span>
+                        <span class="t--value text-end fw-bold">
+                            <?php echo number_format($total_amount, 8); ?>
+                            <sub><?php echo $coin_type ?></sub>
+                        </span>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
     </div>
-    
+
 <?php
     // echo wp_kses_normalize_entities($div_html);
 }
@@ -800,7 +884,7 @@ function callback_parse_request_coinremitter()
     if (in_array(strtolower(coinremitter_right($_SERVER["REQUEST_URI"], "/", false)), array("?coinremitter.webhook", "index.php?coinremitter.webhook", "?coinremitter_webhook", "index.php?coinremitter_webhook", "?coinremitter-webhook", "index.php?coinremitter-webhook"))) {
 
         ob_clean();
-        include_once(plugin_dir_path(__FILE__) . '/coinremitter.webhook.php');  
+        include_once(plugin_dir_path(__FILE__) . '/coinremitter.webhook.php');
         ob_flush();
         die;
     }
@@ -813,21 +897,23 @@ function callback_parse_request_coinremitter()
 #region admin scripts
 #--------------------------------------------------------------------------------
 
-function coinremitter_wp_admin_script() {
+function coinremitter_wp_admin_script()
+{
 
     wp_enqueue_style('cr-style-bootstrap-admin', CR_PLUGIN_PATH . '/css/bootstrapcustom.min.css');
     wp_enqueue_style('bootstrapmin', CR_PLUGIN_PATH . '/css/bootstrapmin.css');
     wp_enqueue_style('custom-apmin', CR_PLUGIN_PATH . '/css/admin-custom.css');
     wp_enqueue_script('bootstrapminjs', CR_PLUGIN_PATH . '/js/bootstrap1.min.js', array('jquery'));
     wp_enqueue_script('admin-jquery-js', CR_PLUGIN_PATH . '/js/jquery.min.js', array('jquery'));
-    wp_enqueue_script('my-ajax-script', CR_PLUGIN_PATH .'/js/admin-custom.js', array('jquery'));
+    wp_enqueue_script('my-ajax-script', CR_PLUGIN_PATH . '/js/admin-custom.js', array('jquery'));
     wp_localize_script('my-ajax-script', 'my_ajax_obj', array(
         'ajaxurl' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('my_nonce_action')
     ));
 }
 
-function script_common(){
+function script_common()
+{
     wp_enqueue_style('cr-style', CR_PLUGIN_PATH . '/css/front.css');
     wp_enqueue_style('cr-style-bootstrap-admin', CR_PLUGIN_PATH . '/css/bootstrapcustom.min.css');
     wp_enqueue_style('bootstrapmin', CR_PLUGIN_PATH . '/css/bootstrapmin.css');
@@ -840,22 +926,26 @@ function script_common(){
 #--------------------------------------------------------------------------------
 
 
-function coinremitter_wp_plugin_scripts() {
+function coinremitter_wp_plugin_scripts()
+{
     // Register the script
     if (is_page('invoice-page') || is_wc_endpoint_url('order-received')) {
         wp_enqueue_style('roboto_font', 'https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
         script_common();
         wp_enqueue_script('checkout-js', CR_PLUGIN_PATH . '/js/checkout.js', array('jquery'));
-}
+    }
 
-if (is_checkout()) {
-    if (is_checkout_block()) {
+    if (is_checkout()) {
+        if (is_checkout_block()) {
+            script_common();
+        }
         script_common();
-    }   
-    script_common();
+    }
+    if (
+        is_wc_endpoint_url('order-received') ||
+        is_wc_endpoint_url('view-order')
+    ) {
+
+        wp_enqueue_style('bootstrapmin', CR_PLUGIN_PATH . '/css/bootstrap.min.css');
+    }
 }
-
-}
-
-
-

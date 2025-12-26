@@ -1,5 +1,71 @@
 <?php
 
+/**
+ * Download coin logo from API and save into uploads/coinremitter/COINSYMBOL.png
+ */
+function cr_save_coin_logo($api_data)
+{
+    if (empty($api_data['coin_symbol']) || empty($api_data['coin_logo'])) {
+        error_log("CR ERROR: Missing coin symbol or coin logo.");
+        return false;
+    }
+
+    // Lowercase symbol for file naming
+    $coin_symbol = strtolower(sanitize_text_field($api_data['coin_symbol']));
+    $image_url   = esc_url_raw($api_data['coin_logo']);
+
+    // === 1. Check plugin images folder ===
+    $plugin_dir  = CR_PLUGIN_DIR . 'images/';
+    $plugin_file = $plugin_dir . $coin_symbol . '.png';
+
+    if (file_exists($plugin_file)) {
+        error_log("CR INFO: Logo found in plugin folder => $plugin_file");
+        return $plugin_file;
+    }
+
+    // === 2. Check uploads folder ===
+    $upload_dir  = wp_upload_dir();
+    $upload_path = $upload_dir["basedir"] . "/coinremitter/";
+    $upload_file = $upload_path . $coin_symbol . '.png';
+
+    if (file_exists($upload_file)) {
+        error_log("CR INFO: Logo found in uploads folder => $upload_file");
+        return $upload_file;
+    }
+
+    // Create directory if not exists
+    if (!file_exists($upload_path)) {
+        wp_mkdir_p($upload_path);
+        error_log("CR INFO: Created uploads/coinremitter folder.");
+    }
+
+    // === 3. Fetch image from API ===
+    $response = wp_remote_get($image_url, [
+        'timeout'   => 30
+    ]);
+
+    if (is_wp_error($response)) {
+        error_log("CR ERROR: Failed fetching logo: " . $response->get_error_message());
+        return false;
+    }
+
+    $image_data = wp_remote_retrieve_body($response);
+
+    if (empty($image_data)) {
+        error_log("CR ERROR: Empty image data for: $coin_symbol");
+        return false;
+    }
+
+    // === 4. Save image ===
+    if (file_put_contents($upload_file, $image_data) === false) {
+        error_log("CR ERROR: Cannot save logo to: $upload_file");
+        return false;
+    }
+
+    error_log("CR SUCCESS: Logo saved => $upload_file");
+    return $upload_file;
+}
+
 #--------------------------------------------------------------------------------
 #region coinremitter wallet add
 #--------------------------------------------------------------------------------
@@ -32,6 +98,9 @@ function coinremitter_wp_wallet_add()
     $coin_name = $wallet_coin['coin']?? '';
     $coin_symbol = $wallet_coin['coin_symbol']?? '';
 
+    /** ⭐ Download coin logo here */
+        cr_save_coin_logo($wallet_coin);
+        
     $currancy_type = get_woocommerce_currency();
     $supported_currencies = fetch_supported_currencies();
     

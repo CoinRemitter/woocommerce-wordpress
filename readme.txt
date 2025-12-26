@@ -2,9 +2,9 @@
 Contributors: coinremitter
 Tags: best crypto payment gateway,crypto payment processor,blockchain API,crypto API,bitcoin api
 Requires at least: 6.4
-Tested up to: 6.8.2
+Tested up to: 6.9
 Requires PHP: 8.1
-Stable Tag: 1.1.5
+Stable Tag: 1.1.6
 License: GNU Version 3 or Any Later Version
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -27,7 +27,7 @@ Coinremitter Official Bitcoin/Altcoin Payment Gateway for WordPress. Accept Cryp
 * Low transaction fee
 
 == Installation ==
-1. First you must have to install woocommerce plugin (version 9.5.1) and have to activate it.
+1. First you must have to install latest woocommerce plugin and activate it.
 2. Click on the **PLUGIN** option (you will find It In the sidebar). 	
 3. Then select on **ADD NEW PLUGINS** option (you will find it on the top of the page)
 4. Now click on the search option and type **Coinremitter Crypto Payment Gateway**.
@@ -86,7 +86,7 @@ Withdrawal is only available on our official website only. You can log in to you
 
 == Frequently Asked Questions ==
 =Which cryptocurrencies are supported in this plugin? = 
-	Bitcoin Cash, Binance (BSC), Bitcoin, Dash, Dogecoin, Ethereum, Litecoin, Testcoin, Tron, USDT (TRC20), USDT (ERC20), Zano.
+	Bitcoin Cash, Binance (BSC), Bitcoin, Dash, Dogecoin, Ethereum, Litecoin, Testcoin, Tron, USDC ERC20, Tether USD ERC20, Tether USD TRC20 , Zano.
 
 =Can I accept multiple coins on my WordPress website?=
 	Yes! you can accept multiple coins in your WordPress websites. As per the different coin wallets which you have created on your WordPress website. 
@@ -175,3 +175,8 @@ Code Optimization and compatibility with wordpress 6.8.2
 
 = 1.1.5 =
 Bug fix and compatibility with wordpress 6.8.2
+
+= 1.1.6 =
+Code Optimization and compatibility with wordpress 6.9 and woocommerce 10.3.7
+Fixes:Fixed an issue where payment gateways could conflict with each other.
+New Feature:If a customer doesn’t complete their payment at checkout, they can now easily complete it later using order->pay.

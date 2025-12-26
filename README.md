@@ -2,14 +2,14 @@ CoinRemitter Crypto Payment Gateway
 -----------------------------------------------------------
 WordPress Woocommerce Plugin URL: [https://wordpress.org/plugins/coinremitter-crypto-payment-gateway/](https://wordpress.org/plugins/coinremitter-crypto-payment-gateway/)
 
-Version 1.1.5
+Version 1.1.6
 
-Coinremitter is [crypto payments](http://coinremitter.com) service for WordPress. Accept Bitcoin, Tron, Binance (BEP20), USDT TRC20, USDT ERC20, Ethereum, Litecoin, Dogecoin, Tether, Dash, Zano etc.
+Coinremitter is [crypto payments](http://coinremitter.com) service for WordPress. Accept Bitcoin Cash, Binance (BSC), Bitcoin, Dash, Dogecoin, Ethereum, Litecoin, Testcoin, Tron, USDC ERC20, Tether USD ERC20, Tether USD TRC20 , Zano.etc.
 
 * Author URI: https://coinremitter.com
 * Requires at least: WordPress 6.0 and WooCommerce 3.5
-* Tested up to: 6.8.2
-* Stable Tag: 1.1.5
+* Tested up to: 6.9
+* Stable Tag: 1.1.6
 * License: GNU Version 3 or Any Later Version
 * License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
