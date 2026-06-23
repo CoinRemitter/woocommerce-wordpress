@@ -2,9 +2,9 @@
 Contributors: coinremitter
 Tags: best crypto payment gateway,crypto payment processor,blockchain API,crypto API,bitcoin api
 Requires at least: 6.4
-Tested up to: 6.9
+Tested up to: 7.0
 Requires PHP: 8.1
-Stable Tag: 1.1.6
+Stable Tag: 1.1.7
 License: GNU Version 3 or Any Later Version
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -176,7 +176,7 @@ Code Optimization and compatibility with wordpress 6.8.2
 = 1.1.5 =
 Bug fix and compatibility with wordpress 6.8.2
 
-= 1.1.6 =
-Code Optimization and compatibility with wordpress 6.9 and woocommerce 10.3.7
+= 1.1.7 =
+Code Optimization and compatibility with wordpress 7.0 and woocommerce 10.3.7
 Fixes:Fixed an issue where payment gateways could conflict with each other.
 New Feature:If a customer doesn’t complete their payment at checkout, they can now easily complete it later using order->pay.
