@@ -432,7 +432,7 @@ if (!function_exists('coinremitter_cd_meta_box_add')) {
         $order_id = isset($_GET['post']) ? $_GET['post'] : '';
         $method = "Payment Detail (Coinremitter)";
         $order_table = $wpdb->prefix . 'coinremitter_orders';
-        $payment_query = "SELECT * FROM $order_table WHERE order_id = '" . $order_id . "'";
+        $payment_query = $wpdb->prepare("SELECT * FROM $order_table WHERE order_id = %s", $order_id);
         $payment_details = $wpdb->get_results($payment_query);
         $args = array(
             'post_type'         => 'shop_order',
@@ -458,7 +458,7 @@ if (!function_exists('coinremitter_cd_meta_box_cb')) {
         $order = new WC_Order($order_id);
 
         $order_table = $wpdb->prefix . 'coinremitter_orders';
-        $payment_query = "SELECT * FROM $order_table WHERE order_id = '" . $order_id . "'";
+        $payment_query = $wpdb->prepare("SELECT * FROM $order_table WHERE order_id = %s", $order_id);
         $get_order_data = $wpdb->get_results($payment_query);
         $address = $get_order_data[0]->payment_address;
         $coin_type = $get_order_data[0]->coin_symbol;
@@ -622,9 +622,18 @@ if (!function_exists('coinremitter_cd_meta_box_cb')) {
                                     }
                                     error_log('webhook Change order data : ' . " trx id : " . $txid . " order id : " . $order_id . ' : ' . $paidAmount . ' : ' . $paidFiatAmount . ' : ' . $order_status_code);
                                     error_log("webhook Status change of trx_id : " . $data_up['trx_id']);
-                                    $updateOrder = "UPDATE ".$wpdb->prefix."coinremitter_orders SET `paid_crypto_amount`='$paidAmount', `paid_fiat_amount`='$paidFiatAmount', `order_status`='$order_status_code' WHERE `order_id`='$order_id'";
                                     $data_up['status'] = 1;
-                                    $wpdb->get_results($updateOrder);
+                                    $wpdb->update(
+                                        $wpdb->prefix . 'coinremitter_orders',
+                                        array(
+                                            'paid_crypto_amount' => $paidAmount,
+                                            'paid_fiat_amount' => $paidFiatAmount,
+                                            'order_status' => $order_status_code,
+                                        ),
+                                        array('order_id' => $order_id),
+                                        array('%s', '%s', '%d'),
+                                        array('%s')
+                                    );
                                 
                                 }
                             }
@@ -694,7 +703,7 @@ if (!function_exists('coinremitter_cd_meta_box_cb')) {
         }
         $pending_amount = $total_amount - $paid_amount;
         $tr_tablename = $wpdb->prefix . 'coinremitter_transactions';
-        $sql = "SELECT * FROM $tr_tablename WHERE order_id='" . $order_id . "'";
+        $sql = $wpdb->prepare("SELECT * FROM $tr_tablename WHERE order_id = %s", $order_id);
         $webhook = $wpdb->get_results($sql);
 
 

@@ -63,7 +63,7 @@
 
     $order_table_name = $wpdb->prefix . 'coinremitter_orders';
 
-    $query = "SELECT * FROM $order_table_name WHERE order_id = " . $order_id . "";
+    $query = $wpdb->prepare("SELECT * FROM $order_table_name WHERE order_id = %s", $order_id);
     $get_order_data = $wpdb->get_results($query);
     if ($get_order_data[0]->order_status == COINREMITTER_INV_PAID || $get_order_data[0]->order_status == COINREMITTER_INV_OVER_PAID) {
         $url = site_url("inedx.php/checkout/?order-received=" . $order_id . "&key=" . $order_key . "");

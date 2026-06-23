@@ -242,7 +242,9 @@ function coinremitter_wp_wallet_edit()
         }
             global $wpdb;
             $tablename = $wpdb->prefix . 'coinremitter_wallets';
-            $existingWallet = $wpdb->get_row("SELECT * FROM $tablename WHERE id = $coinid");
+            $existingWallet = $wpdb->get_row(
+                $wpdb->prepare("SELECT * FROM $tablename WHERE id = %d", $coinid)
+            );
             if ($existingWallet->coin_symbol !== $coin_symbol) {
                 $Result['flag'] = 0;
                 $Result['msg'] = 'Wallet already exists.';

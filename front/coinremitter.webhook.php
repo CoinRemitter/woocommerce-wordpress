@@ -1,4 +1,3 @@
-```
 <?php
 
 if (!defined("COINREMITTER_WORDPRESS")) {
@@ -27,7 +26,11 @@ if (isset($_POST['type']) != "receive") {
 
 error_log("webhook recieve" . json_encode($_POST));
 global $wpdb;
-$addrSql = 'select * from '.$wpdb->prefix.'coinremitter_orders where payment_address="' . $address . '" && coin_symbol ="' . $coin . '"';
+$addrSql = $wpdb->prepare(
+    'SELECT * FROM ' . $wpdb->prefix . 'coinremitter_orders WHERE payment_address = %s AND coin_symbol = %s',
+    $address,
+    $coin
+);
 $getDatas = $wpdb->get_results($addrSql);
 $getData = $getDatas[0];
 // print_r($getDatas);
@@ -64,8 +67,13 @@ if ((is_array($getData) || $getData instanceof Countable) && count($getData) == 
     $order_status_code = COINREMITTER_INV_EXPIRED;
     $order_status = 'Expired';
 
-    $payment_data = "UPDATE ".$wpdb->prefix."coinremitter_transactions SET `status` = '$order_status_code' WHERE `order_id` = '" . $order_id . "' ";
-    $update_payment_data = $wpdb->get_results($payment_data);
+    $wpdb->update(
+        $wpdb->prefix . 'coinremitter_transactions',
+        array('status' => $order_status_code),
+        array('order_id' => $order_id),
+        array('%d'),
+        array('%s')
+    );
 }
 
 
@@ -73,7 +81,7 @@ if ((is_array($getData) || $getData instanceof Countable) && count($getData) == 
 $callback_coin = strtoupper($coin);
 
 $tablename = $wpdb->prefix . 'coinremitter_wallets';
-$wallet = $wpdb->get_row($wpdb->prepare("SELECT  wallet_name, coin_symbol, api_key, password FROM $tablename WHERE coin_symbol = %s", $coin));
+$wallet = $wpdb->get_row($wpdb->prepare("SELECT  wallet_name, coin_symbol, minimum_invoice_amount, api_key, password FROM $tablename WHERE coin_symbol = %s", $coin));
 if (is_null($wallet)) {
     exit('Coin wallet not found in db');
 }
@@ -99,6 +107,15 @@ if ($addrTransaction['type'] != 'receive') {
     exit('Transaction not found for this address ' . $address);
 }
 
+$fiat_amount = ($addrTransaction['amount'] * $getData->fiat_amount) / $getData->crypto_amount;
+$fiat_amount = number_format($fiat_amount, 2, '.', '');
+$minFiatAmount = $wallet->minimum_invoice_amount;
+
+if ($fiat_amount < $minFiatAmount) {
+    error_log('Order amount is less than minimum amount : '.$fiat_amount);
+    exit('Order amount is less than minimum amount. Required fiat amount : '.$minFiatAmount);
+}
+
 $metaTrx = [
     'payment_address' => $address,
     'explorer_url'   => $addrTransaction['explorer_url'],
@@ -113,7 +130,7 @@ $metaTrx = [
     'updated_at'     => $addrTransaction['date'],
 ];
 
-$sql = "SELECT * FROM ".$wpdb->prefix."coinremitter_transactions WHERE order_id = %s";
+$sql = "SELECT * FROM " . $wpdb->prefix . "coinremitter_transactions WHERE order_id = %s";
 $existing_order = $wpdb->get_results($wpdb->prepare($sql, $order_id));
 
 
@@ -129,14 +146,18 @@ if (count($existing_order) <= 0) {
         'order_id'       => $order_id,
         'meta'         => $meta_json,
     ];
-    $wpdb->insert($wpdb->prefix.'coinremitter_transactions', $data);
+    $wpdb->insert($wpdb->prefix . 'coinremitter_transactions', $data);
     exit('Order Entry added intransaction table.');
 }
 $existing_order = $existing_order[0];
 $trxMeta = json_decode($existing_order->meta, true);
 if ($trxMeta) {
 
-    $orderAmount = 'select * from '.$wpdb->prefix.'coinremitter_orders where payment_address="' . $address . '" && coin_symbol ="' . $coin . '"';
+    $orderAmount = $wpdb->prepare(
+        'SELECT * FROM ' . $wpdb->prefix . 'coinremitter_orders WHERE payment_address = %s AND coin_symbol = %s',
+        $address,
+        $coin
+    );
     $orderRow = $wpdb->get_results($orderAmount);
     $order_result = $orderRow[0];
     error_log(json_encode($order_result));
@@ -240,9 +261,18 @@ if ($trxMeta) {
                 error_log('Change order data : ' . " trx id : " . $webhook_trxid . " order id : " . $order_id . ' : ' . $paidAmount . ' : ' . $paidFiatAmount . ' : ' . $order_status_code);
 
                 error_log("Status change of trx_id : " . $data_up['trx_id']);
-                $updateOrder = "UPDATE ".$wpdb->prefix."coinremitter_orders SET `paid_crypto_amount`='$paidAmount', `paid_fiat_amount`='$paidFiatAmount', `order_status`='$order_status_code' WHERE `order_id`='$order_id'";
                 $data_up['status'] = 1;
-                $wpdb->get_results($updateOrder);
+                $wpdb->update(
+                    $wpdb->prefix . 'coinremitter_orders',
+                    array(
+                        'paid_crypto_amount' => $paidAmount,
+                        'paid_fiat_amount' => $paidFiatAmount,
+                        'order_status' => $order_status_code,
+                    ),
+                    array('order_id' => $order_id),
+                    array('%s', '%s', '%d'),
+                    array('%s')
+                );
             }
         }
     }
@@ -254,5 +284,5 @@ if ($trxMeta) {
     ];
     error_log(message: "Order transaction meta update successfully. for trx Id : " . $webhook_trxid);
     error_log(json_encode($data));
-    $wpdb->update($wpdb->prefix.'coinremitter_transactions', $data, $where);
+    $wpdb->update($wpdb->prefix . 'coinremitter_transactions', $data, $where);
 }

@@ -114,8 +114,7 @@ function coinremitter_override_return_url($return_url, $order)
         $sss_url = $s_url . '/index.php/invoice-page/' . $OrdID . '/?pay_for_order=true&key=' . $test_order_key;
 
         $currancy_type = get_woocommerce_currency();
-
-        if ($multiplier == 0 && $multiplier == '') {
+        if ($multiplier == 0 || $multiplier == '') {
             $invoice_exchange_rate = 1;
         } else {
             $invoice_exchange_rate = $multiplier;
@@ -231,315 +230,345 @@ function coinremitter_webhook_data()
         exit;
     }
     $orderWtablename = $wpdb->prefix . 'coinremitter_orders';
-    $order_query = "SELECT * FROM $orderWtablename WHERE payment_address = '" . $addr . "' ";
+    $order_query = $wpdb->prepare(
+        "SELECT * FROM $orderWtablename WHERE payment_address = %s",
+        $addr
+    );
     $order_data = $wpdb->get_results($order_query);
 
-    if (count($order_data) > 0) {
-        $order_id = $order_data[0]->order_id;
-        $coin_symbol = $order_data[0]->coin_symbol;
-        $expiry_date = $order_data[0]->expiry_date;
-        $created_at = $order_data[0]->created_at;
-        $paidAmount = $order_data[0]->paid_crypto_amount;
-        $paidFiatAmount = $order_data[0]->paid_fiat_amount;
-        $fiat_amount = $order_data[0]->fiat_amount;
+    if ($order_data == 0) {
+        error_log('CoinRemitter Webhook: Order not found');
+        wp_send_json_error(['message' => 'Missing addr'], 400);
+        exit;
+    }
+    $order_data = $order_data[0];
+    $order_id = $order_data->order_id;
+    $coin_symbol = $order_data->coin_symbol;
+    $expiry_date = $order_data->expiry_date;
+    $created_at = $order_data->created_at;
+    $paidAmount = $order_data->paid_crypto_amount;
+    $paidFiatAmount = $order_data->paid_fiat_amount;
+    $fiat_amount = $order_data->fiat_amount;
 
-        $order = new WC_Order($order_id);
+    $order = new WC_Order($order_id);
 
-        $order_key = $order->get_order_key();
-        $wcOrderStatus = $order->get_status();
+    $order_key = $order->get_order_key();
+    $wcOrderStatus = $order->get_status();
 
-        $tablename = $wpdb->prefix . 'coinremitter_wallets';
-        $sql = $wpdb->get_row($wpdb->prepare("SELECT wallet_name, coin_symbol, api_key, password FROM $tablename WHERE coin_symbol = %s", $coin_symbol));
+    $tablename = $wpdb->prefix . 'coinremitter_wallets';
+    $walletData = $wpdb->get_row($wpdb->prepare("SELECT wallet_name, coin_symbol, minimum_invoice_amount, api_key, password FROM $tablename WHERE coin_symbol = %s", $coin_symbol));
 
-        if ($sql) {
-            $api_key = decrypt_data($sql->api_key);
-            $api_password = decrypt_data($sql->password);
+    if ($walletData) {
+        $api_key = decrypt_data($walletData->api_key);
+        $api_password = decrypt_data($walletData->password);
+    }
+
+    $transaction_details = create_transaction_check($addr, $api_key, $api_password); //api call
+    // echo '<pre>';print_r($transaction_details);echo '</pre>';
+
+    $paid_amount = 0;
+
+    $webhookTrandata = $transaction_details['data'];
+    $address = $webhookTrandata['address'];
+    $required_confirmations = $webhookTrandata['required_confirmations'];
+    $coin = $webhookTrandata['coin'];
+    error_log("new_webhookTrandata : " . json_encode($webhookTrandata));
+    $coin_symbol = $webhookTrandata['coin_symbol'];
+    foreach ($webhookTrandata['transactions'] as $transaction) {
+        if ($transaction['type'] != 'receive') {
+            continue;
+        }
+        $meta_json = '';
+        $txid = $transaction['txid'];
+        $amount = $transaction['amount'];
+        $status = $transaction['status'];
+        $confirmations = $transaction['confirmations'];
+        error_log("webhook Transaction. confirmations : " . $confirmations . " txid : " . $txid);
+
+        $fiat_amount = ($transaction['amount'] * $order_data->fiat_amount) / $order_data->crypto_amount;
+        $fiat_amount = number_format($fiat_amount, 2, '.', '');
+        $minFiatAmount = $walletData->minimum_invoice_amount;
+
+        if ($fiat_amount < $minFiatAmount) {
+            continue;
         }
 
-        $transaction_details = create_transaction_check($addr, $api_key, $api_password); //api call
-        // echo '<pre>';print_r($transaction_details);echo '</pre>';
+        $metaTrx = [
+            'payment_address' => $address,
+            'explorer_url' => $transaction['explorer_url'],
+            'crypto_amount' => $transaction['amount'],
+            'coin_symbol' => $coin_symbol,
+            'confirmations' => $confirmations,
+            'coin_name' => $coin,
+            'fiat_symbol' => 'USD',
+            'trx_id' => $transaction['txid'],
+            'status' => 0,
+            'created_at' => $transaction['date'],
+            'updated_at' => $transaction['date'],
+        ];
+        error_log("webhook. metaTrx : " . json_encode($metaTrx));
 
-        $paid_amount = 0;
+        if ($status == 'confirm') {
+            $status_code = 0;
+        }
 
-        $webhookTrandata = $transaction_details['data'];
-        $address = $webhookTrandata['address'];
-        $required_confirmations = $webhookTrandata['required_confirmations'];
-        $coin = $webhookTrandata['coin'];
-        error_log("new_webhookTrandata : " . json_encode($webhookTrandata));
-        $coin_symbol = $webhookTrandata['coin_symbol'];
-        foreach ($webhookTrandata['transactions'] as $transaction) {
-            $meta_json = '';
-            $txid = $transaction['txid'];
-            $amount = $transaction['amount'];
-            $status = $transaction['status'];
-            $confirmations = $transaction['confirmations'];
-            error_log("webhook Transaction. confirmations : " . $confirmations . " txid : " . $txid);
+        if ($confirmations >= $required_confirmations) {
+            $paid_amount += $amount;
+        }
+        $sql = "SELECT * FROM " . $wpdb->prefix . "coinremitter_transactions WHERE order_id = %s";
+        $existing_order = $wpdb->get_results($wpdb->prepare($sql, $order_id));
 
-            $metaTrx = [
-                'payment_address' => $address,
-                'explorer_url' => $transaction['explorer_url'],
-                'crypto_amount' => $transaction['amount'],
-                'coin_symbol' => $coin_symbol,
-                'confirmations' => $confirmations,
-                'coin_name' => $coin,
-                'fiat_symbol' => 'USD',
-                'trx_id' => $transaction['txid'],
-                'status' => 0,
-                'created_at' => $transaction['date'],
-                'updated_at' => $transaction['date'],
-            ];
-            error_log("webhook. metaTrx : " . json_encode($metaTrx));
+        if (is_array($existing_order) && count($existing_order) > 0) {
 
-            if ($status == 'confirm') {
-                $status_code = 0;
-            }
+            $fiat_amount = 0.05;       // Amount in fiat (USD)
+            $fiat_currency = 'USD';    // Fiat currency
+            $result_arr = fiat_cryoto($fiat_amount, $fiat_currency, $coin_symbol); //api call
+            $fiat_price = $result_arr['data'][0]['price'];
+            error_log("fiat_rate_result_arr : " . json_encode($result_arr));
 
-            if ($confirmations >= $required_confirmations) {
-                $paid_amount += $amount;
-            }
-            $sql = "SELECT * FROM " . $wpdb->prefix . "coinremitter_transactions WHERE order_id = %s";
-            $existing_order = $wpdb->get_results($wpdb->prepare($sql, $order_id));
+            $meta_data = json_decode($existing_order[0]->meta, true);
+            error_log("existing order : " . json_encode($meta_data));
 
-            if (is_array($existing_order) && count($existing_order) > 0) {
+            $trxArray = array_column($meta_data, 'trx_id');
+            foreach ($meta_data as $key => &$data_up) {
+                if (!in_array($txid, $trxArray)) {
+                    error_log("webhook Transaction not found in metaTrx trx_id : " . $txid . '' . $metaTrx);
+                    array_push($meta_data, $metaTrx);
+                    break;
+                } else {
+                    error_log("webhook Transaction found in meta data. Trx_id : " . $txid . '___' . json_encode($metaTrx));
+                    error_log("existing order found data : " . json_encode($data_up));
+                    // update order data
+                    error_log("webhook Trx id to be processed : " . $data_up['trx_id'] . " status : " . $data_up['status'] . " confirmations : " . $data_up['confirmations']);
+                    if ($data_up['trx_id'] == $txid) {
+                        $meta_data[$key]['confirmations'] = $confirmations;
+                        if ($data_up['status'] == 0 && $confirmations >= $required_confirmations) {
 
-                $fiat_amount = 0.05;       // Amount in fiat (USD)
-                $fiat_currency = 'USD';    // Fiat currency
-                $result_arr = fiat_cryoto($fiat_amount, $fiat_currency, $coin_symbol); //api call
-                $fiat_price = $result_arr['data'][0]['price'];
-                error_log("fiat_rate_result_arr : " . json_encode($result_arr));
+                            $paidAmount +=  $amount;
+                            error_log("webhook New paid amount : " . $paidAmount . " Trx_id : " . $txid);
+                            $walletTotalAmount =  ($amount * $paidFiatAmount) / $paidAmount;
 
-                $meta_data = json_decode($existing_order[0]->meta, true);
-                error_log("existing order : " . json_encode($meta_data));
+                            $paidFiatAmount += $walletTotalAmount;
+                            $paidFiatAmtWithTrunc = $paidAmount + $fiat_price;
 
-                $trxArray = array_column($meta_data, 'trx_id');
-                foreach ($meta_data as $key => &$data_up) {
-                    if (!in_array($txid, $trxArray)) {
-                        error_log("webhook Transaction not found in metaTrx trx_id : " . $txid . '' . $metaTrx);
-                        array_push($meta_data, $metaTrx);
-                        break;
-                    } else {
-                        error_log("webhook Transaction found in meta data. Trx_id : " . $txid . '___' . json_encode($metaTrx));
-                        error_log("existing order found data : " . json_encode($data_up));
-                        // update order data
-                        error_log("webhook Trx id to be processed : " . $data_up['trx_id'] . " status : " . $data_up['status'] . " confirmations : " . $data_up['confirmations']);
-                        if ($data_up['trx_id'] == $txid) {
-                            $meta_data[$key]['confirmations'] = $confirmations;
-                            if ($data_up['status'] == 0 && $confirmations >= $required_confirmations) {
+                            error_log("webhook trucationVal : " . $paidFiatAmtWithTrunc . " walletTotalAmount: " . $walletTotalAmount . "paidFiatAmount" . $paidFiatAmount . "confirmations" . $confirmations);
 
-                                $paidAmount +=  $amount;
-                                error_log("webhook New paid amount : " . $paidAmount . " Trx_id : " . $txid);
-                                $walletTotalAmount =  ($amount * $paidFiatAmount) / $paidAmount;
-
-                                $paidFiatAmount += $walletTotalAmount;
-                                $paidFiatAmtWithTrunc = $paidAmount + $fiat_price;
-
-                                error_log("webhook trucationVal : " . $paidFiatAmtWithTrunc . " walletTotalAmount: " . $walletTotalAmount . "paidFiatAmount" . $paidFiatAmount . "confirmations" . $confirmations);
-
-                                $crypto_amount = $order_data[0]->crypto_amount;
-                                $fiat_amount = $order_data[0]->fiat_amount;
-                                $status = 0;
-                                if ($paidAmount >= $order_data[0]->paid_fiat_amount) {
-                                    $status = 1;
-                                }
-                                $order_status = "";
-                                $order_status_code = "";
-
-                                $option_data = get_option('woocommerce_coinremitterpayments_settings');
-                                $ostatus = $option_data['ostatus'];
-                                if ($paidFiatAmtWithTrunc == 0) {
-
-                                    if ($wcOrderStatus == 'pending') {
-                                        $order->update_status('pending');
-                                        error_log("webhook Status change pending");
-                                    }
-                                    $order_status = "Pending";
-                                    $order_status_code = COINREMITTER_INV_PENDING;  //0
-
-                                } else if ($crypto_amount > $paidAmount) {
-
-                                    if ($wcOrderStatus == 'pending') {
-                                        $order->update_status('processing');
-                                        error_log("webhook Status change pending");
-                                    }
-                                    $order_status_code = COINREMITTER_INV_UNDER_PAID; // 2
-
-                                } else if ($crypto_amount < $paidAmount) {
-
-                                    if ($wcOrderStatus == 'pending' || $wcOrderStatus == 'processing' || $wcOrderStatus == 'Processing') {
-                                        $order->update_status('completed');
-                                        error_log("webhook Status change over paid");
-                                        $order->update_status('wc-' . $ostatus);
-                                    }
-                                    $order_status = "Over paid";
-                                    $order_status_code = COINREMITTER_INV_OVER_PAID; //3 
-
-                                } else if ($crypto_amount == $paidAmount) {
-
-                                    if ($wcOrderStatus == 'processing' || $wcOrderStatus == 'pending' || $wcOrderStatus == 'Processing') {
-                                        $order->update_status('completed');
-                                        error_log("webhook Status change paid");
-                                        $order->update_status('wc-' . $ostatus);
-                                    }
-                                    $order_status = "Paid";
-                                    $order_status_code = COINREMITTER_INV_PAID; //1
-
-                                }
-                                if ($crypto_amount <= $paidFiatAmtWithTrunc &&  $order_status_code == COINREMITTER_INV_UNDER_PAID) {
-                                    if ($wcOrderStatus == 'processing' || $wcOrderStatus == 'pending' || $wcOrderStatus == 'Processing') {
-                                        $order->update_status('completed');
-                                        error_log("webhook Status change paid trucation val");
-                                        $order->update_status('wc-' . $ostatus);
-                                    }
-                                    $order_status = "Paid";
-                                    $order_status_code = COINREMITTER_INV_PAID; //3 
-
-                                }
-                                error_log('webhook Change order data : ' . " trx id : " . $txid . " order id : " . $order_id . ' : ' . $paidAmount . ' : ' . $paidFiatAmount . ' : ' . $order_status_code);
-
-                                error_log("webhook Status change of trx_id : " . $data_up['trx_id'] . "confirmations " . $confirmations);
-                                $updateOrder = "UPDATE " . $wpdb->prefix . "coinremitter_orders SET `paid_crypto_amount`='$paidAmount', `paid_fiat_amount`='$paidFiatAmount', `order_status`='$order_status_code' WHERE `order_id`='$order_id'";
-                                $data_up['status'] = 1;
-                                $wpdb->get_results($updateOrder);
+                            $crypto_amount = $order_data->crypto_amount;
+                            $fiat_amount = $order_data->fiat_amount;
+                            $status = 0;
+                            if ($paidAmount >= $order_data->paid_fiat_amount) {
+                                $status = 1;
                             }
+                            $order_status = "";
+                            $order_status_code = "";
+
+                            $option_data = get_option('woocommerce_coinremitterpayments_settings');
+                            $ostatus = $option_data['ostatus'];
+                            if ($paidFiatAmtWithTrunc == 0) {
+
+                                if ($wcOrderStatus == 'pending') {
+                                    $order->update_status('pending');
+                                    error_log("webhook Status change pending");
+                                }
+                                $order_status = "Pending";
+                                $order_status_code = COINREMITTER_INV_PENDING;  //0
+
+                            } else if ($crypto_amount > $paidAmount) {
+
+                                if ($wcOrderStatus == 'pending') {
+                                    $order->update_status('processing');
+                                    error_log("webhook Status change pending");
+                                }
+                                $order_status_code = COINREMITTER_INV_UNDER_PAID; // 2
+
+                            } else if ($crypto_amount < $paidAmount) {
+
+                                if ($wcOrderStatus == 'pending' || $wcOrderStatus == 'processing' || $wcOrderStatus == 'Processing') {
+                                    $order->update_status('completed');
+                                    error_log("webhook Status change over paid");
+                                    $order->update_status('wc-' . $ostatus);
+                                }
+                                $order_status = "Over paid";
+                                $order_status_code = COINREMITTER_INV_OVER_PAID; //3 
+
+                            } else if ($crypto_amount == $paidAmount) {
+
+                                if ($wcOrderStatus == 'processing' || $wcOrderStatus == 'pending' || $wcOrderStatus == 'Processing') {
+                                    $order->update_status('completed');
+                                    error_log("webhook Status change paid");
+                                    $order->update_status('wc-' . $ostatus);
+                                }
+                                $order_status = "Paid";
+                                $order_status_code = COINREMITTER_INV_PAID; //1
+
+                            }
+                            if ($crypto_amount <= $paidFiatAmtWithTrunc &&  $order_status_code == COINREMITTER_INV_UNDER_PAID) {
+                                if ($wcOrderStatus == 'processing' || $wcOrderStatus == 'pending' || $wcOrderStatus == 'Processing') {
+                                    $order->update_status('completed');
+                                    error_log("webhook Status change paid trucation val");
+                                    $order->update_status('wc-' . $ostatus);
+                                }
+                                $order_status = "Paid";
+                                $order_status_code = COINREMITTER_INV_PAID; //3 
+
+                            }
+                            error_log('webhook Change order data : ' . " trx id : " . $txid . " order id : " . $order_id . ' : ' . $paidAmount . ' : ' . $paidFiatAmount . ' : ' . $order_status_code);
+
+                            error_log("webhook Status change of trx_id : " . $data_up['trx_id'] . "confirmations " . $confirmations);
+                            $data_up['status'] = 1;
+                            $wpdb->update(
+                                $wpdb->prefix . 'coinremitter_orders',
+                                array(
+                                    'paid_crypto_amount' => $paidAmount,
+                                    'paid_fiat_amount' => $paidFiatAmount,
+                                    'order_status' => $order_status_code,
+                                ),
+                                array('order_id' => $order_id),
+                                array('%s', '%s', '%d'),
+                                array('%s')
+                            );
                         }
                     }
                 }
-                $data = [
-                    'meta' => json_encode($meta_data),
-                ];
-                $where = [
-                    'order_id' => $order_id,
-                ];
-                error_log(message: "Order transaction meta update successfully. for trx Id : " . $txid . '' . json_encode($data));
-                $wpdb->update($wpdb->prefix . 'coinremitter_transactions', $data, $where);
             }
-        }
-        // if (count($existing_order) <= 0) {
-        if (isset($existing_order) && is_array($existing_order) && count($existing_order) <= 0) {
-            $metaTrxs[] = $metaTrx;
-            $meta_json = json_encode($metaTrxs);
             $data = [
-                'order_id' => $order_id,
-                'meta' => $meta_json,
+                'meta' => json_encode($meta_data),
             ];
-
-            $wpdb->insert($wpdb->prefix . 'coinremitter_transactions', $data);
+            $where = [
+                'order_id' => $order_id,
+            ];
+            error_log(message: "Order transaction meta update successfully. for trx Id : " . $txid . '' . json_encode($data));
+            $wpdb->update($wpdb->prefix . 'coinremitter_transactions', $data, $where);
         }
-        // awaiting data
+    }
+    // if (count($existing_order) <= 0) {
+    if (isset($existing_order) && is_array($existing_order) && count($existing_order) <= 0) {
+        $metaTrxs[] = $metaTrx;
+        $meta_json = json_encode($metaTrxs);
+        $data = [
+            'order_id' => $order_id,
+            'meta' => $meta_json,
+        ];
 
-        $webhook_data = "SELECT * FROM " . $wpdb->prefix . "coinremitter_transactions WHERE order_id = '" . $order_id . "'";
-        $web_hook = $wpdb->get_results($webhook_data);
-        if (isset($web_hook[0]) && is_object($web_hook[0]) && isset($web_hook[0]->meta)) {
-            $meta_data = json_decode($web_hook[0]->meta, true);
-        } else {
-            $meta_data = null;
-        }
+        $wpdb->insert($wpdb->prefix . 'coinremitter_transactions', $data);
+    }
+    // awaiting data
+
+    $webhook_data = $wpdb->prepare(
+        "SELECT * FROM " . $wpdb->prefix . "coinremitter_transactions WHERE order_id = %s",
+        $order_id
+    );
+    $web_hook = $wpdb->get_results($webhook_data);
+    if (isset($web_hook[0]) && is_object($web_hook[0]) && isset($web_hook[0]->meta)) {
+        $meta_data = json_decode($web_hook[0]->meta, true);
+    } else {
+        $meta_data = null;
+    }
 
 
-        $web_hook_data = '';
-        $noexpitytime = 0;
-        if (count($web_hook) === 1 || $expiry_date == "") {
-            $noexpitytime = 1;
-        } else {
-            $expiry_date = date("M d, Y H:i:s", strtotime($expiry_date));
-        }
-        $web_hook_data .= "<input type='hidden' id='expiry_time' value='" . $expiry_date . "'>";
-        if (count($web_hook) > 0) {
-            foreach ($meta_data as $transaction) {
-                $created_at = $transaction['created_at'];
-                $trx_id = $transaction['trx_id'];
-                $explorer_urll = $transaction['explorer_url'];
-                $crypto_amount = $transaction['crypto_amount'];
-                $confirmations_data = $transaction['confirmations'];
+    $web_hook_data = '';
+    $noexpitytime = 0;
+    if (count($web_hook) === 1 || $expiry_date == "") {
+        $noexpitytime = 1;
+    } else {
+        $expiry_date = date("M d, Y H:i:s", strtotime($expiry_date));
+    }
+    $web_hook_data .= "<input type='hidden' id='expiry_time' value='" . $expiry_date . "'>";
+    if (count($web_hook) > 0) {
+        foreach ($meta_data as $transaction) {
+            $created_at = $transaction['created_at'];
+            $trx_id = $transaction['trx_id'];
+            $explorer_urll = $transaction['explorer_url'];
+            $crypto_amount = $transaction['crypto_amount'];
+            $confirmations_data = $transaction['confirmations'];
 
-                $create_date = strtotime($created_at);
-                $c_date = date('Y-m-d H:i:s', $create_date);
-                $seconds = strtotime(gmdate('Y-m-d H:i:s')) - strtotime($created_at);
-                $years = floor($seconds / (365 * 60 * 60 * 24));
-                $months = floor(($seconds - $years * 365 * 60 * 60 * 24) / (30 * 60 * 60 * 24));
-                $days = floor($seconds / 86400);
-                $hours = floor(($seconds - ($days * 86400)) / 3600);
-                $minutes = floor(($seconds - ($days * 86400) - ($hours * 3600)) / 60);
-                $seconds = floor(($seconds - ($days * 86400) - ($hours * 3600) - ($minutes * 60)));
+            $create_date = strtotime($created_at);
+            $c_date = date('Y-m-d H:i:s', $create_date);
+            $seconds = strtotime(gmdate('Y-m-d H:i:s')) - strtotime($created_at);
+            $years = floor($seconds / (365 * 60 * 60 * 24));
+            $months = floor(($seconds - $years * 365 * 60 * 60 * 24) / (30 * 60 * 60 * 24));
+            $days = floor($seconds / 86400);
+            $hours = floor(($seconds - ($days * 86400)) / 3600);
+            $minutes = floor(($seconds - ($days * 86400) - ($hours * 3600)) / 60);
+            $seconds = floor(($seconds - ($days * 86400) - ($hours * 3600) - ($minutes * 60)));
 
-                if ($years > 0) {
-                    $diff = $years . " year(s) ago";
-                } else if ($months > 0) {
-                    $diff = $months . " month(s) ago";
-                } else if ($days > 0) {
-                    $diff = $days . " day(s) ago";
-                } else if ($hours > 0) {
-                    $diff = $hours . " hour(s) ago";
-                } else if ($minutes > 0) {
-                    $diff = $minutes . " minute(s) ago";
-                } else {
-                    $diff = $seconds . " second(s) ago";
-                }
+            if ($years > 0) {
+                $diff = $years . " year(s) ago";
+            } else if ($months > 0) {
+                $diff = $months . " month(s) ago";
+            } else if ($days > 0) {
+                $diff = $days . " day(s) ago";
+            } else if ($hours > 0) {
+                $diff = $hours . " hour(s) ago";
+            } else if ($minutes > 0) {
+                $diff = $minutes . " minute(s) ago";
+            } else {
+                $diff = $seconds . " second(s) ago";
+            }
 
-                $c_date = date("M d, Y H:i:s", strtotime($create_date));
+            $c_date = date("M d, Y H:i:s", strtotime($create_date));
 
-                if ($transaction['status'] == 1) {
-                    $icon = '<div class="cr-plugin-history-ico" title="Payment Confirmed" >
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <g clip-path="url(#clip0_2377_40)">
-                                        <path
-                                            d="M12 0C5.373 0 0 5.373 0 12C0 18.627 5.373 24 12 24C18.627 24 24 18.627 24 12C24 5.373 18.627 0 12 0ZM10.75 17.292L6.25 12.928L8.107 11.07L10.75 13.576L16.393 7.792L18.25 9.649L10.75 17.292Z"
-                                            fill="#166534" />
-                                    </g>
-                                    <defs>
-                                        <clippath id="clip0_2377_40">
-                                            <rect width="24" height="24" fill="white" />
-                                        </clippath>
-                                    </defs>
-                                </svg>
-                            </div>';
-                } else {
-                    $icon = '<div class="cr-plugin-history-ico" title="' . $confirmations_data . ' confirmation(s)">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <g clip-path="url(#clip0_2377_49)">
-                        <path d="M12 0C5.373 0 0 5.373 0 12C0 18.627 5.373 24 12 24C18.627 24 24 18.627 24 12C24 5.373 18.627 0 12 0ZM11 5H13V15H11V5ZM12 19.25C11.31 19.25 10.75 18.69 10.75 18C10.75 17.31 11.31 16.75 12 16.75C12.69 16.75 13.25 17.31 13.25 18C13.25 18.69 12.69 19.25 12 19.25Z" fill="#F59E0B"/>
-                        </g>
-                        <defs>
-                        <clipPath id="clip0_2377_49">
-                        <rect width="24" height="24" fill="white"/>
-                        </clipPath>
-                        </defs>
-                    </svg>
-                    </div>';
-                }
+            if ($transaction['status'] == 1) {
+                $icon = '<div class="cr-plugin-history-ico" title="Payment Confirmed" >
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <g clip-path="url(#clip0_2377_40)">
+                                    <path
+                                        d="M12 0C5.373 0 0 5.373 0 12C0 18.627 5.373 24 12 24C18.627 24 24 18.627 24 12C24 5.373 18.627 0 12 0ZM10.75 17.292L6.25 12.928L8.107 11.07L10.75 13.576L16.393 7.792L18.25 9.649L10.75 17.292Z"
+                                        fill="#166534" />
+                                </g>
+                                <defs>
+                                    <clippath id="clip0_2377_40">
+                                        <rect width="24" height="24" fill="white" />
+                                    </clippath>
+                                </defs>
+                            </svg>
+                        </div>';
+            } else {
+                $icon = '<div class="cr-plugin-history-ico" title="' . $confirmations_data . ' confirmation(s)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clip-path="url(#clip0_2377_49)">
+                    <path d="M12 0C5.373 0 0 5.373 0 12C0 18.627 5.373 24 12 24C18.627 24 24 18.627 24 12C24 5.373 18.627 0 12 0ZM11 5H13V15H11V5ZM12 19.25C11.31 19.25 10.75 18.69 10.75 18C10.75 17.31 11.31 16.75 12 16.75C12.69 16.75 13.25 17.31 13.25 18C13.25 18.69 12.69 19.25 12 19.25Z" fill="#F59E0B"/>
+                    </g>
+                    <defs>
+                    <clipPath id="clip0_2377_49">
+                    <rect width="24" height="24" fill="white"/>
+                    </clipPath>
+                    </defs>
+                </svg>
+                </div>';
+            }
 
-                $web_hook_data .= '<div class="cr-plugin-history-box">
-                <div class="cr-plugin-history d-flex justify-content-between ">
-                <div class="d-flex gap-2 flex-nowrap">
-                ' . $icon . '
-                <div class="cr-plugin-history-des">
-                <span><a class="text-dark" href="' . $explorer_urll . '" target="_blank">' . substr($trx_id, 0, 30) . '...</a></span>
-                                                <div class="cr-plugin-history-date" title="' . $c_date . ' (UTC)"><span>' . $diff . '</span></div>
-                                                </div>
-                                        </div>';
-                if ($confirmations_data >= 3) {
-                    $web_hook_data .= '
-                                        <div class="text-success fw-bold">
-                                            ' . $crypto_amount . ' <br class="d-none d-sm-block" />
-                                            ' . $coin_symbol . '
-                                        </div>';
-                } else {
-                    $web_hook_data .= '
-                                        <div class="text-pending fw-bold">
-                                            ' . $crypto_amount . ' <br class="d-none d-sm-block" />
-                                            ' . $coin_symbol . '
-                                        </div>';
-                }
-                $web_hook_data .= '</div>
+            $web_hook_data .= '<div class="cr-plugin-history-box">
+            <div class="cr-plugin-history d-flex justify-content-between ">
+            <div class="d-flex gap-2 flex-nowrap">
+            ' . $icon . '
+            <div class="cr-plugin-history-des">
+            <span><a class="text-dark" href="' . $explorer_urll . '" target="_blank">' . substr($trx_id, 0, 30) . '...</a></span>
+                                            <div class="cr-plugin-history-date" title="' . $c_date . ' (UTC)"><span>' . $diff . '</span></div>
+                                            </div>
+                                    </div>';
+            if ($confirmations_data >= 3) {
+                $web_hook_data .= '
+                                    <div class="text-success fw-bold">
+                                        ' . $crypto_amount . ' <br class="d-none d-sm-block" />
+                                        ' . $coin_symbol . '
+                                    </div>';
+            } else {
+                $web_hook_data .= '
+                                    <div class="text-pending fw-bold">
+                                        ' . $crypto_amount . ' <br class="d-none d-sm-block" />
+                                        ' . $coin_symbol . '
                                     </div>';
             }
-        } else {
-            $web_hook_data .=  '<div class="cr-plugin-history-box">
-                                    <div class="cr-plugin-history" style="text-align: center; padding-left: 0;">
-                                    <span>No payment history found</span>
-                                    </div>
+            $web_hook_data .= '</div>
                                 </div>';
         }
+    } else {
+        $web_hook_data .=  '<div class="cr-plugin-history-box">
+                                <div class="cr-plugin-history" style="text-align: center; padding-left: 0;">
+                                <span>No payment history found</span>
+                                </div>
+                            </div>';
     }
 
     $order_table_name = $wpdb->prefix . 'coinremitter_orders';
@@ -589,8 +618,8 @@ function coinremitter_webhook_data()
     $formatted_pricepadAmount_paid = number_format($paidpricepadamount, $decimalspadamount, $decimal_separator, $thousand_separator);
     $formatted_price_cur_paid = $formatted_pricepadAmount_paid . $suffix;
 
-    $crypto_amount = $order_data[0]->crypto_amount;
-    $fiat_amount = $order_data[0]->fiat_amount;
+    $crypto_amount = $order_data->crypto_amount;
+    $fiat_amount = $order_data->fiat_amount;
     $padding_amount = $crypto_amount - $paidAmount;
 
     $pricepadamount = floatval($padding_amount);
@@ -636,8 +665,13 @@ if (!function_exists('coinremitter_cancel_order')) {
             $order->update_status('cancelled');
             $status_code = COINREMITTER_INV_EXPIRED;
             $status = 'Expired';
-            $sql = "UPDATE " . $wpdb->prefix . "coinremitter_orders  SET `order_status`='" . $status_code . "' WHERE  `order_id` = $order_id";
-            $wpdb->get_results($sql);
+            $wpdb->update(
+                $wpdb->prefix . 'coinremitter_orders',
+                array('order_status' => $status_code),
+                array('order_id' => $order_id),
+                array('%d'),
+                array('%s')
+            );
         }
         $Result['url'] = $order_canclled;
         $Result['flag'] = 1;
@@ -850,7 +884,6 @@ function add_custom_class_to_body($classes)
     }
     return $classes;
 }
-
 
 function encrypt_data($data)
 {

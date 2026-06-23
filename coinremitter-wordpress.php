@@ -102,6 +102,7 @@ add_filter('woocommerce_payment_gateways', 'coinremitter_wp_gateway_class');
 // cron update
 add_action('update_fiat_rate_hook', 'coinremitter_wp_update_fiat_rate');
 add_action('wp', 'coinremitter_wp_schedule_fiat_rate_update');
+add_action('admin_notices', 'coinremitter_webhook_admin_notice');
 
 
 
@@ -228,4 +229,33 @@ function cr_get_coin_logo_url($coin_symbol)
 
     // No image found
     return '';
+}
+
+function coinremitter_webhook_admin_notice($hook)
+{
+    // Only show for users who can manage WooCommerce / settings
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+    // Get current screen
+    $screen = get_current_screen();
+    if (!$screen || $screen->id !== 'toplevel_page_coinremitter') {
+        return;
+    }
+
+    // Build dynamic webhook URL
+    $webhook_url = home_url('/?coinremitter_webhook');
+?>
+    <div class="notice notice-info">
+        <p>
+            <strong>CoinRemitter:</strong> To ensure your cryptocurrency payments are updated automatically, please set the following Webhook URL in your CoinRemitter wallet.
+        </p>
+        <p>
+            <strong>Webhook URL:</strong> <code><?php echo esc_url($webhook_url); ?></code>
+        </p>
+        <p>
+            Go to <em>CoinRemitter Wallet → General → Webhook URL</em> and save this URL.
+        </p>
+    </div>
+<?php
 }
