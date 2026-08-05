@@ -249,7 +249,7 @@ function coinremitter_wp_payment_gateways()
                     foreach ($available_coins as $v) {
                         $v = trim(strtolower($v));
                         $checked = $first_coin ? ' checked' : '';
-                        $wall_Coin_IM =  CR_PLUGIN_PATH . 'images/' . $v . '.png';
+                        $wall_Coin_IM = cr_get_coin_logo_url($v);
 
                         if ($multiplier == 0 || $multiplier == '') {
                             $multiplier = 1;
@@ -259,31 +259,33 @@ function coinremitter_wp_payment_gateways()
                             $minimum_invoice_val = 0.0001;
                         }
 
-                        // $total_amount = $total_amt;
                         $sql_wallet = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE coin_symbol = %s", $v));
-                        $coin_name = $sql_wallet->coin_name;
-                        $exchange_rate_multiplier = $sql_wallet->exchange_rate_multiplier;
+                        $coin_name = isset($sql_wallet->coin_name) ? $sql_wallet->coin_name : strtoupper($v);
+                        $exchange_rate_multiplier = isset($sql_wallet->exchange_rate_multiplier) ? floatval($sql_wallet->exchange_rate_multiplier) : 1;
+                        $unit_fiat_amount = isset($sql_wallet->unit_fiat_amount) ? floatval($sql_wallet->unit_fiat_amount) : 0;
                         $total_amount = ($total_amt * $exchange_rate_multiplier) + $shipping;
                         $currancy_type = get_woocommerce_currency();
 
-                        $result_arr = fiat_cryoto($total_amount, $currancy_type, $v); //api call
-                        $crypto_amount = $result_arr['data'][0]['price'];
+                        if ($unit_fiat_amount > 0) {
+                            $crypto_amount = $total_amount / $unit_fiat_amount;
+                        } else {
+                            $result_arr = fiat_cryoto($total_amount, $currancy_type, $v);
+                            $crypto_amount = (is_array($result_arr) && isset($result_arr['data'][0]['price'])) ? floatval($result_arr['data'][0]['price']) : 0;
+                        }
 
-                        // $usd_am = $crypto_amount * $exchange_rate_multiplier;
-                        // $total = $usd_am + $shipping;
                         $usd_am_currency = number_format($crypto_amount, 8);
-                        // }
+
                         $tmp .= "
-                                    <label for='$v' class='align-items-center gap-3 coin_data py-main' rel='" . $v . "' coin='" . $coin_name . "'>
+                                    <label for='$v' class='align-items-center gap-3 coin_data py-main' rel='" . $v . "' coin='" . esc_attr($coin_name) . "'>
                                       <div class='py-left d-flex'>
                                         <input type='radio' name='coins' id='$v' value='$v' $checked>
                                         <div>
-                                            <h5 class='m-0'> $coin_name </h5>
-                                            <h6 class='m-0'>" . $usd_am_currency . ' ' . $v . '' . "</h6>
+                                            <h5 class='m-0'>" . esc_html($coin_name) . "</h5>
+                                            <h6 class='m-0'>" . esc_html($usd_am_currency . ' ' . strtoupper($v)) . "</h6>
                                         </div>
                                       </div>
                                       <div class='py-right'>
-                                        <img src=' $wall_Coin_IM ' alt='$v' class='waller_coin_img'>                        
+                                        <img src='" . esc_url($wall_Coin_IM) . "' alt='" . esc_attr($v) . "' class='waller_coin_img'>                        
                                       </div>
                                     </label>
                                   ";
@@ -300,18 +302,7 @@ function coinremitter_wp_payment_gateways()
                     ' . $CryptoOpt . '</div>
                     </div>' : '';
 
-                $wc_gateways = new WC_Payment_Gateways();
-                $payment_gateways = $wc_gateways->get_available_payment_gateways();
-                foreach ($payment_gateways as $gateway) {
-                    $payment_data = $gateway->id;
-                    if ($payment_data != 'coinremitterpayments') {
-
-                        $transient_name = 'currency_value';
-                        delete_transient($transient_name);
-                    }
-                }
-
-                if (!empty($available_coins[0])) {
+                if (!get_transient('currency_value') && !empty($available_coins[0])) {
                     set_transient('currency_value', $available_coins[0], HOUR_IN_SECONDS);
                 }
 
@@ -325,14 +316,30 @@ function coinremitter_wp_payment_gateways()
 
             $order = new WC_Order($order_id);
 
+            try {
+                $redirect_url = $this->get_return_url($order);
+            } catch (Exception $e) {
+                return array(
+                    'result'   => 'failure',
+                    'redirect' => ''
+                );
+            }
+
+            if (!$redirect_url || strpos($redirect_url, 'invoice-page') === false || wc_notice_count('error') > 0) {
+                return array(
+                    'result'   => 'failure',
+                    'redirect' => ''
+                );
+            }
+
             $order->update_status('Processing', 'Additional data like transaction id or reference number');
 
             $woocommerce->cart->empty_cart();
-            $order->reduce_order_stock();
+            wc_reduce_stock_levels($order_id);
 
             return array(
-                'result' => 'success',
-                'redirect' => $this->get_return_url($order)
+                'result'   => 'success',
+                'redirect' => $redirect_url
             );
         }
 
@@ -1071,6 +1078,7 @@ function create_address($coin, $api_key, $api_password)
     $body = json_encode(['label' => $coin]);
     $args = [
         'method' => 'POST',
+        'timeout' => 30,
         'sslverify' => false,
         'user-agent'  => $userAgent,
         'headers' => [
@@ -1082,8 +1090,20 @@ function create_address($coin, $api_key, $api_password)
     ];
 
     $response = wp_remote_post($url, $args);
+    if (is_wp_error($response)) {
+        return [
+            'success' => 0,
+            'msg' => $response->get_error_message()
+        ];
+    }
     $data = wp_remote_retrieve_body($response);
     $result = json_decode($data, true);
+    if (!is_array($result)) {
+        return [
+            'success' => 0,
+            'msg' => sprintf(__('%s server is currently unavailable or offline.', 'coinremitter'), strtoupper($coin))
+        ];
+    }
     return $result;
 }
 

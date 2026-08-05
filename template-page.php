@@ -1,19 +1,19 @@
  <?php
     /* Template Name: cr Template */
     get_header();
-    ?>
-
- <?php
+    
     global $wpdb;
     $order_key = isset($_GET['key']) ? sanitize_text_field($_GET['key']) : '';
     $order_id = wc_get_order_id_by_order_key($order_key);
     $order = wc_get_order($order_id);
-    $used_coupons = $order->get_used_coupons();
-    // echo 'hyyyyy'; print_r($used_coupons); die;
 
-    if ($order && is_object($order)) {
-        $items = $order->get_items();
+    if (!$order || !is_object($order)) {
+        wp_redirect(home_url());
+        exit;
     }
+
+    $used_coupons = method_exists($order, 'get_coupon_codes') ? $order->get_coupon_codes() : $order->get_used_coupons();
+    $items = $order->get_items();
     $order_status = $order->get_status();
     $symbol = get_woocommerce_currency_symbol();
     $order_items = '';
@@ -42,6 +42,7 @@
     
     foreach ($items as $item) {
         $product = $item->get_product();
+        if (!$product) continue;
         $price = floatval($product->get_price());
         $formatted_price = number_format($price, $decimals, $decimal_separator, $thousand_separator);
 
@@ -65,13 +66,20 @@
 
     $query = $wpdb->prepare("SELECT * FROM $order_table_name WHERE order_id = %s", $order_id);
     $get_order_data = $wpdb->get_results($query);
+
+    if (empty($get_order_data)) {
+        wp_redirect(home_url());
+        exit;
+    }
+
     if ($get_order_data[0]->order_status == COINREMITTER_INV_PAID || $get_order_data[0]->order_status == COINREMITTER_INV_OVER_PAID) {
-        $url = site_url("inedx.php/checkout/?order-received=" . $order_id . "&key=" . $order_key . "");
+        $url = $order->get_checkout_order_received_url();
         wp_redirect($url);
+        exit;
     } else if ($get_order_data[0]->order_status == COINREMITTER_INV_EXPIRED || $order->get_status() == 'cancelled') {
-        // echo '<pre>';print_r($get_order_data[0]->order_status);die;
         $url = $order->get_cancel_order_url();
         wp_redirect($url);
+        exit;
     }
 
     $discount_amount = $order->get_discount_total();

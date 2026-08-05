@@ -70,8 +70,26 @@ function cr_save_coin_logo($api_data)
 #region coinremitter wallet add
 #--------------------------------------------------------------------------------
 
+function coinremitter_check_ajax_security()
+{
+    if (!current_user_can('manage_options')) {
+        $Result['flag'] = 0;
+        $Result['msg'] = 'Unauthorized access.';
+        echo wp_send_json($Result);
+        die;
+    }
+
+    if (!check_ajax_referer('coinremitter_ajax_nonce', 'security', false)) {
+        $Result['flag'] = 0;
+        $Result['msg'] = 'Invalid security token (nonce).';
+        echo wp_send_json($Result);
+        die;
+    }
+}
+
 function coinremitter_wp_wallet_add()
 {
+    coinremitter_check_ajax_security();
     error_log('Wallet_add');
     global $wallet_balance;
     $api_key = sanitize_text_field($_POST["wallet_key"]);
@@ -187,6 +205,7 @@ function coinremitter_wp_wallet_add()
 
 function coinremitter_wp_wallet_edit()
 {
+    coinremitter_check_ajax_security();
     error_log('Wallet_update');
     $coinid = sanitize_text_field($_POST["coin_id"]);
     $api_key = sanitize_text_field($_POST["api_key_value"]);
@@ -303,6 +322,7 @@ function coinremitter_wp_wallet_edit()
 
 function coinremitter_wp_wallet_delete()
 {
+    coinremitter_check_ajax_security();
     error_log('Wallet_delete');
     global $wpdb;
     $id = sanitize_text_field($_POST["id"]);

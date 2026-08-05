@@ -18,13 +18,17 @@ jQuery(document).ready(function ($) {
         var site_url = jQuery("#site_url").val();
         console.log(relVal);
 
+        var ajax_url = (typeof coinremitter_params !== "undefined" && coinremitter_params.ajax_url) ? coinremitter_params.ajax_url : site_url + "/wp-admin/admin-ajax.php";
+        var nonce = (typeof coinremitter_params !== "undefined" && coinremitter_params.nonce) ? coinremitter_params.nonce : "";
+
         // AJAX request
         jQuery.ajax({
-            url: site_url + "/wp-admin/admin-ajax.php",
+            url: ajax_url,
             type: "POST",
             data: {
                 action: "store_rel_value",
                 rel_value: relVal,
+                security: nonce
             },
             success: function (response) {
                 console.log("Value stored successfully:", response);

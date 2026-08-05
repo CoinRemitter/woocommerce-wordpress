@@ -29,6 +29,7 @@ jQuery(document).ready(function ($) {
       type: "POST",
       data: {
         action: "coinremitter_wp_wallet_add",
+        security: my_ajax_obj.nonce,
         wallet_key: api_key,
         wallet_password: wallet_pass,
         minimum_invoice_amount: minimum_invoice_amount,
@@ -108,6 +109,7 @@ jQuery(document).ready(function ($) {
 
     var frmData = {
       action: "coinremitter_wp_wallet_edit",
+      security: my_ajax_obj.nonce,
       coin_id: coin_id,
       cointype: coinName,
       api_key_value: api_key_value,
@@ -168,6 +170,7 @@ jQuery(document).ready(function ($) {
                 type: 'POST',
                 data: {
                     action: 'coinremitter_wp_wallet_delete', // This is the action name to hook into in PHP
+                    security: my_ajax_obj.nonce,
                     id: id
                 },
                 success: function(response) { 

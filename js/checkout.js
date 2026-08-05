@@ -35,9 +35,11 @@ function updateTime() {
 }
 function funExpire(order_id) {
     var base_url = jQuery("#base_url").val();
+    var nonce = (typeof coinremitter_invoice_params !== "undefined" && coinremitter_invoice_params.nonce) ? coinremitter_invoice_params.nonce : (typeof coinremitter_params !== "undefined" ? coinremitter_params.invoice_nonce : "");
 
     var frmData = {
         order_id: order_id,
+        security: nonce
     };
     console.log(frmData);
 
@@ -63,8 +65,14 @@ function funExpire(order_id) {
 function makeTimer() {
     var base_url = jQuery("#base_url").val();
     var addr = jQuery("#order_addr").html();
+    if (!addr || addr.trim() === "") {
+        return;
+    }
+    var nonce = (typeof coinremitter_invoice_params !== "undefined" && coinremitter_invoice_params.nonce) ? coinremitter_invoice_params.nonce : (typeof coinremitter_params !== "undefined" ? coinremitter_params.invoice_nonce : "");
+
     var frmData = {
         addr: addr,
+        security: nonce
     };
 
     jQuery.ajax({

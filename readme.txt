@@ -4,7 +4,7 @@ Tags: best crypto payment gateway,crypto payment processor,blockchain API,crypto
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable Tag: 1.1.7
+Stable Tag: 1.1.8
 License: GNU Version 3 or Any Later Version
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -180,3 +180,6 @@ Bug fix and compatibility with wordpress 6.8.2
 Code Optimization and compatibility with wordpress 7.0 and woocommerce 10.3.7
 Fixes:Fixed an issue where payment gateways could conflict with each other.
 New Feature:If a customer doesn’t complete their payment at checkout, they can now easily complete it later using order->pay.
+
+= 1.1.8 =
+Security: Added capability check and nonce verification to wallet AJAX endpoints.
