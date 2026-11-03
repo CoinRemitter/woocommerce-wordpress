@@ -4,12 +4,16 @@
 Plugin Name:        CoinRemitter Crypto Payment Gateway
 Plugin URI:         https://coinremitter.com/plugins
 Description:        <a href="https://coinremitter.com">coinremitter.com</a> CoinRemitter Crypto Payment Gateway.
-Version:            1.1.8
+Version:            1.1.9
 Author:             CoinRemitter
 Author URI:         https://coinremitter.com
 Requires Plugins:   woocommerce
 Requires at least:  6.8
-Tested up to:       7.0
+Tested up to:       7.1
+License:            GNU Version 3 or Any Later Version
+License URI:        https://www.gnu.org/licenses/gpl-3.0.html
+Text Domain:        coinremitter-crypto-payment-gateway
+Domain Path:        /languages
 
 
  *
@@ -25,12 +29,16 @@ Tested up to:       7.0
  * See the GNU General Public License for more details.
 */
 
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 $wordpress_version = get_bloginfo('version');
 $woocommerce_version = get_option('woocommerce_version');
 define('COINREMITTER', 'coinremitter');
 define('COINREMITTER_SKEY', 'coinremitterdata');
 define('COINREMITTER_CURL', 'https://api.coinremitter.com/v1');
-DEFINE('COINREMITTER_PLUGIN_VERSION', '1.1.8');
+DEFINE('COINREMITTER_PLUGIN_VERSION', '1.1.9');
 DEFINE('WORDPRESS_VERSION', $wordpress_version);
 DEFINE('WOOOCOMMERCE_VERSION', $woocommerce_version);
 define('COINREMITTERWC', 'coinremitter-woocommerce');
@@ -75,7 +83,6 @@ function coinre_actions_call()
         add_action('update_option', 'track_currency_change', 10, 3);
         
     } 
-
 }
 
 add_filter('woocommerce_get_return_url', 'coinremitter_override_return_url', 20, 2);
@@ -102,8 +109,10 @@ add_action('update_fiat_rate_hook', 'coinremitter_wp_update_fiat_rate');
 add_action('wp', 'coinremitter_wp_schedule_fiat_rate_update');
 add_action('admin_notices', 'coinremitter_webhook_admin_notice');
 
-
-
+// cancel expired guest orders (cron)
+add_action('coinremitter_cancel_expired_orders_hook', 'coinremitter_cancel_expired_orders');
+add_action('wp', 'coinremitter_wp_schedule_cancel_expired');
+register_deactivation_hook(__FILE__, 'coinremitter_clear_scheduled_crons');
 
 #--------------------------------------------------------------------------------
 #region coinremitter payment block setting
@@ -122,10 +131,16 @@ function cr_create_page()
 {
     // Check if the page already exists
     $page_title = 'Invoice Page';
-    $page_check = get_page_by_title($page_title);
+    $pages = get_posts(array(
+        'title'       => $page_title,
+        'post_type'   => 'page',
+        'post_status' => 'any',
+        'numberposts' => 1,
+    ));
+    $page_check = !empty($pages) ? $pages[0] : null;
 
     // If the page doesn't exist, create it
-    if (!isset($page_check->ID)) {
+    if (!$page_check) {
         $new_page_id = wp_insert_post(array(
             'post_title' => $page_title,
             'post_status' => 'publish',
@@ -152,7 +167,7 @@ add_filter('page_template', 'cr_register_template');
 add_filter('theme_page_templates', 'cr_template_to_select', 10, 4);
 function cr_template_to_select($post_templates, $wp_theme, $post, $post_type)
 {
-    $post_templates['template-page.php'] = __('Templateconfigurator');
+    $post_templates['template-page.php'] = __('Templateconfigurator', 'coinremitter-crypto-payment-gateway');
 
     return $post_templates;
 }
@@ -246,13 +261,13 @@ function coinremitter_webhook_admin_notice($hook)
 ?>
     <div class="notice notice-info">
         <p>
-            <strong>CoinRemitter:</strong> To ensure your cryptocurrency payments are updated automatically, please set the following Webhook URL in your CoinRemitter wallet.
+            <strong>CoinRemitter:</strong> <?php esc_html_e('To ensure your cryptocurrency payments are updated automatically, please set the following Webhook URL in your CoinRemitter wallet.', 'coinremitter-crypto-payment-gateway'); ?>
         </p>
         <p>
-            <strong>Webhook URL:</strong> <code><?php echo esc_url($webhook_url); ?></code>
+            <strong><?php esc_html_e('Webhook URL:', 'coinremitter-crypto-payment-gateway'); ?></strong> <code><?php echo esc_url($webhook_url); ?></code>
         </p>
         <p>
-            Go to <em>CoinRemitter Wallet → General → Webhook URL</em> and save this URL.
+            <?php esc_html_e('Go to CoinRemitter Wallet → General → Webhook URL and save this URL.', 'coinremitter-crypto-payment-gateway'); ?>
         </p>
     </div>
 <?php

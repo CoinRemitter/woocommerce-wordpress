@@ -12,7 +12,7 @@ jQuery(document).ready(function ($) {
     var exchange_rate_multiplier = $(
       'input[name="exchange_rate_multiplier"]'
     ).val();
- 
+
 
     $("#error-message-wallet").empty();
     $("#usd-rate-error").empty();
@@ -37,7 +37,7 @@ jQuery(document).ready(function ($) {
       },
       success: function (response) {
         console.log(response);
-        if(typeof response == 'string'){
+        if (typeof response == 'string') {
           response = JSON.parse(response)
         }
         $("#error-message-wallet").html(response);
@@ -91,12 +91,12 @@ jQuery(document).ready(function ($) {
     var rate = jQuery('input[name="exchange_rate_multiplier_edit"]').val();
     // console.log(invoice);
 
-  //   if (invoice === '0') {
-  //     $("#error-message-wallet-edit").text(
-  //       "Minimum invoice value must be greater than 0"
-  //     );
-  //     return;
-  // } 
+    //   if (invoice === '0') {
+    //     $("#error-message-wallet-edit").text(
+    //       "Minimum invoice value must be greater than 0"
+    //     );
+    //     return;
+    // } 
 
     $("#error-message-wallet-edit").empty();
     if (api_key_value === "" || password === "") {
@@ -118,7 +118,7 @@ jQuery(document).ready(function ($) {
       rate: rate,
     };
     console.log(frmData);
-    
+
 
     jQuery.ajax({
       type: "post",
@@ -126,7 +126,7 @@ jQuery(document).ready(function ($) {
       data: frmData,
       success: function (response) {
         console.log(response);
-        if(typeof response == 'string'){
+        if (typeof response == 'string') {
           response = JSON.parse(response)
         }
         var msg = response.msg;
@@ -143,82 +143,82 @@ jQuery(document).ready(function ($) {
           $("#error-message-wallet-edit").html(msg);
         }
       },
-      error: function (jqXHR, exception) {},
+      error: function (jqXHR, exception) { },
     });
   });
-  
+
 
   $(".walletdelete_pop").on("click", function () {
     var walletd = $(this).data("walletid");
     var upname = $(this).data("upname");
-    $(".wallet_coin").text(upname);   
-    $("#coin_id").val(walletd);   
+    $(".wallet_coin").text(upname);
+    $("#coin_id").val(walletd);
   });
 
   // coinremitter wallet Delete
- jQuery(document).ready(function($) {
-    $('.walletdelete_pop').on('click', function(e) {
-        e.preventDefault();
+  jQuery(document).ready(function ($) {
+    $('.walletdelete_pop').on('click', function (e) {
+      e.preventDefault();
 
-        var upname = $(this).data('upname');
-        // var walletid = $(this).data('walletid');
-        var id = $('#coin_id').val();
+      var upname = $(this).data('upname');
+      // var walletid = $(this).data('walletid');
+      var id = $('#coin_id').val();
 
-        if (confirm('It will remove ' + upname + ' wallet from your database only. It will not remove actual wallet from coinremitter.')) {
-            $.ajax({
-                url: ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'coinremitter_wp_wallet_delete', // This is the action name to hook into in PHP
-                    security: my_ajax_obj.nonce,
-                    id: id
-                },
-                success: function(response) { 
-                    if(typeof response == 'string'){
-                      response = JSON.parse(response)
-                    }
-                    if (response.success) {
-                          location.reload();  
-                    } else {
-                        alert('Failed to delete wallet.');
-                    }
-                },
-                error: function() {
-                    alert('An error occurred.');
-                }
-            });
-        }
+      if (confirm('It will remove ' + upname + ' wallet from your database only. It will not remove actual wallet from coinremitter.')) {
+        $.ajax({
+          url: ajaxurl,
+          type: 'POST',
+          data: {
+            action: 'coinremitter_wp_wallet_delete', // This is the action name to hook into in PHP
+            security: my_ajax_obj.nonce,
+            id: id
+          },
+          success: function (response) {
+            if (typeof response == 'string') {
+              response = JSON.parse(response)
+            }
+            if (response.success) {
+              location.reload();
+            } else {
+              alert('Failed to delete wallet.');
+            }
+          },
+          error: function () {
+            alert('An error occurred.');
+          }
+        });
+      }
     });
 
-    $('.btn-close').on('click', function() {
+    $('.btn-close').on('click', function () {
       location.reload();
+    });
   });
-});
 
 
-$('#wallet_password , #minimum_invoice_amount , #exchange_rate_multiplier ,#wallet_password_update ,#minimum_invoice_amount_edit , #exchange_rate_multiplier_edit').on('keypress', function(event) {
-  // var key = event.which || event.keyCode;
-  // // Allow: backspace, delete, tab, escape, enter, and numbers
-  // if (key >= 48 && key <= 57 || key === 8 || key === 9 || key === 27 || key === 13) {
-  //     return true;
-  // }
-  // // Prevent any other keypress
-  // event.preventDefault();
+  $('#wallet_password , #minimum_invoice_amount , #exchange_rate_multiplier ,#wallet_password_update ,#minimum_invoice_amount_edit , #exchange_rate_multiplier_edit').on('keypress', function (event) {
+    // var key = event.which || event.keyCode;
+    // // Allow: backspace, delete, tab, escape, enter, and numbers
+    // if (key >= 48 && key <= 57 || key === 8 || key === 9 || key === 27 || key === 13) {
+    //     return true;
+    // }
+    // // Prevent any other keypress
+    // event.preventDefault();
 
-  // var value = $(this).val();
-            
-  //           // Allow only numbers and one decimal point
-  //           var validValue = value.replace(/[^0-9.]/g, ''); // Remove non-numeric characters except decimal point
-            
-  //           // Check for multiple decimal points
-  //           var decimalCount = validValue.split('.').length - 1;
-  //           if (decimalCount > 1) {
-  //               validValue = validValue.replace(/\.+$/, ''); // Remove extra decimal points at the end
-  //               validValue = validValue.replace(/\.(?=.*\.)/, ''); // Remove additional decimal points
-  //           }
-            
-  //           $(this).val(validValue);
-});
+    // var value = $(this).val();
+
+    //           // Allow only numbers and one decimal point
+    //           var validValue = value.replace(/[^0-9.]/g, ''); // Remove non-numeric characters except decimal point
+
+    //           // Check for multiple decimal points
+    //           var decimalCount = validValue.split('.').length - 1;
+    //           if (decimalCount > 1) {
+    //               validValue = validValue.replace(/\.+$/, ''); // Remove extra decimal points at the end
+    //               validValue = validValue.replace(/\.(?=.*\.)/, ''); // Remove additional decimal points
+    //           }
+
+    //           $(this).val(validValue);
+  });
 
 });
 

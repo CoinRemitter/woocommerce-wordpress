@@ -1,6 +1,9 @@
- <?php
-    /* Template Name: cr Template */
-    get_header();
+<?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+/* Template Name: cr Template */
+get_header();
     
     global $wpdb;
     $order_key = isset($_GET['key']) ? sanitize_text_field($_GET['key']) : '';
@@ -8,7 +11,7 @@
     $order = wc_get_order($order_id);
 
     if (!$order || !is_object($order)) {
-        wp_redirect(home_url());
+        wp_safe_redirect(home_url());
         exit;
     }
 
@@ -68,17 +71,47 @@
     $get_order_data = $wpdb->get_results($query);
 
     if (empty($get_order_data)) {
-        wp_redirect(home_url());
+        wp_safe_redirect(home_url());
         exit;
     }
 
+     // SAFETY: expired invoice. The key in the URL is the guest's proof of access.
+    // Cancel it here (server side), then go to the cancel URL (old behaviour).
+    $cr_expiry = $get_order_data[0]->expiry_date;
+    if (
+        !empty($cr_expiry)
+        && $order->get_payment_method() === 'coinremitterpayments'
+        && $order->has_status(array('pending', 'on-hold'))
+        && (int) $get_order_data[0]->order_status !== COINREMITTER_INV_PAID
+        && (int) $get_order_data[0]->order_status !== COINREMITTER_INV_OVER_PAID
+        && strtotime($cr_expiry) <= strtotime(gmdate('Y-m-d H:i:s'))
+    ) {
+        $order->update_status('cancelled', __('Order expired before cryptocurrency payment was received.', 'coinremitter-crypto-payment-gateway'));
+        $wpdb->update(
+            $wpdb->prefix . 'coinremitter_orders',
+            array('order_status' => COINREMITTER_INV_EXPIRED),
+            array('order_id' => (int) $order_id),
+            array('%d'),
+            array('%d')
+        );
+ 
+        $cr_cancel_url = $order->get_cancel_order_url();
+        if (!headers_sent()) {
+            wp_safe_redirect($cr_cancel_url);
+        } else {
+            // get_header() already printed output, so redirect with JS instead.
+            echo '<script>window.location.href=' . wp_json_encode(esc_url_raw($cr_cancel_url)) . ';</script>';
+        }
+        exit;
+    }
+    
     if ($get_order_data[0]->order_status == COINREMITTER_INV_PAID || $get_order_data[0]->order_status == COINREMITTER_INV_OVER_PAID) {
         $url = $order->get_checkout_order_received_url();
-        wp_redirect($url);
+        wp_safe_redirect($url);
         exit;
     } else if ($get_order_data[0]->order_status == COINREMITTER_INV_EXPIRED || $order->get_status() == 'cancelled') {
         $url = $order->get_cancel_order_url();
-        wp_redirect($url);
+        wp_safe_redirect($url);
         exit;
     }
 
@@ -91,46 +124,35 @@
     $formatted_price_cur = $prefix . $formatted_priceTot . $suffix;
 
     // grand total
-    $pricegrand = floatval(($order->get_subtotal()) + $order->get_shipping_total() + $order->get_shipping_tax() - $order->get_discount_total());
+    $pricegrand = floatval($order->get_total());
     $formatted_priceGrand = number_format($pricegrand, $decimals, $decimal_separator, $thousand_separator);
     $formatted_price_cur_total = $prefix . $formatted_priceGrand . $suffix;
 
-    // Amount cal
+    // Amount cal - strictly format without commas for wallet clipboard copying
     $priceamount = floatval($get_order_data[0]->crypto_amount);
-    $decimalsamount = 8;
-    $formatted_priceAmount = number_format($priceamount, $decimalsamount, $decimal_separator, $thousand_separator);
-    $formatted_price_cur_am = $prefix . $formatted_priceAmount . $suffix;
+    $raw_crypto_amount = number_format($priceamount, 8, '.', '');
+    $formatted_priceAmount = $raw_crypto_amount;
 
     // Padding Amount
-    $pad1 = $get_order_data[0]->crypto_amount - $get_order_data[0]->paid_crypto_amount;
-    // $pad1 = $get_order_data[0]->paid_crypto_amount;
-    // if ($pad <b 0) {
-    //     $pad = 0;
-    // }
+    $pad1 = max(0, floatval($get_order_data[0]->crypto_amount) - floatval($get_order_data[0]->paid_crypto_amount));
     $pricepadamount = floatval($pad1);
-    $decimalspadamount = 8;
-    $formatted_pricepadAmount = number_format($pricepadamount, $decimalspadamount, $decimal_separator, $thousand_separator);
-    $formatted_price_cur_pad = $prefix . $formatted_pricepadAmount . $suffix;
+    $formatted_pricepadAmount = number_format($pricepadamount, 8, '.', '');
 
     // shipping amount
     $pricepadamountshiping = floatval($order->get_shipping_total());
-    $decimalspadamount = 2;
-    $formatted_priceshipigAmount = number_format($pricepadamountshiping, $decimalspadamount, $decimal_separator, $thousand_separator);
+    $formatted_priceshipigAmount = number_format($pricepadamountshiping, $decimals, $decimal_separator, $thousand_separator);
     $formatted_price_cur_ship = $prefix . $formatted_priceshipigAmount . $suffix;
 
-    // taxes amount
-    $pricepadamounttax = floatval($order->get_shipping_tax(),);
-    $decimalspadamount = 2;
-    $formatted_pricetaxAmount = number_format($pricepadamounttax, $decimalspadamount, $decimal_separator, $thousand_separator);
+    // taxes amount (all product and shipping taxes)
+    $pricepadamounttax = floatval($order->get_total_tax());
+    $formatted_pricetaxAmount = number_format($pricepadamounttax, $decimals, $decimal_separator, $thousand_separator);
     $formatted_price_cur_tax = $prefix . $formatted_pricetaxAmount . $suffix;
 
     $padding_amount = $get_order_data[0]->paid_crypto_amount;
 
     // paid amount
     $paidpricepadamount = floatval($padding_amount);
-    $decimalspadamount = 8;
-    $formatted_pricepadAmount_paid = number_format($paidpricepadamount, $decimalspadamount, $decimal_separator, $thousand_separator);
-    $formatted_price_cur_paid = $prefix . $formatted_pricepadAmount_paid . $suffix;
+    $formatted_pricepadAmount_paid = number_format($paidpricepadamount, 8, '.', '');
 
     ?>
 
@@ -208,7 +230,7 @@
                          <div class="mb-3 payment_history">
                              <div class="w-100">
                                  <div class="cr-plugin-history-list w-100" id="Webhook_history">
-                                     <input type="hidden" id="expiry_time" value>
+                                     <input type="hidden" id="expiry_time" value="<?php echo esc_attr(!empty($get_order_data[0]->expiry_date) ? $get_order_data[0]->expiry_date : ''); ?>">
                                      <div class="cr-plugin-history-box">
                                          <div class="cr-plugin-history"
                                              style="text-align: center; padding-left: 0;">

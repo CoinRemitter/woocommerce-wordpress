@@ -1,5 +1,7 @@
-
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 function coinremitter_wp_admin_menu()
 {
@@ -100,39 +102,23 @@ function coinremitter_wp_page_summary()
     $table_name = $wpdb->prefix . 'coinremitter_wallets';
 
     $results = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);
-    if ($results) {
     ?>
-        <?php
-        foreach ($results as $result) {
-            $wallet_name = $result['wallet_name'];
-        ?>
-
-            <input type='hidden' id='coin_id' name="coin_id" value="" />
-            <input type='hidden' id='coinName' name="coinName" value="" />
-
-        <?php } ?>
-    <?php
-    }  ?>
-
     <div class="modal fade" id="update_wallet" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content coin_model_content">
                 <div class="modal-header model_coin_header">
                     <h1 class="modal-title fs-5 fw-bold" id="exampleModalLabel">Update
                         <img class="wallet_image" alt="Wallet Image" style="width: 5%;">
-                        <span id="editcointypeid"> <?php
-                         if ($results) {
-                         echo $wallet_name;
-                        }
-                          ?> </span>
-                        Wallet
+                        <span id="editcointypeid"> Wallet </span>
                     </h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <form method="post" action="" enctype="multipart/form-data" id="coinedit-form" autocomplete="off" novalidate="novalidate">
                     <div class="wallet-form-box">
-                        <input type='hidden' name='currency_type' id='currency_type' value="<?php if ($results) { echo $wallet_name;  }?>" />
+                        <input type='hidden' id='coin_id' name="coin_id" value="" />
+                        <input type='hidden' id='coinName' name="coinName" value="" />
+                        <input type='hidden' name='currency_type' id='currency_type' value="" />
 
 
                         <div class="csf-field csf-field-text">
@@ -186,7 +172,7 @@ function coinremitter_wp_page_summary()
                         <h6 id="edit-success-message-wallet"></h6>
                         <h6 id="error-message-wallet-edit"></h6>
                         <p id="message-container"></p>
-                        <button type="submit" class="button button-primary js-register-theme walletUpdateBtn" id="<?php  if ($results) { echo $wallet_name; } ?>">Update
+                        <button type="submit" class="button button-primary js-register-theme walletUpdateBtn" id="walletUpdateBtn">Update
                             Wallet</button>
                     </div>
                 </form>
@@ -264,13 +250,13 @@ function coinremitter_wp_page_summary()
             public function get_columns()
             {
                 return array(
-                    'wallet_image'              => __('Wallet image', 'textdomain'),
-                    'wallet_name'              => __('Wallet Name', 'textdomain'),
-                    'balance'                  => __('Balance', 'textdomain'),
-                    'api_key'                  => __('API Key', 'textdomain'),
-                    'minimum_invoice_amount'   => __('Minimum Order Value', 'textdomain'),
-                    'exchange_rate_multiplier' => __('Order Multiplier', 'textdomain'),
-                    'actions' => __('Actions', 'textdomain')
+                    'wallet_image'              => __('Wallet image', 'coinremitter-crypto-payment-gateway'),
+                    'wallet_name'              => __('Wallet Name', 'coinremitter-crypto-payment-gateway'),
+                    'balance'                  => __('Balance', 'coinremitter-crypto-payment-gateway'),
+                    'api_key'                  => __('API Key', 'coinremitter-crypto-payment-gateway'),
+                    'minimum_invoice_amount'   => __('Minimum Order Value', 'coinremitter-crypto-payment-gateway'),
+                    'exchange_rate_multiplier' => __('Order Multiplier', 'coinremitter-crypto-payment-gateway'),
+                    'actions' => __('Actions', 'coinremitter-crypto-payment-gateway')
                 );
             }
 
@@ -339,7 +325,7 @@ function coinremitter_wp_page_summary()
                         $edit_url = add_query_arg(array('action' => 'edit', 'id' => $item['id'], 'password' => $item['password'], 'coin_symbol' => $item['coin_symbol'], 'api_key' => $item['api_key'], 'minimum_invoice_amounts' => $item['minimum_invoice_amounts'], 'exchange_rate_multiplier' => $item['exchange_rate_multiplier']));
                         $delete_url = add_query_arg(array('action' => 'delete', 'id' => $item['id']), admin_url('admin.php'));
                         return sprintf(
-                            '<a href="javascript:void(0)" data-id="' . $item['id'] . '" data-rel="' . $item['coin_symbol'] . '" data-key="' . $item['api_key'] . '" data-password="' . $item['password'] . '" data-amount="' . $item['minimum_invoice_amounts'] . '" data-rate="' . $item['exchange_rate_multiplier'] . '" class="EditOpenPopup">Edit</a> | 
+                            '<a href="javascript:void(0)" data-id="' . $item['id'] . '" data-rel="' . $item['coin_symbol'] . '" data-image="' . esc_url(cr_get_coin_logo_url($item['coin_symbol'])) . '" data-key="' . $item['api_key'] . '" data-password="' . $item['password'] . '" data-amount="' . $item['minimum_invoice_amounts'] . '" data-rate="' . $item['exchange_rate_multiplier'] . '" class="EditOpenPopup">Edit</a> | 
                         <a href="javascript:void(0)" class="coinremitterbutton delete_wallet walletdelete_pop" 
                         data-upname="' . $item['coin_symbol'] . '" data-walletid="' . $item['id'] . '">Delete</a>',
 

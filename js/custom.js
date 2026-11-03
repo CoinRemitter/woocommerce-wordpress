@@ -25,6 +25,9 @@ jQuery(document).ready(function ($) {
         jQuery.ajax({
             url: ajax_url,
             type: "POST",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            },
             data: {
                 action: "store_rel_value",
                 rel_value: relVal,

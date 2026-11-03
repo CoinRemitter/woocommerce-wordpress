@@ -1,10 +1,10 @@
 === Coinremitter Crypto Payment Gateway ===
 Contributors: coinremitter
 Tags: best crypto payment gateway,crypto payment processor,blockchain API,crypto API,bitcoin api
-Requires at least: 6.4
-Tested up to: 7.0
+Requires at least: 6.8
+Tested up to: 7.1
 Requires PHP: 8.1
-Stable Tag: 1.1.8
+Stable Tag: 1.1.9
 License: GNU Version 3 or Any Later Version
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -109,77 +109,78 @@ Withdrawal is only available on our official website only. You can log in to you
 	You can link the test coin wallet. Coinremitter will give you 10 TCN as free credit for testing purposes. [Read More](https://blog.coinremitter.com/what-is-test-coin-tcn-and-how-to-use-it-during-integration/)
 
 == Changelog ==
-= 1.0.0 =
-This is the first version of the CoinRemitter Crypto Payment Gateway Plugin.
-
-== Changelog ==
-= 1.1.3 =
-Code Optimization and compatibility with wordpress 6.7.1 and woocommerce 9.5.1
-We've implemented new API docs with a few advancements.
-Now, the payment section on the checkout page is both shortcode-based as well as block-based.
-The UI designs of the checkout page and the invoice page are changed.
-
-= 1.1.5 =
-Code Optimization and compatibility with wordpress 6.8.2
-
-== Upgrade Notice ==    
-= 1.0 =
-This is the first version of the CoinRemitter Crypto Payment Gateway Plugin.
-
-== Upgrade Notice ==    
-= 1.0.2 =
-Invoice feature added.
-
-== Upgrade Notice ==    
-= 1.0.5 =
-Security Improved and compatibility with WooCommerce (7.0.0).
-
-== Upgrade Notice ==    
-= 1.0.6 =
-Code Optimization and compatibility with wordpress 6.2.2
-
-== Upgrade Notice ==    
-= 1.0.7 =
-Code Optimization and compatibility with wordpress 6.3
-
-== Upgrade Notice ==    
-= 1.0.8 =
-Code Optimization and Bug fix
-
-== Upgrade Notice ==    
-= 1.0.9 =
-Code Optimization and Bug fix
-Support: Wordpress 6.5.3 and Woocommerce 8.8.5
-
-== Upgrade Notice ==    
-= 1.1.0 =
-Code Optimization and Bug fix
-Support: Wordpress 6.5.5 and Woocommerce 9.0.2
-
-= 1.1.1 =
-Code Optimization and Bug fix
-Support: Wordpress 6.5.5 and Woocommerce 9.0.2
-
-= 1.1.2 =
-Code Optimization and Bug fix
-Support: Wordpress 6.6.1 and Woocommerce 9.0.2
-
-= 1.1.3 =
-Code Optimization and compatibility with wordpress 6.7.1 and woocommerce 9.5.1
-We've implemented new API docs with a few advancements.
-Now, the payment section on the checkout page is both shortcode-based as well as block-based.
-The UI designs of the checkout page and the invoice page are changed.
-
-= 1.1.4 =
-Code Optimization and compatibility with wordpress 6.8.2
-
-= 1.1.5 =
-Bug fix and compatibility with wordpress 6.8.2
-
-= 1.1.7 =
-Code Optimization and compatibility with wordpress 7.0 and woocommerce 10.3.7
-Fixes:Fixed an issue where payment gateways could conflict with each other.
-New Feature:If a customer doesn’t complete their payment at checkout, they can now easily complete it later using order->pay.
+= 1.1.9 =
+* Security: Hardened webhook transaction verification to prevent payment bypass vulnerabilities.
+* Security: Added authentication and ownership verification to cancel order AJAX endpoint to prevent unauthorized cancellation and order-key leakage.
+* Security: Hardened cancel order endpoint against SQL injection.
+* Security: Added direct file access protection (`ABSPATH` check) across all PHP files.
+* Fix: Fixed large-amount comma formatting bug in crypto calculations ($1,000+ orders).
+* Fix: Resolved invoice 404 template error and timezone shifts.
+* Fix: Added global store compatibility for cart discounts, coupons, shipping, and VAT/sales taxes.
+* Fix: Resolved Block Checkout button click obstruction.
+* Fix: Added WooCommerce class guards to eliminate `WC_Payment_Gateway` fatal crashes.
+* Optimization: Standardized WordPress text domains to `coinremitter-crypto-payment-gateway`.
 
 = 1.1.8 =
-Security: Added capability check and nonce verification to wallet AJAX endpoints.
+* Security: Added capability check and nonce verification to wallet AJAX endpoints.
+
+= 1.1.7 =
+* Code Optimization and compatibility with wordpress 7.0 and woocommerce 10.3.7.
+
+= 1.1.6 =
+* Code Optimization and compatibility with wordpress 6.9 and woocommerce 10.3.7.
+* Fixes: Fixed an issue where payment gateways could conflict with each other.
+* New Feature: If a customer doesn't complete payment at checkout, they can complete it later using order->pay.
+
+= 1.1.5 =
+* Bug fix and compatibility with wordpress 6.8.2.
+
+= 1.1.4 =
+* Code Optimization and compatibility with wordpress 6.8.2.
+
+= 1.1.3 =
+* Code Optimization, block checkout integration, and updated UI designs.
+
+= 1.1.2 =
+* Code Optimization and Bug fix.
+
+= 1.1.1 =
+* Code Optimization and Bug fix.
+
+= 1.1.0 =
+* Code Optimization and Bug fix.
+
+= 1.0.9 =
+* Code Optimization and Bug fix.
+
+= 1.0.8 =
+* Code Optimization and Bug fix.
+
+= 1.0.7 =
+* Code Optimization and compatibility with wordpress 6.3.
+
+= 1.0.6 =
+* Code Optimization and compatibility with wordpress 6.2.2.
+
+= 1.0.5 =
+* Security Improved and compatibility with WooCommerce.
+
+= 1.0.4 =
+* Code Optimization and Bug fix.
+
+= 1.0.3 =
+* DASH support added.
+
+= 1.0.2 =
+* Invoice feature added.
+
+= 1.0.1 =
+* Security Improved.
+* ETH support added.
+
+= 1.0.0 =
+* First version of the CoinRemitter Crypto Payment Gateway Plugin.
+
+== Upgrade Notice ==
+= 1.1.9 =
+Critical update: Webhook payment verification hardening, cancel order authorization checks, calculation fixes for large amounts, global tax/coupon support, and WooCommerce compatibility improvements.

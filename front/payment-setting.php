@@ -1,4 +1,7 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
 require_once CR_PLUGIN_DIR . '/front/cron-event.php';
 
 #--------------------------------------------------------------------------------
@@ -40,7 +43,7 @@ function is_checkout_block()
 }
 
 
-// error_log('currency_update_checkout');
+// Block direct browser address-bar visits with 404 while allowing genuine AJAX calls
 function coinremitter_block_direct_browser_access()
 {
     if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest') {
@@ -68,8 +71,11 @@ function store_rel_value()
 
     $rel_value = isset($_POST['rel_value']) ? sanitize_text_field($_POST['rel_value']) : '';
 
-    // Set transient
-    set_transient('currency_value', $rel_value, HOUR_IN_SECONDS); // set transient for 1 hour
+    if (isset(WC()->session)) {
+        WC()->session->set('coinremitter_selected_coin', $rel_value);
+    }
+    // Set transient as fallback
+    set_transient('currency_value', $rel_value, HOUR_IN_SECONDS);
     wc_clear_notices(); // Clear old coin error notices when customer switches coin selection
     echo 'Transient set successfully: ' . $rel_value;
     wp_die();
@@ -100,10 +106,16 @@ function coinremitter_override_return_url($return_url, $order)
 
     global $wpdb;
     global $woocommerce;
-    $coin = get_transient('currency_value');
+    $coin = '';
+    if (isset(WC()->session)) {
+        $coin = WC()->session->get('coinremitter_selected_coin');
+    }
+    if (empty($coin)) {
+        $coin = get_transient('currency_value');
+    }
 
     if (!$coin) {
-        $msg = __('Please select a coin for cryptocurrency payment.', 'coinremitter');
+        $msg = __('Please select a coin for cryptocurrency payment.', 'coinremitter-crypto-payment-gateway');
         $order->update_status('failed', $msg);
         if (isset(WC()->session)) {
             WC()->session->set('order_awaiting_payment', 0);
@@ -113,15 +125,13 @@ function coinremitter_override_return_url($return_url, $order)
     }
 
     $OrdID = $order->get_id();
-    $order_amount = $order->get_subtotal();
-    $shipping = $order->get_shipping_total();
-    $tax = $woocommerce->cart->get_shipping_tax();
+    $order_total = floatval($order->get_total());
 
     $tablename = $wpdb->prefix . 'coinremitter_wallets';
     $sql = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE coin_symbol = %s", $coin));
 
     if (!$sql) {
-        $msg = sprintf(__('Wallet configuration for %s was not found.', 'coinremitter'), strtoupper($coin));
+        $msg = sprintf(__('Wallet configuration for %s was not found.', 'coinremitter-crypto-payment-gateway'), strtoupper($coin));
         $order->update_status('failed', $msg);
         if (isset(WC()->session)) {
             WC()->session->set('order_awaiting_payment', 0);
@@ -133,14 +143,17 @@ function coinremitter_override_return_url($return_url, $order)
     $currancy_type = get_woocommerce_currency();
     $CurrAPIKey = decrypt_data($sql->api_key);
     $CurrPassword = decrypt_data($sql->password);
-    $multiplier = $sql->exchange_rate_multiplier;
-    $unit_fiat_amount = $sql->unit_fiat_amount;
+    $multiplier = (isset($sql->exchange_rate_multiplier) && floatval($sql->exchange_rate_multiplier) > 0) ? floatval($sql->exchange_rate_multiplier) : 1;
+    $unit_fiat_amount = floatval($sql->unit_fiat_amount);
 
-    $total_amount = ($order_amount * $multiplier) + $shipping + $tax;
+    $total_amount = $order_total * $multiplier;
     $convert_amount = ($unit_fiat_amount > 0) ? ($total_amount / $unit_fiat_amount) : 0;
-    $crypto_amount = number_format($convert_amount, 8);
+    $crypto_amount = number_format($convert_amount, 8, '.', '');
 
     if ($order->get_payment_method() !== 'coinremitterpayments') {
+        if (isset(WC()->session)) {
+            WC()->session->__unset('coinremitter_selected_coin');
+        }
         delete_transient('currency_value');
     }
 
@@ -172,7 +185,7 @@ function coinremitter_override_return_url($return_url, $order)
         $expiry_date = null;
 
         if ($invoice_expiry != "") {
-            $expiry_date = date("Y/m/d H:i:s", strtotime("+" . $invoice_expiry . " minutes"));
+            $expiry_date = gmdate("Y-m-d H:i:s", time() + (intval($invoice_expiry) * 60));
         }
 
         if ($crypto_amount >= $apiMinimum_deposit_amount) {
@@ -189,8 +202,8 @@ function coinremitter_override_return_url($return_url, $order)
                 'crypto_amount' => floatval($crypto_amount),
                 'fiat_symbol' => sanitize_text_field($currancy_type),
                 'fiat_amount' => sanitize_text_field($total_amount),
-                'paid_crypto_amount' => '',
-                'paid_fiat_amount' => '',
+                'paid_crypto_amount' => 0,
+                'paid_fiat_amount' => 0,
                 'payment_address' => sanitize_text_field($result_arr['data']['address']),
                 'qr_code' => sanitize_text_field($result_arr['data']['qr_code']),
                 'expiry_date' => $expiry_date,
@@ -234,7 +247,7 @@ function coinremitter_override_return_url($return_url, $order)
             }
             $tablename_orders = $wpdb->prefix . 'coinremitter_orders';
             $wpdb->delete($tablename_orders, array('order_id' => $OrdID));
-            $msg = sprintf(__('Order total is less than the minimum deposit required (%s %s) for this coin.', 'coinremitter'), $apiMinimum_deposit_amount, strtoupper($coin));
+            $msg = sprintf(__('Order total is less than the minimum deposit required (%s %s) for this coin.', 'coinremitter-crypto-payment-gateway'), $apiMinimum_deposit_amount, strtoupper($coin));
             wc_add_notice($msg, 'error');
             throw new \Exception($msg);
         }
@@ -247,9 +260,9 @@ function coinremitter_override_return_url($return_url, $order)
         $wpdb->delete($tablename_orders, array('order_id' => $OrdID));
         $msg = (is_array($result_arr) && isset($result_arr['msg']) && !empty($result_arr['msg']))
             ? $result_arr['msg']
-            : sprintf(__('%s server is currently unavailable or offline.', 'coinremitter'), strtoupper($coin));
-        wc_add_notice(__($msg), 'error');
-        throw new \Exception(__($msg));
+            : sprintf(__('%s server is currently unavailable or offline.', 'coinremitter-crypto-payment-gateway'), strtoupper($coin));
+        wc_add_notice($msg, 'error');
+        throw new \Exception($msg);
     }
 }
 
@@ -278,7 +291,7 @@ function coinremitter_webhook_data()
     );
     $order_data = $wpdb->get_results($order_query);
 
-    if ($order_data == 0) {
+    if (empty($order_data)) {
         error_log('CoinRemitter Webhook: Order not found');
         wp_send_json_error(['message' => 'Missing addr'], 400);
         exit;
@@ -292,208 +305,184 @@ function coinremitter_webhook_data()
     $paidFiatAmount = $order_data->paid_fiat_amount;
     $fiat_amount = $order_data->fiat_amount;
 
-    $order = new WC_Order($order_id);
+    $order = wc_get_order($order_id);
+    if (!$order || !is_a($order, 'WC_Order')) {
+        wp_send_json_error(['message' => 'Invalid order'], 404);
+        exit;
+    }
 
     $order_key = $order->get_order_key();
     $wcOrderStatus = $order->get_status();
 
-    $tablename = $wpdb->prefix . 'coinremitter_wallets';
-    $walletData = $wpdb->get_row($wpdb->prepare("SELECT wallet_name, coin_symbol, minimum_invoice_amount, api_key, password FROM $tablename WHERE coin_symbol = %s", $coin_symbol));
-
-    if ($walletData) {
-        $api_key = decrypt_data($walletData->api_key);
-        $api_password = decrypt_data($walletData->password);
+    if ($order_data->order_status == COINREMITTER_INV_EXPIRED || $wcOrderStatus == 'cancelled') {
+        $url = $order->get_cancel_order_url();
+        $Result['link'] = $url;
+        $Result['flag'] = '2';
+        $Result['is_cancelled'] = 1;
+        echo wp_json_encode($Result);
+        return false;
     }
 
-    $transaction_details = create_transaction_check($addr, $api_key, $api_password); //api call
-    // echo '<pre>';print_r($transaction_details);echo '</pre>';
+    // --- [START] Direct API check (Active fallback alongside Webhook) ---
+    if ($order_data->order_status != COINREMITTER_INV_PAID && $order_data->order_status != COINREMITTER_INV_OVER_PAID) {
+        $tablename = $wpdb->prefix . 'coinremitter_wallets';
+        $walletData = $wpdb->get_row($wpdb->prepare("SELECT wallet_name, coin_symbol, minimum_invoice_amount, api_key, password FROM $tablename WHERE coin_symbol = %s", $coin_symbol));
 
-    $paid_amount = 0;
-
-    $webhookTrandata = $transaction_details['data'];
-    $address = $webhookTrandata['address'];
-    $required_confirmations = $webhookTrandata['required_confirmations'];
-    $coin = $webhookTrandata['coin'];
-    error_log("new_webhookTrandata : " . json_encode($webhookTrandata));
-    $coin_symbol = $webhookTrandata['coin_symbol'];
-    foreach ($webhookTrandata['transactions'] as $transaction) {
-        if ($transaction['type'] != 'receive') {
-            continue;
-        }
-        $meta_json = '';
-        $txid = $transaction['txid'];
-        $amount = $transaction['amount'];
-        $status = $transaction['status'];
-        $confirmations = $transaction['confirmations'];
-        error_log("webhook Transaction. confirmations : " . $confirmations . " txid : " . $txid);
-
-        $fiat_amount = ($transaction['amount'] * $order_data->fiat_amount) / $order_data->crypto_amount;
-        $fiat_amount = number_format($fiat_amount, 2, '.', '');
-        $minFiatAmount = $walletData->minimum_invoice_amount;
-
-        if ($fiat_amount < $minFiatAmount) {
-            continue;
+        $api_key = '';
+        $api_password = '';
+        if ($walletData) {
+            $api_key = decrypt_data($walletData->api_key);
+            $api_password = decrypt_data($walletData->password);
         }
 
-        $metaTrx = [
-            'payment_address' => $address,
-            'explorer_url' => $transaction['explorer_url'],
-            'crypto_amount' => $transaction['amount'],
-            'coin_symbol' => $coin_symbol,
-            'confirmations' => $confirmations,
-            'coin_name' => $coin,
-            'fiat_symbol' => 'USD',
-            'trx_id' => $transaction['txid'],
-            'status' => 0,
-            'created_at' => $transaction['date'],
-            'updated_at' => $transaction['date'],
-        ];
-        error_log("webhook. metaTrx : " . json_encode($metaTrx));
+        $transaction_details = create_transaction_check($addr, $api_key, $api_password); //api call
+        // echo '<pre>';print_r($transaction_details);echo '</pre>';
 
-        if ($status == 'confirm') {
-            $status_code = 0;
-        }
+        $paid_amount = 0;
 
-        if ($confirmations >= $required_confirmations) {
-            $paid_amount += $amount;
-        }
-        $sql = "SELECT * FROM " . $wpdb->prefix . "coinremitter_transactions WHERE order_id = %s";
-        $existing_order = $wpdb->get_results($wpdb->prepare($sql, $order_id));
+        $webhookTrandata = (is_array($transaction_details) && isset($transaction_details['data'])) ? $transaction_details['data'] : array();
+        $address = isset($webhookTrandata['address']) ? $webhookTrandata['address'] : $addr;
+        $required_confirmations = isset($webhookTrandata['required_confirmations']) ? $webhookTrandata['required_confirmations'] : 3;
+        $coin = isset($webhookTrandata['coin']) ? $webhookTrandata['coin'] : $coin_symbol;
+        error_log("new_webhookTrandata : " . json_encode($webhookTrandata));
+        $coin_symbol = isset($webhookTrandata['coin_symbol']) ? $webhookTrandata['coin_symbol'] : $coin_symbol;
+        $transactions = (isset($webhookTrandata['transactions']) && is_array($webhookTrandata['transactions'])) ? $webhookTrandata['transactions'] : array();
 
-        if (is_array($existing_order) && count($existing_order) > 0) {
-
-            $fiat_amount = 0.05;       // Amount in fiat (USD)
-            $fiat_currency = 'USD';    // Fiat currency
-            $result_arr = fiat_cryoto($fiat_amount, $fiat_currency, $coin_symbol); //api call
-            $fiat_price = $result_arr['data'][0]['price'];
-            error_log("fiat_rate_result_arr : " . json_encode($result_arr));
-
-            $meta_data = json_decode($existing_order[0]->meta, true);
-            error_log("existing order : " . json_encode($meta_data));
-
-            $trxArray = array_column($meta_data, 'trx_id');
-            foreach ($meta_data as $key => &$data_up) {
-                if (!in_array($txid, $trxArray)) {
-                    error_log("webhook Transaction not found in metaTrx trx_id : " . $txid . '' . $metaTrx);
-                    array_push($meta_data, $metaTrx);
-                    break;
-                } else {
-                    error_log("webhook Transaction found in meta data. Trx_id : " . $txid . '___' . json_encode($metaTrx));
-                    error_log("existing order found data : " . json_encode($data_up));
-                    // update order data
-                    error_log("webhook Trx id to be processed : " . $data_up['trx_id'] . " status : " . $data_up['status'] . " confirmations : " . $data_up['confirmations']);
-                    if ($data_up['trx_id'] == $txid) {
-                        $meta_data[$key]['confirmations'] = $confirmations;
-                        if ($data_up['status'] == 0 && $confirmations >= $required_confirmations) {
-
-                            $paidAmount +=  $amount;
-                            error_log("webhook New paid amount : " . $paidAmount . " Trx_id : " . $txid);
-                            $walletTotalAmount =  ($amount * $paidFiatAmount) / $paidAmount;
-
-                            $paidFiatAmount += $walletTotalAmount;
-                            $paidFiatAmtWithTrunc = $paidAmount + $fiat_price;
-
-                            error_log("webhook trucationVal : " . $paidFiatAmtWithTrunc . " walletTotalAmount: " . $walletTotalAmount . "paidFiatAmount" . $paidFiatAmount . "confirmations" . $confirmations);
-
-                            $crypto_amount = $order_data->crypto_amount;
-                            $fiat_amount = $order_data->fiat_amount;
-                            $status = 0;
-                            if ($paidAmount >= $order_data->paid_fiat_amount) {
-                                $status = 1;
-                            }
-                            $order_status = "";
-                            $order_status_code = "";
-
-                            $option_data = get_option('woocommerce_coinremitterpayments_settings');
-                            $ostatus = $option_data['ostatus'];
-                            if ($paidFiatAmtWithTrunc == 0) {
-
-                                if ($wcOrderStatus == 'pending') {
-                                    $order->update_status('pending');
-                                    error_log("webhook Status change pending");
-                                }
-                                $order_status = "Pending";
-                                $order_status_code = COINREMITTER_INV_PENDING;  //0
-
-                            } else if ($crypto_amount > $paidAmount) {
-
-                                if ($wcOrderStatus == 'pending') {
-                                    $order->update_status('processing');
-                                    error_log("webhook Status change pending");
-                                }
-                                $order_status_code = COINREMITTER_INV_UNDER_PAID; // 2
-
-                            } else if ($crypto_amount < $paidAmount) {
-
-                                if ($wcOrderStatus == 'pending' || $wcOrderStatus == 'processing' || $wcOrderStatus == 'Processing') {
-                                    $order->update_status('completed');
-                                    error_log("webhook Status change over paid");
-                                    $order->update_status('wc-' . $ostatus);
-                                }
-                                $order_status = "Over paid";
-                                $order_status_code = COINREMITTER_INV_OVER_PAID; //3 
-
-                            } else if ($crypto_amount == $paidAmount) {
-
-                                if ($wcOrderStatus == 'processing' || $wcOrderStatus == 'pending' || $wcOrderStatus == 'Processing') {
-                                    $order->update_status('completed');
-                                    error_log("webhook Status change paid");
-                                    $order->update_status('wc-' . $ostatus);
-                                }
-                                $order_status = "Paid";
-                                $order_status_code = COINREMITTER_INV_PAID; //1
-
-                            }
-                            if ($crypto_amount <= $paidFiatAmtWithTrunc &&  $order_status_code == COINREMITTER_INV_UNDER_PAID) {
-                                if ($wcOrderStatus == 'processing' || $wcOrderStatus == 'pending' || $wcOrderStatus == 'Processing') {
-                                    $order->update_status('completed');
-                                    error_log("webhook Status change paid trucation val");
-                                    $order->update_status('wc-' . $ostatus);
-                                }
-                                $order_status = "Paid";
-                                $order_status_code = COINREMITTER_INV_PAID; //3 
-
-                            }
-                            error_log('webhook Change order data : ' . " trx id : " . $txid . " order id : " . $order_id . ' : ' . $paidAmount . ' : ' . $paidFiatAmount . ' : ' . $order_status_code);
-
-                            error_log("webhook Status change of trx_id : " . $data_up['trx_id'] . "confirmations " . $confirmations);
-                            $data_up['status'] = 1;
-                            $wpdb->update(
-                                $wpdb->prefix . 'coinremitter_orders',
-                                array(
-                                    'paid_crypto_amount' => $paidAmount,
-                                    'paid_fiat_amount' => $paidFiatAmount,
-                                    'order_status' => $order_status_code,
-                                ),
-                                array('order_id' => $order_id),
-                                array('%s', '%s', '%d'),
-                                array('%s')
-                            );
-                        }
-                    }
+        if (!empty($transactions)) {
+            $sql = "SELECT * FROM " . $wpdb->prefix . "coinremitter_transactions WHERE order_id = %s";
+            $existing_order = $wpdb->get_results($wpdb->prepare($sql, $order_id));
+            $meta_data = array();
+            $has_existing_order = false;
+            if (is_array($existing_order) && count($existing_order) > 0) {
+                $has_existing_order = true;
+                $decoded = json_decode($existing_order[0]->meta, true);
+                if (is_array($decoded)) {
+                    $meta_data = $decoded;
                 }
             }
-            $data = [
-                'meta' => json_encode($meta_data),
-            ];
-            $where = [
-                'order_id' => $order_id,
-            ];
-            error_log(message: "Order transaction meta update successfully. for trx Id : " . $txid . '' . json_encode($data));
-            $wpdb->update($wpdb->prefix . 'coinremitter_transactions', $data, $where);
+
+            $store_currency = !empty($order_data->fiat_symbol) ? $order_data->fiat_symbol : get_woocommerce_currency();
+
+            foreach ($transactions as $transaction) {
+                if (!isset($transaction['type']) || $transaction['type'] != 'receive') {
+                    continue;
+                }
+                $txid = $transaction['txid'];
+                $amount = floatval($transaction['amount']);
+                $confirmations = isset($transaction['confirmations']) ? intval($transaction['confirmations']) : 0;
+                $explorer_url = isset($transaction['explorer_url']) ? $transaction['explorer_url'] : '';
+                $trx_date = isset($transaction['date']) ? $transaction['date'] : current_time('mysql');
+
+                $order_crypto_req = floatval($order_data->crypto_amount);
+                $order_fiat_req   = floatval($order_data->fiat_amount);
+
+                $trx_exists = false;
+                foreach ($meta_data as &$item) {
+                    if ($item['trx_id'] == $txid) {
+                        $trx_exists = true;
+                        $item['confirmations'] = $confirmations;
+                        if ($confirmations >= $required_confirmations) {
+                            $item['status'] = 1;
+                        }
+                        break;
+                    }
+                }
+                unset($item);
+
+                if (!$trx_exists) {
+                    $new_status = ($confirmations >= $required_confirmations) ? 1 : 0;
+                    $meta_data[] = [
+                        'payment_address' => $address,
+                        'explorer_url'    => $explorer_url,
+                        'crypto_amount'   => $transaction['amount'],
+                        'coin_symbol'     => $coin_symbol,
+                        'confirmations'   => $confirmations,
+                        'coin_name'       => $coin,
+                        'fiat_symbol'     => $store_currency,
+                        'trx_id'          => $txid,
+                        'status'          => $new_status,
+                        'created_at'      => $trx_date,
+                        'updated_at'      => $trx_date,
+                    ];
+                }
+            }
+
+            if (!empty($meta_data)) {
+                $total_confirmed_crypto = 0;
+                $order_crypto_req = floatval($order_data->crypto_amount);
+                $order_fiat_req   = floatval($order_data->fiat_amount);
+
+                foreach ($meta_data as $m_trx) {
+                    if (isset($m_trx['status']) && $m_trx['status'] == 1) {
+                        $total_confirmed_crypto += floatval($m_trx['crypto_amount']);
+                    }
+                }
+
+                $total_paid_fiat = ($order_crypto_req > 0) ? ($total_confirmed_crypto * $order_fiat_req) / $order_crypto_req : 0;
+
+                $option_data = get_option('woocommerce_coinremitterpayments_settings');
+                $ostatus = isset($option_data['ostatus']) ? $option_data['ostatus'] : 'completed';
+
+                if ($order_crypto_req > 0 && $total_confirmed_crypto >= $order_crypto_req) {
+                    if ($total_confirmed_crypto > $order_crypto_req) {
+                        $order_status_code = COINREMITTER_INV_OVER_PAID;
+                    } else {
+                        $order_status_code = COINREMITTER_INV_PAID;
+                    }
+                    $target_status = str_replace('wc-', '', $ostatus);
+                    if ($wcOrderStatus !== $target_status && $wcOrderStatus !== 'cancelled' && $wcOrderStatus !== 'refunded') {
+                        $order->update_status($target_status, __('Cryptocurrency payment received in full via CoinRemitter.', 'coinremitter-crypto-payment-gateway'));
+                    }
+                } else if ($total_confirmed_crypto > 0) {
+                    $order_status_code = COINREMITTER_INV_UNDER_PAID;
+                    $remaining_crypto = max(0, round($order_crypto_req - $total_confirmed_crypto, 8));
+                    if (round(floatval($order_data->paid_crypto_amount), 8) !== round($total_confirmed_crypto, 8)) {
+                        $order->add_order_note(sprintf(
+                            __('Partial cryptocurrency payment received: %s %s. Remaining pending balance: %s %s.', 'coinremitter-crypto-payment-gateway'),
+                            number_format($total_confirmed_crypto, 8, '.', ''),
+                            strtoupper($coin),
+                            number_format($remaining_crypto, 8, '.', ''),
+                            strtoupper($coin)
+                        ));
+                    }
+                } else {
+                    $order_status_code = COINREMITTER_INV_PENDING;
+                }
+
+                $wpdb->update(
+                    $wpdb->prefix . 'coinremitter_orders',
+                    array(
+                        'paid_crypto_amount' => number_format($total_confirmed_crypto, 8, '.', ''),
+                        'paid_fiat_amount'   => number_format($total_paid_fiat, 2, '.', ''),
+                        'order_status'       => $order_status_code,
+                    ),
+                    array('order_id' => $order_id),
+                    array('%s', '%s', '%d'),
+                    array('%s')
+                );
+
+                $paidAmount = $total_confirmed_crypto;
+                $paidFiatAmount = $total_paid_fiat;
+
+                if ($has_existing_order) {
+                    $wpdb->update(
+                        $wpdb->prefix . 'coinremitter_transactions',
+                        array('meta' => json_encode($meta_data)),
+                        array('order_id' => $order_id)
+                    );
+                } else {
+                    $wpdb->insert(
+                        $wpdb->prefix . 'coinremitter_transactions',
+                        array(
+                            'order_id' => $order_id,
+                            'meta'     => json_encode($meta_data),
+                        )
+                    );
+                }
+            }
         }
     }
-    // if (count($existing_order) <= 0) {
-    if (isset($existing_order) && is_array($existing_order) && count($existing_order) <= 0) {
-        $metaTrxs[] = $metaTrx;
-        $meta_json = json_encode($metaTrxs);
-        $data = [
-            'order_id' => $order_id,
-            'meta' => $meta_json,
-        ];
-
-        $wpdb->insert($wpdb->prefix . 'coinremitter_transactions', $data);
-    }
+    // --- [END] Direct API check ---
     // awaiting data
 
     $webhook_data = $wpdb->prepare(
@@ -615,22 +604,12 @@ function coinremitter_webhook_data()
 
     $order_table_name = $wpdb->prefix . 'coinremitter_orders';
     $order = wc_get_order($order_id);
-    $query = "SELECT * FROM $order_table_name WHERE order_id = " . $order_id . "";
+    $query = $wpdb->prepare("SELECT * FROM $order_table_name WHERE order_id = %s", $order_id);
     $get_order_data = $wpdb->get_results($query);
-    if ($get_order_data[0]->order_status == COINREMITTER_INV_PAID || $get_order_data[0]->order_status == COINREMITTER_INV_OVER_PAID) {
-        $url = site_url("index.php/checkout/?order-received=" . $order_id . "&key=" . $order_key . "");
-        $Result['link'] = $url;
-        $Result['flag'] = '2';
-        echo wp_json_encode($Result);
-        return false;
-    } else if ($get_order_data[0]->order_status == COINREMITTER_INV_EXPIRED || $order->get_status() == 'cancelled') {
 
-        $url = $order->get_cancel_order_url();
-        $Result['link'] = $url;
-        $Result['flag'] = '2';
-        echo wp_json_encode($Result);
-        return false;
-    }
+    $current_order_status = (!empty($get_order_data)) ? $get_order_data[0]->order_status : $order_data->order_status;
+    $current_paid_amount = (!empty($get_order_data) && isset($get_order_data[0]->paid_crypto_amount)) ? $get_order_data[0]->paid_crypto_amount : $paidAmount;
+
     $symbol = get_woocommerce_currency_symbol();
     $order_items = '';
     $position = get_option('woocommerce_currency_pos');
@@ -655,19 +634,39 @@ function coinremitter_webhook_data()
     $thousand_separator = wc_get_price_thousand_separator();
     $decimals = wc_get_price_decimals();
 
-    $paidpricepadamount = floatval($paidAmount);
+    $paidpricepadamount = floatval($current_paid_amount);
     $decimalspadamount = 8;
     $formatted_pricepadAmount_paid = number_format($paidpricepadamount, $decimalspadamount, $decimal_separator, $thousand_separator);
     $formatted_price_cur_paid = $formatted_pricepadAmount_paid . $suffix;
 
     $crypto_amount = $order_data->crypto_amount;
     $fiat_amount = $order_data->fiat_amount;
-    $padding_amount = $crypto_amount - $paidAmount;
+    $padding_amount = $crypto_amount - $current_paid_amount;
 
-    $pricepadamount = floatval($padding_amount);
+    $pricepadamount = floatval($padding_amount > 0 ? $padding_amount : 0);
     $decimalspadamount = 8;
     $formatted_pricepadAmount = number_format($pricepadamount, $decimalspadamount, $decimal_separator, $thousand_separator);
     $formatted_price_cur_pad = $formatted_pricepadAmount . $suffix;
+
+    if (!empty($get_order_data) && ($current_order_status == COINREMITTER_INV_PAID || $current_order_status == COINREMITTER_INV_OVER_PAID)) {
+        $url = $order->get_checkout_order_received_url();
+        $Result['link'] = $url;
+        $Result['flag'] = '2';
+        $Result['coin_symbol'] = $coin_symbol;
+        $Result['padding_amount'] = $formatted_price_cur_pad;
+        $Result['paid_amount'] = $formatted_price_cur_paid;
+        $Result['expiry'] = $noexpitytime;
+        $Result['data'] = $web_hook_data;
+        echo wp_json_encode($Result);
+        return false;
+    } else if (!empty($get_order_data) && ($current_order_status == COINREMITTER_INV_EXPIRED || $order->get_status() == 'cancelled')) {
+        $url = $order->get_cancel_order_url();
+        $Result['link'] = $url;
+        $Result['flag'] = '2';
+        $Result['is_cancelled'] = 1;
+        echo wp_json_encode($Result);
+        return false;
+    }
 
     $Result['coin_symbol'] = $coin_symbol;
     $Result['padding_amount'] = $formatted_price_cur_pad;
@@ -691,39 +690,72 @@ if (!function_exists('coinremitter_cancel_order')) {
         coinremitter_block_direct_browser_access();
         check_ajax_referer('coinremitter_invoice_nonce', 'security');
         error_log('coinremitter_cancel_order');
+        // Guests: blocked. Cron cancels their expired orders.
+        if (!is_user_logged_in()) {
+            wp_send_json(array('flag' => 0, 'message' => 'Forbidden.'), 403);
+        }
+
         global $wpdb;
-        $order_id = isset($_GET['order_id']) ? sanitize_text_field($_GET['order_id']) : '';
-        $order = wc_get_order($order_id);
-        $order_canclled = $order->get_cancel_order_url();
 
-        $tran_data = "SELECT * FROM " . $wpdb->prefix . "coinremitter_transactions WHERE order_id = '" . $order_id . "'";
-        $trnweb_hook = $wpdb->get_results($tran_data);
+        $order_id = isset($_GET['order_id']) ? absint($_GET['order_id']) : 0;
+        $order    = $order_id ? wc_get_order($order_id) : false;
 
-        $webhook_data = "SELECT * FROM " . $wpdb->prefix . "coinremitter_orders WHERE order_id = '$order_id'";
-        $web_hook = $wpdb->get_results($webhook_data);
-        $expiry_date = $web_hook[0]->expiry_date;
+        // One generic failure for every case, so order IDs can't be probed.
+        $forbidden = function () {
+            wp_send_json(array('flag' => 0, 'message' => 'Forbidden.'), 403);
+        };
 
-        $diff = strtotime($expiry_date) - strtotime(gmdate('Y-m-d H:i:s'));
+        if (!$order || !is_a($order, 'WC_Order')) {
+            $forbidden();
+        }
 
-        if ($diff <= 0) {
-            $order->update_status('cancelled');
-            $status_code = COINREMITTER_INV_EXPIRED;
-            $status = 'Expired';
+        // Logged-in: must own the order, or be a shop manager.
+        $is_owner   = (int) $order->get_customer_id() > 0
+            && (int) $order->get_customer_id() === get_current_user_id();
+        $is_manager = current_user_can('manage_woocommerce');
+        if (!$is_owner && !$is_manager) {
+            $forbidden();
+        }
+
+        // Only CoinRemitter orders that are still awaiting payment.
+        if ($order->get_payment_method() !== 'coinremitterpayments') {
+            $forbidden();
+        }
+        if (!$order->has_status(array('pending', 'on-hold'))) {
+            $forbidden();
+        }
+
+        $web_hook = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT order_status, expiry_date FROM {$wpdb->prefix}coinremitter_orders WHERE order_id = %d",
+                $order_id
+            )
+        );
+        if (!$web_hook) {
+            $forbidden();
+        }
+
+        // Cancel only if truly expired. A missing expiry never cancels.
+        if (
+            !empty($web_hook->expiry_date)
+            && (int) $web_hook->order_status !== COINREMITTER_INV_PAID
+            && (int) $web_hook->order_status !== COINREMITTER_INV_OVER_PAID
+            && strtotime($web_hook->expiry_date) - strtotime(gmdate('Y-m-d H:i:s')) <= 0
+        ) {
+            $order->update_status('cancelled', __('Order expired before cryptocurrency payment was received.', 'coinremitter-crypto-payment-gateway'));
             $wpdb->update(
                 $wpdb->prefix . 'coinremitter_orders',
-                array('order_status' => $status_code),
+                array('order_status' => COINREMITTER_INV_EXPIRED),
                 array('order_id' => $order_id),
                 array('%d'),
-                array('%s')
+                array('%d')
             );
         }
-        $Result['url'] = $order_canclled;
-        $Result['flag'] = 1;
-        echo wp_json_encode($Result);
-        return false;
+
+        // Only an authorised owner receives the cancel URL (it contains the order key).
+        wp_send_json(array('flag' => 1, 'url' => $order->get_cancel_order_url()));
     }
 }
-
 
 #--------------------------------------------------------------------------------
 #region cr thank you
@@ -739,7 +771,6 @@ function coinremitter_thank_you_field_display_cust_order_meta($d)
         return;
     }
 
-    $dd = json_decode($d, true);
     if (isset($_GET['order-received'])) {
         $order_id = sanitize_text_field($_GET['order-received']);
     } else {
@@ -766,7 +797,8 @@ function coinremitter_thank_you_field_display_cust_order_meta($d)
     $total_amount = isset($getData->crypto_amount) ? floatval($getData->crypto_amount) : 0;
     $paid_amount = isset($getData->paid_crypto_amount) ? floatval($getData->paid_crypto_amount) : 0;
     $status = isset($getData->order_status) ? $getData->order_status : '';
-    $pending_amount = $total_amount - $paid_amount;
+    $pending_amount = max(0, round($total_amount - $paid_amount, 8));
+    $overpaid_amount = max(0, round($paid_amount - $total_amount, 8));
 
     // if ($status == COINREMITTER_INV_PENDING) {
 
@@ -886,12 +918,22 @@ function coinremitter_thank_you_field_display_cust_order_meta($d)
             <!-- RIGHT COLUMN → TOTALS -->
             <div class="col-md-6 d-flex">
                 <div class="card h-100 shadow-sm flex-fill p-3 ">
+                    <?php if ($status == COINREMITTER_INV_OVER_PAID && $overpaid_amount > 0.00000001) { ?>
+                        <!-- Overpaid Amount -->
+                        <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-2 border-secondary pb-2">
+                            <span class="fw-semibold">Overpaid Amount</span>
+                            <span class="t--value text-end fw-bold text-success">
+                                <?php echo number_format($overpaid_amount, 8, '.', ''); ?>
+                                <sub><?php echo $coin_type ?></sub>
+                            </span>
+                        </div>
+                    <?php } ?>
                     <!-- Pending Amount -->
 
                     <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-2 border-secondary pb-2">
                         <span class="fw-semibold">Pending Amount</span>
-                        <span class="t--value text-end fw-bold text-danger">
-                            <?php echo number_format($pending_amount, 8); ?>
+                        <span class="t--value text-end fw-bold <?php echo ($pending_amount > 0) ? 'text-danger' : 'text-muted'; ?>">
+                            <?php echo number_format($pending_amount, 8, '.', ''); ?>
                             <sub><?php echo $coin_type ?></sub>
                         </span>
                     </div>
@@ -899,7 +941,7 @@ function coinremitter_thank_you_field_display_cust_order_meta($d)
                     <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-2 border-secondary pb-2">
                         <span class="fw-semibold">Paid Amount</span>
                         <span class="t--value text-end fw-bold">
-                            <?php echo number_format($paid_amount, 8); ?>
+                            <?php echo number_format($paid_amount, 8, '.', ''); ?>
                             <sub><?php echo $coin_type ?></sub>
                         </span>
                     </div>
@@ -907,7 +949,7 @@ function coinremitter_thank_you_field_display_cust_order_meta($d)
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="fw-semibold">Total Amount</span>
                         <span class="t--value text-end fw-bold">
-                            <?php echo number_format($total_amount, 8); ?>
+                            <?php echo number_format($total_amount, 8, '.', ''); ?>
                             <sub><?php echo $coin_type ?></sub>
                         </span>
                     </div>
@@ -964,7 +1006,12 @@ function coinremitter_right($str, $findme, $firstpos = true)
 
 function callback_parse_request_coinremitter()
 {
-    if (in_array(strtolower(coinremitter_right($_SERVER["REQUEST_URI"], "/", false)), array("?coinremitter.webhook", "index.php?coinremitter.webhook", "?coinremitter_webhook", "index.php?coinremitter_webhook", "?coinremitter-webhook", "index.php?coinremitter-webhook"))) {
+    if (
+        isset($_GET['coinremitter_webhook']) ||
+        isset($_GET['coinremitter-webhook']) ||
+        isset($_GET['coinremitter.webhook']) ||
+        in_array(strtolower(coinremitter_right($_SERVER["REQUEST_URI"], "/", false)), array("?coinremitter.webhook", "index.php?coinremitter.webhook", "?coinremitter_webhook", "index.php?coinremitter_webhook", "?coinremitter-webhook", "index.php?coinremitter-webhook"))
+    ) {
 
         ob_clean();
         include_once(plugin_dir_path(__FILE__) . '/coinremitter.webhook.php');
@@ -987,7 +1034,7 @@ function coinremitter_wp_admin_script()
     wp_enqueue_style('bootstrapmin', CR_PLUGIN_PATH . '/css/bootstrapmin.css');
     wp_enqueue_style('custom-apmin', CR_PLUGIN_PATH . '/css/admin-custom.css');
     wp_enqueue_script('bootstrapminjs', CR_PLUGIN_PATH . '/js/bootstrap1.min.js', array('jquery'));
-    wp_enqueue_script('admin-jquery-js', CR_PLUGIN_PATH . '/js/jquery.min.js', array('jquery'));
+    wp_enqueue_script('jquery');
     wp_enqueue_script('my-ajax-script', CR_PLUGIN_PATH . '/js/admin-custom.js', array('jquery'));
     wp_localize_script('my-ajax-script', 'my_ajax_obj', array(
         'ajaxurl' => admin_url('admin-ajax.php'),
@@ -1001,7 +1048,7 @@ function script_common()
     wp_enqueue_style('cr-style-bootstrap-admin', CR_PLUGIN_PATH . '/css/bootstrapcustom.min.css');
     wp_enqueue_style('bootstrapmin', CR_PLUGIN_PATH . '/css/bootstrapmin.css');
     wp_enqueue_script('bootstrapminjs', CR_PLUGIN_PATH . '/js/bootstrap1.min.js', array('jquery'));
-    wp_enqueue_script('jquery-js', CR_PLUGIN_PATH . '/js/jquery.min.js', array('jquery'));
+    wp_enqueue_script('jquery');
     wp_enqueue_script('custom-js', CR_PLUGIN_PATH . '/js/custom.js', array('jquery'));
     wp_localize_script('custom-js', 'coinremitter_params', array(
         'ajax_url' => admin_url('admin-ajax.php'),
@@ -1022,7 +1069,8 @@ function coinremitter_wp_plugin_scripts()
         script_common();
         wp_enqueue_script('checkout-js', CR_PLUGIN_PATH . '/js/checkout.js', array('jquery'));
         wp_localize_script('checkout-js', 'coinremitter_invoice_params', array(
-            'nonce' => wp_create_nonce('coinremitter_invoice_nonce')
+            'nonce'        => wp_create_nonce('coinremitter_invoice_nonce'),
+            'is_logged_in' => is_user_logged_in() ? 1 : 0
         ));
     }
 

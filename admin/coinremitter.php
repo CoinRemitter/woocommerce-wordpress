@@ -1,4 +1,7 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 /**
  * Download coin logo from API and save into uploads/coinremitter/COINSYMBOL.png
@@ -10,8 +13,8 @@ function cr_save_coin_logo($api_data)
         return false;
     }
 
-    // Lowercase symbol for file naming
-    $coin_symbol = strtolower(sanitize_text_field($api_data['coin_symbol']));
+    // Lowercase symbol for file naming - strict alphanumeric to eliminate path traversal
+    $coin_symbol = preg_replace('/[^a-z0-9_-]/', '', strtolower(sanitize_text_field($api_data['coin_symbol'])));
     $image_url   = esc_url_raw($api_data['coin_logo']);
 
     // === 1. Check plugin images folder ===
@@ -136,9 +139,11 @@ function coinremitter_wp_wallet_add()
     $unit_fiat_amount = $currency_data['price_in_usd'];
 
     if ($currancy_type !== 'USD') {
-        $fiat_request = crypto_to_fiat($currancy_type, $coin_symbol,1); // api call
-        $minInvoiceValInFiat = number_format($fiat_request * $currency_data['minimum_deposit_amount'], 8, '.', '');
-        $unit_fiat_amount = $fiat_request;
+        $fiat_request = crypto_to_fiat($currancy_type, $coin_symbol, 1); // api call
+        if (!is_wp_error($fiat_request) && is_numeric($fiat_request) && floatval($fiat_request) > 0) {
+            $minInvoiceValInFiat = number_format(floatval($fiat_request) * floatval($currency_data['minimum_deposit_amount']), 8, '.', '');
+            $unit_fiat_amount = floatval($fiat_request);
+        }
     }
 
     if ($minimum_invoice_amount < $minInvoiceValInFiat) {
@@ -245,12 +250,14 @@ function coinremitter_wp_wallet_edit()
             return;
         }
         $minInvoiceValInFiat = calculate_min_invoice_amount($currency_data); // api call
-        $unit_fiat_amount = $$currency_data['price_in_usd'];
+        $unit_fiat_amount = isset($currency_data['price_in_usd']) ? floatval($currency_data['price_in_usd']) : 0;
 
         if ($currancy_type !== 'USD') {
-            $fiat_request = crypto_to_fiat($currancy_type, $coin_symbol,1); // api call
-            $minInvoiceValInFiat = number_format($fiat_request * $currency_data['minimum_deposit_amount'], 8, '.', '');
-            $unit_fiat_amount = $fiat_request;
+            $fiat_request = crypto_to_fiat($currancy_type, $coin_symbol, 1); // api call
+            if (!is_wp_error($fiat_request) && is_numeric($fiat_request) && floatval($fiat_request) > 0) {
+                $minInvoiceValInFiat = number_format(floatval($fiat_request) * floatval($currency_data['minimum_deposit_amount']), 8, '.', '');
+                $unit_fiat_amount = floatval($fiat_request);
+            }
         }
 
         if ($invoice < $minInvoiceValInFiat) {
@@ -290,7 +297,12 @@ function coinremitter_wp_wallet_edit()
                     array(
                         '%s',
                         '%s',
-                        '%s'
+                        '%s',
+                        '%s',
+                        '%s',
+                        '%f',
+                        '%f',
+                        '%f'
                     ),
                     array('%d')
                 );
@@ -393,12 +405,14 @@ function update_currency($new_currency)
         // error_log('setting_unit_fiat_amount: ' . $unit_fiat_amount);
 
         if ($new_currency !== 'USD') {
-            $fiat_request = crypto_to_fiat($new_currency, $coin_symbol,1); // api call
-            $final_min_invoice_amount = number_format($fiat_request * $currency_data['minimum_deposit_amount'], 8, '.', '');
-            $unit_fiat_amount = $fiat_request;
-            Error_log('coin_fiat_request: ' . $fiat_request);
-            Error_log('coin_final_min_invoice_amount: ' . $final_min_invoice_amount);
-            Error_log('coin_unit_fiat_amount: ' . $unit_fiat_amount);
+            $fiat_request = crypto_to_fiat($new_currency, $coin_symbol, 1); // api call
+            if (!is_wp_error($fiat_request) && is_numeric($fiat_request) && floatval($fiat_request) > 0) {
+                $final_min_invoice_amount = number_format(floatval($fiat_request) * floatval($currency_data['minimum_deposit_amount']), 8, '.', '');
+                $unit_fiat_amount = floatval($fiat_request);
+                Error_log('coin_fiat_request: ' . $fiat_request);
+                Error_log('coin_final_min_invoice_amount: ' . $final_min_invoice_amount);
+                Error_log('coin_unit_fiat_amount: ' . $unit_fiat_amount);
+            }
         }
         update_wallet_data($table_name, $coin_symbol, $final_min_invoice_amount ,$unit_fiat_amount);
     }

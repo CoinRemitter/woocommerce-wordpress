@@ -1,6 +1,7 @@
 <?php
-
-
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 
@@ -17,12 +18,14 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
     public function initialize()
     {
         $this->settings = get_option('woocommerce_coinremitterpayments_settings', []);
-        $this->methods = new WC_Gateway_CoinRemitter();
+        if (class_exists('WC_Gateway_CoinRemitter')) {
+            $this->methods = new WC_Gateway_CoinRemitter();
+        }
     }
 
     public function is_active()
     {
-        return $this->methods->is_available();
+        return (!empty($this->methods) && is_object($this->methods)) ? $this->methods->is_available() : false;
     }
 
     public function get_payment_method_script_handles()
@@ -150,16 +153,14 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
                     $minimum_invoice_val = 0.0001;
                 }
                 $sql_wallet = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE coin_symbol = %s", $v));
-                $exchange_rate_multiplier = $sql_wallet->exchange_rate_multiplier;
+                $exchange_rate_multiplier = (isset($sql_wallet->exchange_rate_multiplier) && floatval($sql_wallet->exchange_rate_multiplier) > 0) ? floatval($sql_wallet->exchange_rate_multiplier) : 1;
 
-                $total_amount = ($total_amt * $exchange_rate_multiplier ) + $shipping + $tax;
+                $total_amount = $main_total * $exchange_rate_multiplier;
 
-                $addrSql = 'select * from '. $wpdb->prefix . 'coinremitter_wallets where coin_symbol ="' . $v . '"';
-                $getDatas = $wpdb->get_results($addrSql);
-                $unit_fiat_amount = $getDatas[0]->unit_fiat_amount;
-                $convert_amount = $total_amount / $unit_fiat_amount;
-                $coin_name = $sql_wallet->coin_name;
-                $usd_am_currency = number_format($convert_amount,8);
+                $unit_fiat_amount = isset($sql_wallet->unit_fiat_amount) ? floatval($sql_wallet->unit_fiat_amount) : 0;
+                $convert_amount = ($unit_fiat_amount > 0) ? ($total_amount / $unit_fiat_amount) : 0;
+                $coin_name = isset($sql_wallet->coin_name) ? $sql_wallet->coin_name : strtoupper($v);
+                $usd_am_currency = number_format($convert_amount, 8, '.', '');
                 // }
                 $tmp .= "
                         <label for='$v' class='align-items-center gap-3 coin_data py-main' rel='" . $v . "' coin='". $coin_name ."'>
@@ -188,13 +189,19 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
         </div>' : '';
 
 
-        if (!empty($available_coins[0])) {
+        if (isset(WC()->session)) {
+            $sess_coin = WC()->session->get('coinremitter_selected_coin');
+            if (empty($sess_coin) && !empty($available_coins[0])) {
+                WC()->session->set('coinremitter_selected_coin', $available_coins[0]);
+            }
+        }
+        if (!get_transient('currency_value') && !empty($available_coins[0])) {
             set_transient('currency_value', $available_coins[0], HOUR_IN_SECONDS);
         }
-        $des = !empty($this->get_setting('description')) ? $this->get_setting('description') : __('Enter your payment details below:', 'coinremitter'); // Add description field
+        $des = !empty($this->get_setting('description')) ? $this->get_setting('description') : __('Enter your payment details below:', 'coinremitter-crypto-payment-gateway'); // Add description field
         $dataa = '<p style="margin-top: 10px; font-size: 14px;">' . $des . '</p>';
         return [
-            'title' => !empty($this->get_setting('title')) ? $this->get_setting('title') : __('Pay With Cryptocurrency', 'coinremitter'),
+            'title' => !empty($this->get_setting('title')) ? $this->get_setting('title') : __('Pay With Cryptocurrency', 'coinremitter-crypto-payment-gateway'),
             'enabledCurrency' => $SetPaymentOpt . $dataa . $html,
             'description' =>  $des,
             'supports' => array_filter($this->methods->supports, [$this->methods, 'supports']),

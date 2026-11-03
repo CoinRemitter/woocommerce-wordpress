@@ -1,7 +1,7 @@
 
 // const settings = window.wc.wcSettings.getSetting("coinremitterpayments");
-const settings = window.wc.wcSettings.getPaymentMethodData("coinremitterpayments"); 
-const label = window.wp.htmlEntities.decodeEntities(settings.title) || window.wp.i18n.__("Pay With Cryptocurrency", "coinremitterpayments");
+const settings = window.wc.wcSettings.getPaymentMethodData("coinremitterpayments");
+const label = window.wp.htmlEntities.decodeEntities(settings.title) || window.wp.i18n.__("Pay With Cryptocurrency", "coinremitter-crypto-payment-gateway");
 const des = settings.description;
 console.log(des);
 // const enabledCurrency = settings.enabledCurrency ? settings.enabledCurrency : "<span class='wallet_error_checkout'>Wallet Not Found. Please Add Wallet</span>";
@@ -12,7 +12,7 @@ if (settings.enabledCurrency && settings.enabledCurrency.length > 0) {
 } else {
   wallet_data = settings;
 }
-const htmlToElem = ( html ) => wp.element.RawHTML( { children: html } );
+const htmlToElem = (html) => wp.element.RawHTML({ children: html });
 
 const Block_Gateway = {
   name: "coinremitterpayments",
@@ -28,9 +28,3 @@ const Block_Gateway = {
   description: settings.description,
 };
 window.wc.wcBlocksRegistry.registerPaymentMethod(Block_Gateway);
-
-jQuery(document).on('click','.wc-block-components-checkout-place-order-button',function (e) {
-  console.log("called");
-  return false;
-  
-})
