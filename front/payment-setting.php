@@ -315,7 +315,7 @@ function coinremitter_webhook_data()
     $wcOrderStatus = $order->get_status();
 
     if ($order_data->order_status == COINREMITTER_INV_EXPIRED || $wcOrderStatus == 'cancelled') {
-        $url = $order->get_cancel_order_url();
+        $url = method_exists($order, 'get_cancel_order_url_raw') ? $order->get_cancel_order_url_raw() : $order->get_cancel_order_url();
         $Result['link'] = $url;
         $Result['flag'] = '2';
         $Result['is_cancelled'] = 1;
@@ -574,8 +574,8 @@ function coinremitter_webhook_data()
             <div class="d-flex gap-2 flex-nowrap">
             ' . $icon . '
             <div class="cr-plugin-history-des">
-            <span><a class="text-dark" href="' . $explorer_urll . '" target="_blank">' . substr($trx_id, 0, 30) . '...</a></span>
-                                            <div class="cr-plugin-history-date" title="' . $c_date . ' (UTC)"><span>' . $diff . '</span></div>
+            <span><a class="text-dark" href="' . esc_url($explorer_urll) . '" target="_blank">' . esc_html(substr($trx_id, 0, 30)) . '...</a></span>
+                                            <div class="cr-plugin-history-date" title="' . esc_attr($c_date) . ' (UTC)"><span>' . esc_html($diff) . '</span></div>
                                             </div>
                                     </div>';
             if ($confirmations_data >= 3) {
@@ -660,7 +660,7 @@ function coinremitter_webhook_data()
         echo wp_json_encode($Result);
         return false;
     } else if (!empty($get_order_data) && ($current_order_status == COINREMITTER_INV_EXPIRED || $order->get_status() == 'cancelled')) {
-        $url = $order->get_cancel_order_url();
+        $url = method_exists($order, 'get_cancel_order_url_raw') ? $order->get_cancel_order_url_raw() : $order->get_cancel_order_url();
         $Result['link'] = $url;
         $Result['flag'] = '2';
         $Result['is_cancelled'] = 1;
@@ -690,17 +690,12 @@ if (!function_exists('coinremitter_cancel_order')) {
         coinremitter_block_direct_browser_access();
         check_ajax_referer('coinremitter_invoice_nonce', 'security');
         error_log('coinremitter_cancel_order');
-        // Guests: blocked. Cron cancels their expired orders.
-        if (!is_user_logged_in()) {
-            wp_send_json(array('flag' => 0, 'message' => 'Forbidden.'), 403);
-        }
-
         global $wpdb;
 
-        $order_id = isset($_GET['order_id']) ? absint($_GET['order_id']) : 0;
-        $order    = $order_id ? wc_get_order($order_id) : false;
+        $order_id  = isset($_GET['order_id']) ? absint($_GET['order_id']) : 0;
+        $order_key = isset($_GET['order_key']) ? sanitize_text_field(wp_unslash($_GET['order_key'])) : '';
+        $order     = $order_id ? wc_get_order($order_id) : false;
 
-        // One generic failure for every case, so order IDs can't be probed.
         $forbidden = function () {
             wp_send_json(array('flag' => 0, 'message' => 'Forbidden.'), 403);
         };
@@ -709,11 +704,12 @@ if (!function_exists('coinremitter_cancel_order')) {
             $forbidden();
         }
 
-        // Logged-in: must own the order, or be a shop manager.
-        $is_owner   = (int) $order->get_customer_id() > 0
-            && (int) $order->get_customer_id() === get_current_user_id();
-        $is_manager = current_user_can('manage_woocommerce');
-        if (!$is_owner && !$is_manager) {
+        // Authorization: Owner, Shop Manager, or Guest with valid Order Key
+        $is_owner     = (int) $order->get_customer_id() > 0 && (int) $order->get_customer_id() === get_current_user_id();
+        $is_manager   = current_user_can('manage_woocommerce');
+        $is_valid_key = !empty($order_key) && hash_equals($order->get_order_key(), $order_key);
+
+        if (!$is_owner && !$is_manager && !$is_valid_key) {
             $forbidden();
         }
 
@@ -735,14 +731,12 @@ if (!function_exists('coinremitter_cancel_order')) {
             $forbidden();
         }
 
-        // Cancel only if truly expired. A missing expiry never cancels.
+        // Cancel order if not paid/overpaid
         if (
-            !empty($web_hook->expiry_date)
-            && (int) $web_hook->order_status !== COINREMITTER_INV_PAID
+            (int) $web_hook->order_status !== COINREMITTER_INV_PAID
             && (int) $web_hook->order_status !== COINREMITTER_INV_OVER_PAID
-            && strtotime($web_hook->expiry_date) - strtotime(gmdate('Y-m-d H:i:s')) <= 0
         ) {
-            $order->update_status('cancelled', __('Order expired before cryptocurrency payment was received.', 'coinremitter-crypto-payment-gateway'));
+            $order->update_status('cancelled', __('Order cancelled / expired before cryptocurrency payment was received.', 'coinremitter-crypto-payment-gateway'));
             $wpdb->update(
                 $wpdb->prefix . 'coinremitter_orders',
                 array('order_status' => COINREMITTER_INV_EXPIRED),
@@ -752,8 +746,9 @@ if (!function_exists('coinremitter_cancel_order')) {
             );
         }
 
-        // Only an authorised owner receives the cancel URL (it contains the order key).
-        wp_send_json(array('flag' => 1, 'url' => $order->get_cancel_order_url()));
+        // Only an authorised owner/key-holder receives the cancel URL (raw unescaped for payment gateways).
+        $cancel_url = method_exists($order, 'get_cancel_order_url_raw') ? $order->get_cancel_order_url_raw() : $order->get_cancel_order_url();
+        wp_send_json(array('flag' => 1, 'url' => $cancel_url));
     }
 }
 
@@ -766,16 +761,16 @@ function coinremitter_thank_you_field_display_cust_order_meta($d)
     error_log('coinremitter_thank_you_field_display_cust_order_meta');
     global $wpdb;
 
+    if (!is_a($d, 'WC_Order')) {
+        return;
+    }
+
     // Show ONLY for CoinRemitter payment method
     if ($d->get_payment_method() !== 'coinremitterpayments') {
         return;
     }
 
-    if (isset($_GET['order-received'])) {
-        $order_id = sanitize_text_field($_GET['order-received']);
-    } else {
-        $order_id = $d->get_order_number();
-    }
+    $order_id = $d->get_id();
 
     $webhook_data = $wpdb->prepare("SELECT * FROM " . $wpdb->prefix . "coinremitter_transactions WHERE order_id = %s", $order_id);
     $web_hook = $wpdb->get_results($webhook_data);
@@ -888,9 +883,10 @@ function coinremitter_thank_you_field_display_cust_order_meta($d)
                             <?php foreach ($meta_data as $transaction) { ?>
                                 <div class="list-group-item">
 
-                                    <a href="<?php echo $transaction['explorer_url']; ?>"
+                                    <a href="<?php echo esc_url($transaction['explorer_url']); ?>"
+                                        target="_blank" rel="noopener noreferrer"
                                         class="fw-bold text-break d-block mb-1 text-danger">
-                                        <?php echo $transaction['trx_id']; ?>
+                                        <?php echo esc_html($transaction['trx_id']); ?>
                                     </a>
 
                                     <span class="text-muted small d-block mb-2">
@@ -977,21 +973,65 @@ function add_custom_class_to_body($classes)
     return $classes;
 }
 
+function coinremitter_get_encryption_key()
+{
+    if (defined('AUTH_KEY') && !empty(AUTH_KEY)) {
+        return hash('sha256', AUTH_KEY, true);
+    }
+    $key = get_option('coinremitter_secret_key');
+    if (!$key) {
+        $key = wp_generate_password(64, true, true);
+        update_option('coinremitter_secret_key', $key);
+    }
+    return hash('sha256', $key, true);
+}
+
 function encrypt_data($data)
 {
-    return openssl_encrypt($data, 'aes-256-cbc', COINREMITTER_SKEY, 0, substr(COINREMITTER_SKEY, 0, 16));
+    if (empty($data)) {
+        return '';
+    }
+    $key = coinremitter_get_encryption_key();
+    $iv  = openssl_random_pseudo_bytes(16);
+    $encrypted = openssl_encrypt($data, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+    if ($encrypted === false) {
+        return '';
+    }
+    return 'crv2:' . base64_encode($iv . $encrypted);
 }
+
 function decrypt_data($encrypted_data)
 {
+    if (empty($encrypted_data)) {
+        return '';
+    }
 
-    $iv = substr(COINREMITTER_SKEY, 0, 16);
+    // v2: Decrypt with site-specific key and dynamic IV
+    if (strpos($encrypted_data, 'crv2:') === 0) {
+        $raw = base64_decode(substr($encrypted_data, 5));
+        if ($raw !== false && strlen($raw) > 16) {
+            $iv         = substr($raw, 0, 16);
+            $ciphertext = substr($raw, 16);
+            $key        = coinremitter_get_encryption_key();
+            $decrypted  = openssl_decrypt($ciphertext, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+            if ($decrypted !== false && $decrypted !== '') {
+                return $decrypted;
+            }
+        }
+    }
 
-    // Pad the IV if it's shorter than 16 bytes
+    // Legacy fallback: Decrypt existing wallets stored with the legacy key
+    $legacy_key = defined('COINREMITTER_SKEY') ? COINREMITTER_SKEY : 'coinremitterdata';
+    $iv = substr($legacy_key, 0, 16);
     if (strlen($iv) < 16) {
         $iv = str_pad($iv, 16, "\0");
     }
+    $legacy_decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $legacy_key, 0, $iv);
+    if ($legacy_decrypted !== false && $legacy_decrypted !== '') {
+        return $legacy_decrypted;
+    }
 
-    return openssl_decrypt($encrypted_data, 'aes-256-cbc', COINREMITTER_SKEY, 0, $iv);
+    return $encrypted_data;
 }
 
 function coinremitter_right($str, $findme, $firstpos = true)
@@ -1049,7 +1089,7 @@ function script_common()
     wp_enqueue_style('bootstrapmin', CR_PLUGIN_PATH . '/css/bootstrapmin.css');
     wp_enqueue_script('bootstrapminjs', CR_PLUGIN_PATH . '/js/bootstrap1.min.js', array('jquery'));
     wp_enqueue_script('jquery');
-    wp_enqueue_script('custom-js', CR_PLUGIN_PATH . '/js/custom.js', array('jquery'));
+    wp_enqueue_script('custom-js', CR_PLUGIN_PATH . 'js/custom.js', array('jquery'), COINREMITTER_PLUGIN_VERSION);
     wp_localize_script('custom-js', 'coinremitter_params', array(
         'ajax_url' => admin_url('admin-ajax.php'),
         'nonce'    => wp_create_nonce('coinremitter_store_rel_nonce'),
@@ -1067,7 +1107,7 @@ function coinremitter_wp_plugin_scripts()
     if (is_page('invoice-page')) {
         wp_enqueue_style('roboto_font', 'https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
         script_common();
-        wp_enqueue_script('checkout-js', CR_PLUGIN_PATH . '/js/checkout.js', array('jquery'));
+        wp_enqueue_script('checkout-js', CR_PLUGIN_PATH . 'js/checkout.js', array('jquery'), COINREMITTER_PLUGIN_VERSION);
         wp_localize_script('checkout-js', 'coinremitter_invoice_params', array(
             'nonce'        => wp_create_nonce('coinremitter_invoice_nonce'),
             'is_logged_in' => is_user_logged_in() ? 1 : 0

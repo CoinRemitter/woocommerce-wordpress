@@ -451,22 +451,21 @@ if (!function_exists('coinremitter_cd_meta_box_add')) {
     function coinremitter_cd_meta_box_add()
     {
         global $wpdb;
-        if (isset($_GET['id']))
-            $order_id = $_GET['id'];
-        else
-        $order_id = isset($_GET['post']) ? $_GET['post'] : '';
+        $order_id = isset($_GET['id']) ? absint($_GET['id']) : (isset($_GET['post']) ? absint($_GET['post']) : 0);
+        if (!$order_id) {
+            return;
+        }
         $method = "Payment Detail (Coinremitter)";
         $order_table = $wpdb->prefix . 'coinremitter_orders';
-        $payment_query = $wpdb->prepare("SELECT * FROM $order_table WHERE order_id = %s", $order_id);
+        $payment_query = $wpdb->prepare("SELECT * FROM $order_table WHERE order_id = %d", $order_id);
         $payment_details = $wpdb->get_results($payment_query);
-        $args = array(
-            'post_type'         => 'shop_order',
-            'posts_per_page'    => -1
-    );
-    
-    $posts = get_posts($args);
+
         if (!empty($payment_details)) {
-            add_meta_box('my-meta-box-id', $method, 'coinremitter_cd_meta_box_cb', $posts, 'advanced', 'high');
+            $screen = function_exists('wc_get_page_screen_id') ? wc_get_page_screen_id('shop-order') : 'shop_order';
+            add_meta_box('my-meta-box-id', $method, 'coinremitter_cd_meta_box_cb', $screen, 'advanced', 'high');
+            if ($screen !== 'shop_order') {
+                add_meta_box('my-meta-box-id', $method, 'coinremitter_cd_meta_box_cb', 'shop_order', 'advanced', 'high');
+            }
         }
     }
 }
@@ -475,16 +474,21 @@ if (!function_exists('coinremitter_cd_meta_box_cb')) {
     function coinremitter_cd_meta_box_cb()
     {
         global $wpdb;
-        if (isset($_GET['id']))
-            $id = $_GET['id'];
-        else
-            $id = $_GET['post'];
-        $order_id = sanitize_text_field($id);
-        $order = new WC_Order($order_id);
+        $order_id = isset($_GET['id']) ? absint($_GET['id']) : (isset($_GET['post']) ? absint($_GET['post']) : 0);
+        if (!$order_id) {
+            return;
+        }
+        $order = wc_get_order($order_id);
+        if (!$order || !is_a($order, 'WC_Order')) {
+            return;
+        }
 
         $order_table = $wpdb->prefix . 'coinremitter_orders';
-        $payment_query = $wpdb->prepare("SELECT * FROM $order_table WHERE order_id = %s", $order_id);
+        $payment_query = $wpdb->prepare("SELECT * FROM $order_table WHERE order_id = %d", $order_id);
         $get_order_data = $wpdb->get_results($payment_query);
+        if (empty($get_order_data)) {
+            return "";
+        }
         $address = $get_order_data[0]->payment_address;
         $coin_type = $get_order_data[0]->coin_symbol;
         $order_statusData = $get_order_data[0]->order_status;
@@ -700,7 +704,7 @@ if (!function_exists('coinremitter_cd_meta_box_cb')) {
         $webhook = $wpdb->get_results($sql);
 
 
-        $temp2 = "<style>.cr_table table {border:none !important;}</style>";
+        $temp2 = "";
         if (!empty($webhook)) {
 
             foreach ($webhook as $value) {
@@ -716,20 +720,20 @@ if (!function_exists('coinremitter_cd_meta_box_cb')) {
                     $created_at = $mdata['created_at'];
 
                     $temp2 .= '<tr>
-                    <td class="label greeColour"><a title="' . __('Transaction Details', 'coinremitter-crypto-payment-gateway') . ' - ' . $trx_id . '" href="' . $explorer_url . '" target="_blank"><strong>' . substr($trx_id, 0, 20) . '....</strong></a></td>
-                    <td> ' . sprintf('%.8f', $crypto_amount) . ' ' . $coin_symbol . '</td>
-                    <td>' . $created_at . '</td>
-                    <td style="text-align:center"><img src="' . CR_PLUGIN_PATH . 'images/checked.gif' . '"></td>
+                    <td class="label greeColour"><a title="' . esc_attr(__('Transaction Details', 'coinremitter-crypto-payment-gateway') . ' - ' . $trx_id) . '" href="' . esc_url($explorer_url) . '" target="_blank"><strong>' . esc_html(substr($trx_id, 0, 20)) . '....</strong></a></td>
+                    <td> ' . esc_html(sprintf('%.8f', $crypto_amount) . ' ' . $coin_symbol) . '</td>
+                    <td>' . esc_html($created_at) . '</td>
+                    <td style="text-align:center"><img src="' . esc_url(CR_PLUGIN_PATH . 'images/checked.gif') . '"></td>
                     </tr>';
                 }
             }
         } else if (isset($payment_history) && is_array($payment_history)) {
             foreach ($payment_history as $key => $value) {
                 $temp2 .= '<tr>
-				<td class="label greeColour"><a title="' . __('Transaction Details', 'coinremitter-crypto-payment-gateway') . ' - ' . $value['txid'] . '" href="' . $value['explorer_url'] . '" target="_blank"><strong>' . substr($value['txid'], 0, 20) . '....</strong></a></td>
-				<td> ' . sprintf('%.8f', $value['amount']) . ' ' . $coin . '</td>
-				<td>' . $value['date'] . '</td>
-				<td style="text-align:center"><img src="' . plugins_url('/images/checked.gif', __FILE__) . '"></td>
+				<td class="label greeColour"><a title="' . esc_attr(__('Transaction Details', 'coinremitter-crypto-payment-gateway') . ' - ' . $value['txid']) . '" href="' . esc_url($value['explorer_url']) . '" target="_blank"><strong>' . esc_html(substr($value['txid'], 0, 20)) . '....</strong></a></td>
+				<td> ' . esc_html(sprintf('%.8f', $value['amount']) . ' ' . $coin) . '</td>
+				<td>' . esc_html($value['date']) . '</td>
+				<td style="text-align:center"><img src="' . esc_url(plugins_url('/images/checked.gif', __FILE__)) . '"></td>
 				</tr>';
             }
         } else {
@@ -878,7 +882,8 @@ if (!function_exists('coinremitter_cd_meta_box_cb')) {
 		</div>
 		</div>
 		</div>';
-        echo wp_kses_normalize_entities($detail . $url . $desc_html . $t_html . $p_html . $pending_html . $overpaid_html . $payment_html);
+        echo '<style>.cr_table table {border:none !important;}</style>';
+        echo wp_kses_post($detail . $url . $desc_html . $t_html . $p_html . $pending_html . $overpaid_html . $payment_html);
     }
 }
 
@@ -894,7 +899,7 @@ function fetch_supported_currencies()
     $userAgent = 'wordpress@' . WORDPRESS_VERSION . ', Woocommerce@'.WOOOCOMMERCE_VERSION.' crplugin@' . COINREMITTER_PLUGIN_VERSION;
     $args = array(
         'method'    => 'POST',
-        'sslverify' => false,
+        'sslverify' => true,
         'user-agent'  => $userAgent,
         'headers'   => array('Content-Type' => 'application/json'),
         'body'      => wp_json_encode(array()),
@@ -945,7 +950,7 @@ function fiat_cryoto($amount, $from_currency, $coin_symbol)
 
     $args = array(
         'method'    => 'POST',
-        'sslverify' => false,
+        'sslverify' => true,
         'user-agent'  => $userAgent,
         'headers'   => array('Content-Type' => 'application/json'),
         'body'      => wp_json_encode($body),
@@ -1003,7 +1008,7 @@ function crypto_to_fiat($currancy_type, $coin_symbol,$crypto_amount=1)
     );
     $fiat_args = array(
         'method'      => 'POST',
-        'sslverify'   => false,
+        'sslverify'   => true,
         'user-agent'  => $userAgent,
         'headers'     => array(
             'Content-Type'  => 'application/json',
@@ -1028,7 +1033,7 @@ function balance_request($api_key, $password, $body = array())
     $userAgent = 'wordpress@' . WORDPRESS_VERSION . ', Woocommerce@'.WOOOCOMMERCE_VERSION.' crplugin@' . COINREMITTER_PLUGIN_VERSION;
     $args = array(
         'method'    => 'POST',
-        'sslverify' => false,
+        'sslverify' => true,
         'user-agent'  => $userAgent,
         'headers'   => array(
             'x-api-key'        => $api_key,
@@ -1055,7 +1060,7 @@ function create_transaction_check($addr, $api_key, $api_password)
     $args = array(
         'method'      => 'POST',
         'timeout'     => 45,
-        'sslverify'   => false,
+        'sslverify'   => true,
         'user-agent'  => $userAgent,
         'headers'     => array(
             'x-api-key'     => $api_key,
@@ -1084,7 +1089,7 @@ function create_address($coin, $api_key, $api_password)
     $args = [
         'method' => 'POST',
         'timeout' => 30,
-        'sslverify' => false,
+        'sslverify' => true,
         'user-agent'  => $userAgent,
         'headers' => [
             'Content-Type'  => 'application/json',
@@ -1122,7 +1127,7 @@ function createTransaction($id, $CurrAPIKey, $CurrPassword)
     $args = array(
         'method'      => 'POST',
         'timeout'     => 45,
-        'sslverify'   => false,
+        'sslverify'   => true,
         'user-agent'  => $userAgent,
         'headers'     => array(
             'x-api-key'    => $CurrAPIKey,  

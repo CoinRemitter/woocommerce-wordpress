@@ -42,34 +42,25 @@ function updateTime() {
     }
 }
 
-function funExpire(order_id) {
-    clearInterval(timerInterval);
-    // Guests cannot call the cancel endpoint. The server cancels their order
-    // with cron, and the status poll redirects once it is cancelled.
-    var isLoggedIn = (typeof coinremitter_invoice_params !== "undefined"
-        && coinremitter_invoice_params.is_logged_in == 1);
-    if (!isLoggedIn) {
-        jQuery("#timer_status").html("<span>Expired, finalizing...</span>");
+var isCancelling = false;
 
-        // Reload the invoice page. The server sees the expired invoice, cancels
-        // the order and redirects to the cancel URL. Max 3 tries to avoid a loop.
-        var rk = "cr_exp_reload_" + order_id, tries = 0;
-        try {
-            tries = parseInt(sessionStorage.getItem(rk) || "0", 10);
-            sessionStorage.setItem(rk, String(tries + 1));
-        } catch (e) { }
-        if (tries < 3) {
-            setTimeout(function () { window.location.reload(); }, 2000);
-        }
-        return;
-    }
+function funExpire(order_id) {
+    if (isCancelling) return;
+    isCancelling = true;
+
+    clearInterval(timerInterval);
     clearInterval(pollInterval);
-    var base_url = jQuery("#base_url").val();
-    var nonce = (typeof coinremitter_invoice_params !== "undefined" && coinremitter_invoice_params.nonce) ? coinremitter_invoice_params.nonce : (typeof coinremitter_params !== "undefined" ? coinremitter_params.invoice_nonce : "");
+
+    var base_url  = jQuery("#base_url").val();
+    var order_key = jQuery("#order_key").val();
+    var nonce     = (typeof coinremitter_invoice_params !== "undefined" && coinremitter_invoice_params.nonce) 
+                    ? coinremitter_invoice_params.nonce 
+                    : (typeof coinremitter_params !== "undefined" ? coinremitter_params.invoice_nonce : "");
 
     var frmData = {
-        order_id: order_id,
-        security: nonce
+        order_id:  order_id,
+        order_key: order_key,
+        security:  nonce
     };
 
     jQuery.ajax({
@@ -81,12 +72,17 @@ function funExpire(order_id) {
         },
         data: frmData,
         success: function (html) {
-            if (html.flag == 1) {
+            if (html.flag == 1 && html.url) {
                 setTimeout(function () {
                     window.location = html.url;
                 }, 1000);
+            } else {
+                window.location.reload();
             }
         },
+        error: function () {
+            window.location.reload();
+        }
     });
 }
 
