@@ -92,10 +92,12 @@ function makeTimer() {
     if (!addr || addr.trim() === "") {
         return;
     }
+    var order_key = jQuery("#order_key").val();
     var nonce = (typeof coinremitter_invoice_params !== "undefined" && coinremitter_invoice_params.nonce) ? coinremitter_invoice_params.nonce : (typeof coinremitter_params !== "undefined" ? coinremitter_params.invoice_nonce : "");
 
     var frmData = {
         addr: addr.trim(),
+        order_key: (order_key ? order_key.trim() : ""),
         security: nonce
     };
 

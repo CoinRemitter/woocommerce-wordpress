@@ -71,13 +71,19 @@ function store_rel_value()
 
     $rel_value = isset($_POST['rel_value']) ? sanitize_text_field($_POST['rel_value']) : '';
 
-    if (isset(WC()->session)) {
-        WC()->session->set('coinremitter_selected_coin', $rel_value);
+    if (!empty($rel_value)) {
+        global $wpdb;
+        $tablename = $wpdb->prefix . 'coinremitter_wallets';
+        $wallet = $wpdb->get_row($wpdb->prepare("SELECT id, coin_symbol FROM $tablename WHERE LOWER(coin_symbol) = LOWER(%s)", $rel_value));
+        if ($wallet && isset(WC()->session)) {
+            WC()->session->set('coinremitter_selected_coin', $wallet->coin_symbol);
+            if (method_exists(WC()->session, 'save_data')) {
+                WC()->session->save_data();
+            }
+        }
     }
-    // Set transient as fallback
-    set_transient('currency_value', $rel_value, HOUR_IN_SECONDS);
     wc_clear_notices(); // Clear old coin error notices when customer switches coin selection
-    echo 'Transient set successfully: ' . $rel_value;
+    echo 'Coin set successfully: ' . esc_html($rel_value);
     wp_die();
 }
 
@@ -107,11 +113,30 @@ function coinremitter_override_return_url($return_url, $order)
     global $wpdb;
     global $woocommerce;
     $coin = '';
-    if (isset(WC()->session)) {
+
+    // Direct form submission has highest priority (what customer actually selected in checkout)
+    if (!empty($_POST['coins'])) {
+        $coin = sanitize_text_field($_POST['coins']);
+    } elseif (!empty($_POST['currency_type'])) {
+        $coin = sanitize_text_field($_POST['currency_type']);
+    } elseif (isset(WC()->session) && !empty(WC()->session->get('coinremitter_selected_coin'))) {
         $coin = WC()->session->get('coinremitter_selected_coin');
-    }
-    if (empty($coin)) {
-        $coin = get_transient('currency_value');
+    } elseif ($order instanceof WC_Order) {
+        $order_id = $order->get_id();
+        $order_coin = $order->get_meta('_order_crypto_coin');
+        if (empty($order_coin)) {
+            $order_coin = get_post_meta($order_id, '_order_crypto_coin', true);
+        }
+        if (empty($order_coin)) {
+            $table_cr = $wpdb->prefix . 'coinremitter_orders';
+            $cr_row = $wpdb->get_row($wpdb->prepare("SELECT coin_symbol FROM $table_cr WHERE order_id = %d ORDER BY id DESC LIMIT 1", $order_id));
+            if ($cr_row && !empty($cr_row->coin_symbol)) {
+                $order_coin = $cr_row->coin_symbol;
+            }
+        }
+        if (!empty($order_coin)) {
+            $coin = $order_coin;
+        }
     }
 
     if (!$coin) {
@@ -128,7 +153,7 @@ function coinremitter_override_return_url($return_url, $order)
     $order_total = floatval($order->get_total());
 
     $tablename = $wpdb->prefix . 'coinremitter_wallets';
-    $sql = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE coin_symbol = %s", $coin));
+    $sql = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE LOWER(coin_symbol) = LOWER(%s)", $coin));
 
     if (!$sql) {
         $msg = sprintf(__('Wallet configuration for %s was not found.', 'coinremitter-crypto-payment-gateway'), strtoupper($coin));
@@ -139,6 +164,8 @@ function coinremitter_override_return_url($return_url, $order)
         wc_add_notice($msg, 'error');
         throw new \Exception($msg);
     }
+
+    $coin = $sql->coin_symbol;
 
     $currancy_type = get_woocommerce_currency();
     $CurrAPIKey = decrypt_data($sql->api_key);
@@ -154,7 +181,6 @@ function coinremitter_override_return_url($return_url, $order)
         if (isset(WC()->session)) {
             WC()->session->__unset('coinremitter_selected_coin');
         }
-        delete_transient('currency_value');
     }
 
     $userID = get_current_user_id();
@@ -162,6 +188,21 @@ function coinremitter_override_return_url($return_url, $order)
     $test_order = new WC_Order($OrdID);
     $test_order_key = $test_order->get_order_key();
     $sss_url = $s_url . '/index.php/invoice-page/' . $OrdID . '/?pay_for_order=true&key=' . $test_order_key;
+
+    // Check if an unexpired invoice already exists for this order in coinremitter_orders
+    $tablename_orders = $wpdb->prefix . 'coinremitter_orders';
+    $existing_order = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename_orders WHERE order_id = %d ORDER BY id DESC LIMIT 1", $OrdID));
+    if ($existing_order && !empty($existing_order->payment_address)) {
+        if (empty($coin) || strtolower($existing_order->coin_symbol) === strtolower($coin)) {
+            $now = gmdate('Y-m-d H:i:s');
+            if (empty($existing_order->expiry_date) || $existing_order->expiry_date > $now) {
+                if (!$order->has_status(array('processing', 'completed'))) {
+                    $order->update_status('pending', __('Awaiting cryptocurrency payment via CoinRemitter', 'coinremitter-crypto-payment-gateway'));
+                }
+                return $sss_url;
+            }
+        }
+    }
 
     if ($multiplier == 0 || $multiplier == '') {
         $invoice_exchange_rate = 1;
@@ -191,8 +232,6 @@ function coinremitter_override_return_url($return_url, $order)
         if ($crypto_amount >= $apiMinimum_deposit_amount) {
             $available_coins[] = $coin;
             $tablename_orders = $wpdb->prefix . 'coinremitter_orders';
-
-            $wpdb->delete($tablename_orders, array('order_id' => $OrdID));
 
             $data = array(
                 'order_id' => $OrdID,
@@ -234,30 +273,38 @@ function coinremitter_override_return_url($return_url, $order)
                     $qr_code
                 ));
             }
+            $order->update_meta_data('_order_crypto_price', $crypto_amount);
+            $order->update_meta_data('_order_crypto_coin', $coin);
+            $order->save();
             update_post_meta($OrdID, '_order_crypto_price', $crypto_amount);
             update_post_meta($OrdID, '_order_crypto_coin', $coin);
+
+            // Clear session coin so next order begins fresh
+            if (isset(WC()->session)) {
+                WC()->session->__unset('coinremitter_selected_coin');
+            }
 
             if ($payment_method === 'coinremitterpayments') {
                 return $sss_url;
             }
         } else {
-            $order->update_status('failed');
             if (isset(WC()->session)) {
                 WC()->session->set('order_awaiting_payment', 0);
             }
-            $tablename_orders = $wpdb->prefix . 'coinremitter_orders';
-            $wpdb->delete($tablename_orders, array('order_id' => $OrdID));
+            if (!$existing_order) {
+                $order->update_status('failed');
+            }
             $msg = sprintf(__('Order total is less than the minimum deposit required (%s %s) for this coin.', 'coinremitter-crypto-payment-gateway'), $apiMinimum_deposit_amount, strtoupper($coin));
             wc_add_notice($msg, 'error');
             throw new \Exception($msg);
         }
     } else {
-        $order->update_status('failed');
         if (isset(WC()->session)) {
             WC()->session->set('order_awaiting_payment', 0);
         }
-        $tablename_orders = $wpdb->prefix . 'coinremitter_orders';
-        $wpdb->delete($tablename_orders, array('order_id' => $OrdID));
+        if (!$existing_order) {
+            $order->update_status('failed');
+        }
         $msg = (is_array($result_arr) && isset($result_arr['msg']) && !empty($result_arr['msg']))
             ? $result_arr['msg']
             : sprintf(__('%s server is currently unavailable or offline.', 'coinremitter-crypto-payment-gateway'), strtoupper($coin));
@@ -308,6 +355,17 @@ function coinremitter_webhook_data()
     $order = wc_get_order($order_id);
     if (!$order || !is_a($order, 'WC_Order')) {
         wp_send_json_error(['message' => 'Invalid order'], 404);
+        exit;
+    }
+
+    // Authorization: Owner, Shop Manager, or Guest with valid Order Key
+    $requested_order_key = isset($_GET['order_key']) ? sanitize_text_field(wp_unslash($_GET['order_key'])) : '';
+    $is_owner            = (int) $order->get_customer_id() > 0 && (int) $order->get_customer_id() === get_current_user_id();
+    $is_manager          = current_user_can('manage_woocommerce');
+    $is_valid_key        = !empty($requested_order_key) && hash_equals($order->get_order_key(), $requested_order_key);
+
+    if (!$is_owner && !$is_manager && !$is_valid_key) {
+        wp_send_json_error(['message' => 'Forbidden'], 403);
         exit;
     }
 
@@ -421,7 +479,7 @@ function coinremitter_webhook_data()
                 $total_paid_fiat = ($order_crypto_req > 0) ? ($total_confirmed_crypto * $order_fiat_req) / $order_crypto_req : 0;
 
                 $option_data = get_option('woocommerce_coinremitterpayments_settings');
-                $ostatus = isset($option_data['ostatus']) ? $option_data['ostatus'] : 'completed';
+                $ostatus = (!empty($option_data['ostatus']) && $option_data['ostatus'] !== 'pending') ? $option_data['ostatus'] : 'processing';
 
                 if ($order_crypto_req > 0 && $total_confirmed_crypto >= $order_crypto_req) {
                     if ($total_confirmed_crypto > $order_crypto_req) {
@@ -604,7 +662,7 @@ function coinremitter_webhook_data()
 
     $order_table_name = $wpdb->prefix . 'coinremitter_orders';
     $order = wc_get_order($order_id);
-    $query = $wpdb->prepare("SELECT * FROM $order_table_name WHERE order_id = %s", $order_id);
+    $query = $wpdb->prepare("SELECT * FROM $order_table_name WHERE order_id = %s ORDER BY id DESC", $order_id);
     $get_order_data = $wpdb->get_results($query);
 
     $current_order_status = (!empty($get_order_data)) ? $get_order_data[0]->order_status : $order_data->order_status;
@@ -723,7 +781,7 @@ if (!function_exists('coinremitter_cancel_order')) {
 
         $web_hook = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT order_status, expiry_date FROM {$wpdb->prefix}coinremitter_orders WHERE order_id = %d",
+                "SELECT order_status, expiry_date FROM {$wpdb->prefix}coinremitter_orders WHERE order_id = %d ORDER BY id DESC LIMIT 1",
                 $order_id
             )
         );
@@ -779,7 +837,7 @@ function coinremitter_thank_you_field_display_cust_order_meta($d)
         $meta_data = array();
     }
 
-    $addrSql = $wpdb->prepare("SELECT * FROM " . $wpdb->prefix . "coinremitter_orders WHERE order_id = %s", $order_id);
+    $addrSql = $wpdb->prepare("SELECT * FROM " . $wpdb->prefix . "coinremitter_orders WHERE order_id = %s ORDER BY id DESC", $order_id);
     $getDatas = $wpdb->get_results($addrSql);
     if (empty($getDatas)) {
         return;
@@ -1031,7 +1089,58 @@ function decrypt_data($encrypted_data)
         return $legacy_decrypted;
     }
 
-    return $encrypted_data;
+    return '';
+}
+
+function coinremitter_migrate_wallets()
+{
+    // 1. Check if migration has already been completed
+    if (get_option('coinremitter_wallet_migrated')) {
+        return;
+    }
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'coinremitter_wallets';
+    // 2. Ensure table exists before querying
+    if ($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name)) !== $table_name) {
+        return;
+    }
+    
+    // 3. Fetch all stored wallets
+    $wallets = $wpdb->get_results("SELECT id, api_key, password FROM {$table_name}");
+    if (!empty($wallets)) {
+        foreach ($wallets as $wallet) {
+            $updated = [];
+
+            // Migrate api_key if it does not already start with 'crv2:'
+            if (!empty($wallet->api_key) && strpos($wallet->api_key, 'crv2:') !== 0) {
+                $decrypted_api_key = decrypt_data($wallet->api_key);
+                if (!empty($decrypted_api_key)) {
+                    $updated['api_key'] = encrypt_data($decrypted_api_key);
+                }
+            }
+
+            // Migrate password if it does not already start with 'crv2:'
+            if (!empty($wallet->password) && strpos($wallet->password, 'crv2:') !== 0) {
+                $decrypted_password = decrypt_data($wallet->password);
+                if (!empty($decrypted_password)) {
+                    $updated['password'] = encrypt_data($decrypted_password);
+                }
+            }
+
+            // Save to database only if credentials were re-encrypted
+            if (!empty($updated)) {
+                $wpdb->update(
+                    $table_name,
+                    $updated,
+                    ['id' => $wallet->id]
+                );
+            }
+        }
+    }
+
+    // 4. Set migration flag so this never runs again
+    update_option('coinremitter_wallet_migrated', true);
 }
 
 function coinremitter_right($str, $findme, $firstpos = true)

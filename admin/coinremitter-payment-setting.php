@@ -39,7 +39,7 @@ function coinremitter_wp_payment_gateways()
     {
         private $notices = array();
         private $payments           = array();
-        private $statuses           = array('pending' => 'Pending payment', 'processing' => 'Processing Payment', 'on-hold' => 'On Hold', 'completed' => 'Completed');
+        private $statuses           = array('processing' => 'Processing Payment', 'on-hold' => 'On Hold', 'completed' => 'Completed');
         private $url2               = '';
         private $url3               = 'https://coinremitter.com/';
         function __construct()
@@ -129,7 +129,7 @@ function coinremitter_wp_payment_gateways()
                     'title'         => __('Order Status - On Payment Received', 'coinremitter-crypto-payment-gateway'),
                     'type'             => 'select',
                     'options'         => $this->statuses,
-                    'default'         => 'Processing',
+                    'default'         => 'processing',
                     'description'     => sprintf(__("When customer pay coinremitter invoice, What order status should be ? Set it here", 'coinremitter-crypto-payment-gateway'), $this->url2)
                 ),
                 'invoice_expiry'        => array(
@@ -156,18 +156,20 @@ function coinremitter_wp_payment_gateways()
                 // Fetch stored coin name from your table
                 $table = $wpdb->prefix . 'coinremitter_orders';
                 $coin = $wpdb->get_row(
-                    $wpdb->prepare("SELECT coin_name, coin_symbol FROM $table WHERE order_id = %s", $order_id),
+                    $wpdb->prepare("SELECT coin_name, coin_symbol FROM $table WHERE order_id = %s ORDER BY id DESC LIMIT 1", $order_id),
                     ARRAY_A
                 );
 
-                // If coin is stored → show correct message
+                // If coin is stored → show correct message and hidden inputs for form submission
                 if (!empty($coin)) {
                     $coin_name   = esc_html($coin['coin_name']);         // Example: Bitcoin
                     $coin_symbol = esc_html(strtoupper($coin['coin_symbol'])); // BTC
 
                     return "<p class='wallet_error_checkout' style='color:#000;font-weight:600;'> 
                         Pay Using $coin_name ($coin_symbol)
-                    </p>";
+                    </p>
+                    <input type='hidden' name='coins' id='coins' value='" . esc_attr($coin['coin_symbol']) . "' />
+                    <input type='hidden' name='currency_type' id='currency_type' value='" . esc_attr($coin['coin_symbol']) . "' />";
                 }
 
                 // If not found, fallback
@@ -245,8 +247,9 @@ function coinremitter_wp_payment_gateways()
                     $SetPaymentOpt = !empty($CryptoOpt) ? (isset($CoinSript) ? $CoinSript : '') . '<div>' . $CryptoOpt . '</div>' : '';
                     return $SetPaymentOpt;
                 } else if ($count == 0) {
-                    $transient_name = 'currency_value';
-                    delete_transient($transient_name);
+                    if (isset(WC()->session)) {
+                        WC()->session->__unset('coinremitter_selected_coin');
+                    }
                     $temp = "<p class='noCoin wallet_error_checkout' >Invoice amount is too low. Choose other payment method !</p>";
                     $CryptoOpt = !empty($temp) ? (isset($Script) ? $Script : '') . $temp . '<input type="hidden" name="crpopt" id="crpopt" >' : '';
                     $SetPaymentOpt = !empty($CryptoOpt) ? (isset($CoinSript) ? $CoinSript : '') . '<div>' . $CryptoOpt . '</div>' : '';
@@ -256,11 +259,19 @@ function coinremitter_wp_payment_gateways()
 
 
                 $tmp = '';
+                $current_selected = '';
+                if (isset(WC()->session)) {
+                    $current_selected = strtolower(WC()->session->get('coinremitter_selected_coin'));
+                }
+                if (empty($current_selected) && !empty($available_coins[0])) {
+                    $current_selected = strtolower($available_coins[0]);
+                }
+
                 $first_coin = true;
                 if (is_array($available_coins) && sizeof(value: $available_coins)) {
                     foreach ($available_coins as $v) {
                         $v = trim(strtolower($v));
-                        $checked = $first_coin ? ' checked' : '';
+                        $checked = ($v === $current_selected) ? ' checked' : '';
                         $wall_Coin_IM = cr_get_coin_logo_url($v);
 
                         if ($multiplier == 0 || $multiplier == '') {
@@ -271,7 +282,7 @@ function coinremitter_wp_payment_gateways()
                             $minimum_invoice_val = 0.0001;
                         }
 
-                        $sql_wallet = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE coin_symbol = %s", $v));
+                        $sql_wallet = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE LOWER(coin_symbol) = LOWER(%s)", $v));
                         $coin_name = isset($sql_wallet->coin_name) ? $sql_wallet->coin_name : strtoupper($v);
                         $exchange_rate_multiplier = isset($sql_wallet->exchange_rate_multiplier) ? floatval($sql_wallet->exchange_rate_multiplier) : 1;
                         $unit_fiat_amount = isset($sql_wallet->unit_fiat_amount) ? floatval($sql_wallet->unit_fiat_amount) : 0;
@@ -319,9 +330,6 @@ function coinremitter_wp_payment_gateways()
                     if (empty($sess_coin) && !empty($available_coins[0])) {
                         WC()->session->set('coinremitter_selected_coin', $available_coins[0]);
                     }
-                }
-                if (!get_transient('currency_value') && !empty($available_coins[0])) {
-                    set_transient('currency_value', $available_coins[0], HOUR_IN_SECONDS);
                 }
 
                 echo $html . $SetPaymentOpt;
@@ -457,7 +465,7 @@ if (!function_exists('coinremitter_cd_meta_box_add')) {
         }
         $method = "Payment Detail (Coinremitter)";
         $order_table = $wpdb->prefix . 'coinremitter_orders';
-        $payment_query = $wpdb->prepare("SELECT * FROM $order_table WHERE order_id = %d", $order_id);
+        $payment_query = $wpdb->prepare("SELECT * FROM $order_table WHERE order_id = %d ORDER BY id DESC", $order_id);
         $payment_details = $wpdb->get_results($payment_query);
 
         if (!empty($payment_details)) {
@@ -484,7 +492,7 @@ if (!function_exists('coinremitter_cd_meta_box_cb')) {
         }
 
         $order_table = $wpdb->prefix . 'coinremitter_orders';
-        $payment_query = $wpdb->prepare("SELECT * FROM $order_table WHERE order_id = %d", $order_id);
+        $payment_query = $wpdb->prepare("SELECT * FROM $order_table WHERE order_id = %d ORDER BY id DESC", $order_id);
         $get_order_data = $wpdb->get_results($payment_query);
         if (empty($get_order_data)) {
             return "";
@@ -592,7 +600,7 @@ if (!function_exists('coinremitter_cd_meta_box_cb')) {
                     $total_paid_fiat = ($order_crypto_req > 0) ? ($total_confirmed_crypto * $order_fiat_req) / $order_crypto_req : 0;
 
                     $option_data = get_option('woocommerce_coinremitterpayments_settings');
-                    $ostatus = isset($option_data['ostatus']) ? $option_data['ostatus'] : 'completed';
+                    $ostatus = (!empty($option_data['ostatus']) && $option_data['ostatus'] !== 'pending') ? $option_data['ostatus'] : 'processing';
 
                     if ($order_crypto_req > 0 && $total_confirmed_crypto >= $order_crypto_req) {
                         if ($total_confirmed_crypto > $order_crypto_req) {

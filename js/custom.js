@@ -13,10 +13,11 @@ jQuery(document).on("click", ".crpObj", function (e) {
 });
 
 jQuery(document).ready(function ($) {
-    jQuery(document).on("click", "input[name='coins']", function (e) {
+    jQuery(document).on("click change", "input[name='coins']", function (e) {
         var relVal = $(this).closest(".coin_data").attr("rel");
         var site_url = jQuery("#site_url").val();
-        console.log(relVal);
+        console.log("Selected coin:", relVal);
+        jQuery("#currency_type").val(relVal);
 
         var ajax_url = (typeof coinremitter_params !== "undefined" && coinremitter_params.ajax_url) ? coinremitter_params.ajax_url : site_url + "/wp-admin/admin-ajax.php";
         var nonce = (typeof coinremitter_params !== "undefined" && coinremitter_params.nonce) ? coinremitter_params.nonce : "";

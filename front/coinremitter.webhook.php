@@ -175,7 +175,7 @@ foreach ($trxMeta as $item) {
 $total_paid_fiat = ($order_crypto_req > 0) ? ($total_confirmed_crypto * $order_fiat_req) / $order_crypto_req : 0;
 
 $option_data = get_option('woocommerce_coinremitterpayments_settings');
-$ostatus = isset($option_data['ostatus']) ? $option_data['ostatus'] : 'completed';
+$ostatus = (!empty($option_data['ostatus']) && $option_data['ostatus'] !== 'pending') ? $option_data['ostatus'] : 'processing';
 
 $diff = round($total_confirmed_crypto - $order_crypto_req, 8);
 if ($diff >= 0) {

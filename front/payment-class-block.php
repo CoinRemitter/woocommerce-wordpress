@@ -123,14 +123,23 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
             $SetPaymentOpt = !empty($CryptoOpt) ? (isset($CoinSript) ? $CoinSript : '') . '<div>' . $CryptoOpt . '</div>' : '';
             return $SetPaymentOpt;
         } else if ($count == 0) {
-            $transient_name = 'currency_value';
-            delete_transient($transient_name);
+            if (isset(WC()->session)) {
+                WC()->session->__unset('coinremitter_selected_coin');
+            }
             $temp = "<p class='noCoin wallet_error_checkout' >Invoice amount is too low. Choose other payment method !</p>";
             $CryptoOpt = !empty($temp) ? (isset($Script) ? $Script : '') . $temp . '<input type="hidden" name="crpopt" id="crpopt" >' : '';
             $SetPaymentOpt = !empty($CryptoOpt) ? (isset($CoinSript) ? $CoinSript : '') . '<div>' . $CryptoOpt . '</div>' : '';
             return $SetPaymentOpt;
         }
 
+
+        $current_selected = '';
+        if (isset(WC()->session)) {
+            $current_selected = strtolower(WC()->session->get('coinremitter_selected_coin'));
+        }
+        if (empty($current_selected) && !empty($available_coins[0])) {
+            $current_selected = strtolower($available_coins[0]);
+        }
 
         $tmp = '';
         $first_coin = true;
@@ -139,7 +148,7 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
             foreach ($available_coins as $v) {
 
                 $v = trim(strtolower($v));
-                $checked = $first_coin ? ' checked' : '';
+                $checked = ($v === $current_selected) ? ' checked' : '';
                 //$wall_Coin_IM =  CR_PLUGIN_PATH . 'images/' . $v . '.png';
 
                 // new functions call to get images 
@@ -152,7 +161,7 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
                 if ($minimum_invoice_val == '' || $minimum_invoice_val == null) {
                     $minimum_invoice_val = 0.0001;
                 }
-                $sql_wallet = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE coin_symbol = %s", $v));
+                $sql_wallet = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE LOWER(coin_symbol) = LOWER(%s)", $v));
                 $exchange_rate_multiplier = (isset($sql_wallet->exchange_rate_multiplier) && floatval($sql_wallet->exchange_rate_multiplier) > 0) ? floatval($sql_wallet->exchange_rate_multiplier) : 1;
 
                 $total_amount = $main_total * $exchange_rate_multiplier;
@@ -194,9 +203,6 @@ final class My_Custom_Gateway_Blocks extends AbstractPaymentMethodType
             if (empty($sess_coin) && !empty($available_coins[0])) {
                 WC()->session->set('coinremitter_selected_coin', $available_coins[0]);
             }
-        }
-        if (!get_transient('currency_value') && !empty($available_coins[0])) {
-            set_transient('currency_value', $available_coins[0], HOUR_IN_SECONDS);
         }
         $des = !empty($this->get_setting('description')) ? $this->get_setting('description') : __('Enter your payment details below:', 'coinremitter-crypto-payment-gateway'); // Add description field
         $dataa = '<p style="margin-top: 10px; font-size: 14px;">' . $des . '</p>';

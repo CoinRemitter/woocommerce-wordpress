@@ -67,7 +67,7 @@ get_header();
 
     $order_table_name = $wpdb->prefix . 'coinremitter_orders';
 
-    $query = $wpdb->prepare("SELECT * FROM $order_table_name WHERE order_id = %s", $order_id);
+    $query = $wpdb->prepare("SELECT * FROM $order_table_name WHERE order_id = %s ORDER BY id DESC", $order_id);
     $get_order_data = $wpdb->get_results($query);
 
     if (empty($get_order_data)) {

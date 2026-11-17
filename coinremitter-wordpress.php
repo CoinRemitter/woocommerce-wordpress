@@ -4,7 +4,7 @@
 Plugin Name:        CoinRemitter Crypto Payment Gateway
 Plugin URI:         https://coinremitter.com/plugins
 Description:        <a href="https://coinremitter.com">coinremitter.com</a> CoinRemitter Crypto Payment Gateway.
-Version:            1.2.0
+Version:            1.2.1
 Author:             CoinRemitter
 Author URI:         https://coinremitter.com
 Requires Plugins:   woocommerce
@@ -41,7 +41,7 @@ if (!defined('COINREMITTER_SKEY')) {
     define('COINREMITTER_SKEY', 'coinremitterdata');
 }
 define('COINREMITTER_CURL', 'https://api.coinremitter.com/v1');
-DEFINE('COINREMITTER_PLUGIN_VERSION', '1.2.0');
+DEFINE('COINREMITTER_PLUGIN_VERSION', '1.2.1');
 DEFINE('WORDPRESS_VERSION', $wordpress_version);
 DEFINE('WOOOCOMMERCE_VERSION', $woocommerce_version);
 define('COINREMITTERWC', 'coinremitter-woocommerce');
@@ -116,6 +116,9 @@ add_action('admin_notices', 'coinremitter_webhook_admin_notice');
 add_action('coinremitter_cancel_expired_orders_hook', 'coinremitter_cancel_expired_orders');
 add_action('wp', 'coinremitter_wp_schedule_cancel_expired');
 register_deactivation_hook(__FILE__, 'coinremitter_clear_scheduled_crons');
+
+// Migration Wallets
+add_action('admin_init', 'coinremitter_migrate_wallets');
 
 #--------------------------------------------------------------------------------
 #region coinremitter payment block setting
@@ -198,7 +201,7 @@ class CoinremitterPlugin
             'enabled' => 'yes',
             'title' => 'Pay Using Cryptocurrency',
             'description' => 'Secure, anonymous payment with cryptocurrency. <a target="_blank" href="https://en.wikipedia.org/wiki/Cryptocurrency">What is it?</a>',
-            'ostatus' => 'Processing',
+            'ostatus' => 'processing',
             'invoice_expiry' => '30'
         ];
 
