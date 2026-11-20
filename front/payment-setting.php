@@ -1176,15 +1176,21 @@ function callback_parse_request_coinremitter()
 #region admin scripts
 #--------------------------------------------------------------------------------
 
-function coinremitter_wp_admin_script()
+function coinremitter_wp_admin_script($hook = '')
 {
+    // Standard WordPress check: Only load scripts on CoinRemitter Admin page
+    if (!empty($hook) && $hook !== 'toplevel_page_coinremitter') {
+        return;
+    }
+    if (empty($hook) && (!isset($_GET['page']) || $_GET['page'] !== 'coinremitter')) {
+        return;
+    }
 
-    wp_enqueue_style('cr-style-bootstrap-admin', CR_PLUGIN_PATH . '/css/bootstrapcustom.min.css');
-    wp_enqueue_style('bootstrapmin', CR_PLUGIN_PATH . '/css/bootstrapmin.css');
-    wp_enqueue_style('custom-apmin', CR_PLUGIN_PATH . '/css/admin-custom.css');
-    wp_enqueue_script('bootstrapminjs', CR_PLUGIN_PATH . '/js/bootstrap1.min.js', array('jquery'));
+    wp_enqueue_style('bootstrapmin', CR_PLUGIN_PATH . 'css/bootstrapmin.css');
+    wp_enqueue_style('custom-apmin', CR_PLUGIN_PATH . 'css/admin-custom.css');
+    wp_enqueue_script('bootstrapminjs', CR_PLUGIN_PATH . 'js/bootstrap1.min.js', array('jquery'));
     wp_enqueue_script('jquery');
-    wp_enqueue_script('my-ajax-script', CR_PLUGIN_PATH . '/js/admin-custom.js', array('jquery'));
+    wp_enqueue_script('my-ajax-script', CR_PLUGIN_PATH . 'js/admin-custom.js', array('jquery'));
     wp_localize_script('my-ajax-script', 'my_ajax_obj', array(
         'ajaxurl' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('coinremitter_ajax_nonce')
@@ -1193,10 +1199,9 @@ function coinremitter_wp_admin_script()
 
 function script_common()
 {
-    wp_enqueue_style('cr-style', CR_PLUGIN_PATH . '/css/front.css');
-    wp_enqueue_style('cr-style-bootstrap-admin', CR_PLUGIN_PATH . '/css/bootstrapcustom.min.css');
-    wp_enqueue_style('bootstrapmin', CR_PLUGIN_PATH . '/css/bootstrapmin.css');
-    wp_enqueue_script('bootstrapminjs', CR_PLUGIN_PATH . '/js/bootstrap1.min.js', array('jquery'));
+    wp_enqueue_style('cr-style', CR_PLUGIN_PATH . 'css/front.css');
+    wp_enqueue_style('bootstrapmin', CR_PLUGIN_PATH . 'css/bootstrapmin.css');
+    wp_enqueue_script('bootstrapminjs', CR_PLUGIN_PATH . 'js/bootstrap1.min.js', array('jquery'));
     wp_enqueue_script('jquery');
     wp_enqueue_script('custom-js', CR_PLUGIN_PATH . 'js/custom.js', array('jquery'), COINREMITTER_PLUGIN_VERSION);
     wp_localize_script('custom-js', 'coinremitter_params', array(
@@ -1234,6 +1239,6 @@ function coinremitter_wp_plugin_scripts()
         is_wc_endpoint_url('view-order')
     ) {
 
-        wp_enqueue_style('bootstrapmin', CR_PLUGIN_PATH . '/css/bootstrap.min.css');
+        wp_enqueue_style('bootstrapmin', CR_PLUGIN_PATH . 'css/bootstrapmin.css');
     }
 }

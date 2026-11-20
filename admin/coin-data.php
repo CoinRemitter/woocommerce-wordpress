@@ -11,16 +11,13 @@ function coinremitter_wp_admin_menu()
         'manage_options',              // Capability required to view this menu
         'coinremitter',               // Menu slug
         'coinremitter_wp_page_summary',   // Function to display the page content
-        CR_PLUGIN_PATH . '/images/coin_admin.svg', // Icon URL
+        CR_PLUGIN_PATH . 'images/coin_admin.svg', // Icon URL
         6                               // Position in the menu
     );
 }
 
 function coinremitter_wp_page_summary()
 { 
-    require_once CR_PLUGIN_DIR . 'admin/admin-js.php';
-    
-    do_action( 'coinremitter_enqueue_script_admin' );
     $currancy_type = get_woocommerce_currency();
     ?>
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -62,7 +59,7 @@ function coinremitter_wp_page_summary()
                                     </div>
                             </label>
                         </div>
-                        <div class="csf-fieldset"><input type="number" name="minimum_invoice_amount"
+                        <div class="csf-fieldset"><input type="number" step="any" min="1" name="minimum_invoice_amount"
                                 id="minimum_invoice_amount" value="" data-depend-id="wallet_invoice">
                         </div>
                         <div class="clear"></div>
@@ -77,7 +74,7 @@ function coinremitter_wp_page_summary()
                                     </div>
                                 </label>
                         </div>
-                        <div class="csf-fieldset"><input type="number" name="exchange_rate_multiplier"
+                        <div class="csf-fieldset"><input type="number" step="any" min="1" name="exchange_rate_multiplier"
                                 id="exchange_rate_multiplier" value="1"></div>
                         <div class="clear"></div>
                     </div>
@@ -148,7 +145,7 @@ function coinremitter_wp_page_summary()
                                     </div>
                                 </label>
                             </div>
-                            <div class="csf-fieldset"><input type="number" name="minimum_invoice_amount_edit"
+                            <div class="csf-fieldset"><input type="number" step="any" min="1" name="minimum_invoice_amount_edit"
                                     id="minimum_invoice_amount_edit" value="" data-depend-description="wallet_description">
                             </div>
                             <div class="clear"></div>
@@ -162,7 +159,7 @@ function coinremitter_wp_page_summary()
                                     </div>
                                 </label>
                             </div>
-                            <div class="csf-fieldset"><input type="number" name="exchange_rate_multiplier_edit"
+                            <div class="csf-fieldset"><input type="number" step="any" min="1" name="exchange_rate_multiplier_edit"
                                     id="exchange_rate_multiplier_edit" value="" data-depend-description="wallet_description">
                             </div>
                             <div class="clear"></div>
@@ -322,16 +319,9 @@ function coinremitter_wp_page_summary()
             {
                 switch ($column_name) {
                     case 'actions':
-                        $edit_url = add_query_arg(array('action' => 'edit', 'id' => $item['id'], 'password' => $item['password'], 'coin_symbol' => $item['coin_symbol'], 'api_key' => $item['api_key'], 'minimum_invoice_amounts' => $item['minimum_invoice_amounts'], 'exchange_rate_multiplier' => $item['exchange_rate_multiplier']));
-                        $delete_url = add_query_arg(array('action' => 'delete', 'id' => $item['id']), admin_url('admin.php'));
-                        return sprintf(
-                            '<a href="javascript:void(0)" data-id="' . $item['id'] . '" data-rel="' . $item['coin_symbol'] . '" data-image="' . esc_url(cr_get_coin_logo_url($item['coin_symbol'])) . '" data-key="' . $item['api_key'] . '" data-password="' . $item['password'] . '" data-amount="' . $item['minimum_invoice_amounts'] . '" data-rate="' . $item['exchange_rate_multiplier'] . '" class="EditOpenPopup">Edit</a> | 
+                        return '<a href="javascript:void(0)" data-id="' . esc_attr($item['id']) . '" class="EditOpenPopup">Edit</a> | 
                         <a href="javascript:void(0)" class="coinremitterbutton delete_wallet walletdelete_pop" 
-                        data-upname="' . $item['coin_symbol'] . '" data-walletid="' . $item['id'] . '">Delete</a>',
-
-                            esc_url($edit_url),
-                            esc_url($delete_url)
-                        );
+                        data-upname="' . esc_attr($item['coin_symbol']) . '" data-walletid="' . esc_attr($item['id']) . '">Delete</a>';
                     default:
                         return isset($item[$column_name]) ? $item[$column_name] : '';
                 }
@@ -351,7 +341,7 @@ function coinremitter_wp_page_summary()
                 </div>
                 <div class="col-6">
                     <div class="coinremitterlogo">
-                        <a href="https://coinremitter.com/" target="_blank"><img title="CRYPTO-CURRENCY PAYMENT GATEWAY" src="<?php echo CR_PLUGIN_PATH . '/images/coinremitter.png'; ?>" border="0"></a>
+                        <a href="https://coinremitter.com/" target="_blank"><img title="CRYPTO-CURRENCY PAYMENT GATEWAY" src="<?php echo CR_PLUGIN_PATH . 'images/coinremitter.png'; ?>" border="0"></a>
                     </div>
                 </div>
                 <div class='wallets-button'>

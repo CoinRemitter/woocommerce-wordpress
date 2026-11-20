@@ -16,9 +16,23 @@ jQuery(document).ready(function ($) {
 
     $("#error-message-wallet").empty();
     $("#usd-rate-error").empty();
-    if (api_key === "" || wallet_pass === "") {
+    if (api_key === "" || wallet_pass === "" || minimum_invoice_amount === "" || exchange_rate_multiplier === "") {
       $("#error-message-wallet").text(
         "Please fill out all the fields to proceed."
+      );
+      $(".add-wallet-btn").prop("disabled", false);
+      return;
+    }
+    if (isNaN(parseFloat(minimum_invoice_amount)) || parseFloat(minimum_invoice_amount) <= 0) {
+      $("#error-message-wallet").text(
+        "Minimum order value must be greater than 0."
+      );
+      $(".add-wallet-btn").prop("disabled", false);
+      return;
+    }
+    if (isNaN(parseFloat(exchange_rate_multiplier)) || parseFloat(exchange_rate_multiplier) <= 0) {
+      $("#error-message-wallet").text(
+        "Order multiplier must be greater than 0."
       );
       $(".add-wallet-btn").prop("disabled", false);
       return;
@@ -62,21 +76,43 @@ jQuery(document).ready(function ($) {
     });
   });
 
+  // Fetch live wallet data and open Edit modal
+  $(".EditOpenPopup").on("click", function () {
+    var $this = $(this);
+    var id = $this.data("id");
 
+    var ajaxEndpoint = (typeof my_ajax_obj !== "undefined" && my_ajax_obj.ajaxurl) ? my_ajax_obj.ajaxurl : ajaxurl;
+    var ajaxNonce = (typeof my_ajax_obj !== "undefined" && my_ajax_obj.nonce) ? my_ajax_obj.nonce : "";
 
-
-
-  // function edit_data(apikey, pass, amount, rate, id, shortName) {
-  //   $("#coin_id").val(id);
-  //   $("#editcointypeid").text(shortName);
-  //   $(".wallet_image").attr("src" ,"././images/"+shortName);
-  //   $("#wallet_key_update").val(apikey);
-  //   $("#wallet_password_update").val(pass);
-  //   $("#minimum_invoice_amount_edit").val(amount);
-  //   $("#exchange_rate_multiplier_edit").val(rate);
-  //   $("#coinName").val(shortName);
-  //   // console.log(apikey);
-  // }
+    // Fetch live, fresh wallet data from DB via AJAX
+    $.ajax({
+      type: "POST",
+      url: ajaxEndpoint,
+      data: {
+        action: "coinremitter_wp_wallet_get",
+        security: ajaxNonce,
+        id: id,
+      },
+      success: function (response) {
+        if (response.success && response.data) {
+          var data = response.data;
+          $("#coin_id").val(data.id);
+          $("#editcointypeid").text(data.coin_symbol);
+          if (data.coin_logo_url) {
+            $(".wallet_image").attr("src", data.coin_logo_url);
+          }
+          $("#wallet_key_update").val(data.api_key);
+          $("#wallet_password_update").val(data.password);
+          $("#minimum_invoice_amount_edit").val(data.minimum_invoice_amount);
+          $("#exchange_rate_multiplier_edit").val(data.exchange_rate_multiplier);
+          $("#coinName").val(data.coin_symbol ? String(data.coin_symbol).toLowerCase() : "");
+        }
+      },
+      complete: function () {
+        $("#update_wallet").modal("show");
+      },
+    });
+  });
 
   // coinremitter wallet Update
   jQuery(".walletUpdateBtn").on("click", function (e) {
@@ -99,11 +135,25 @@ jQuery(document).ready(function ($) {
     // } 
 
     $("#error-message-wallet-edit").empty();
-    if (api_key_value === "" || password === "") {
+    if (api_key_value === "" || invoice === "" || rate === "") {
       $("#error-message-wallet-edit").text(
         "Please fill out all the fields to proceed."
       );
-      $(".walletUpdateBtn").prop("disabled", false)
+      $(".walletUpdateBtn").prop("disabled", false);
+      return;
+    }
+    if (isNaN(parseFloat(invoice)) || parseFloat(invoice) <= 0) {
+      $("#error-message-wallet-edit").text(
+        "Minimum order value must be greater than 0."
+      );
+      $(".walletUpdateBtn").prop("disabled", false);
+      return;
+    }
+    if (isNaN(parseFloat(rate)) || parseFloat(rate) <= 0) {
+      $("#error-message-wallet-edit").text(
+        "Order multiplier must be greater than 0."
+      );
+      $(".walletUpdateBtn").prop("disabled", false);
       return;
     }
 
@@ -148,51 +198,52 @@ jQuery(document).ready(function ($) {
   });
 
 
-  $(".walletdelete_pop").on("click", function () {
-    var walletd = $(this).data("walletid");
-    var upname = $(this).data("upname");
-    $(".wallet_coin").text(upname);
-    $("#coin_id").val(walletd);
+  // coinremitter wallet Delete
+  $('.walletdelete_pop').on('click', function (e) {
+    e.preventDefault();
+
+    var upname = $(this).data('upname');
+    var id = $(this).data('walletid') || $('#coin_id').val();
+    if (!id) {
+      alert('Invalid wallet selected.');
+      return;
+    }
+
+    if (confirm('It will remove ' + upname + ' wallet from your database only. It will not remove actual wallet from coinremitter.')) {
+      $.ajax({
+        url: (typeof my_ajax_obj !== 'undefined' && my_ajax_obj.ajaxurl) ? my_ajax_obj.ajaxurl : ajaxurl,
+        type: 'POST',
+        data: {
+          action: 'coinremitter_wp_wallet_delete', // This is the action name to hook into in PHP
+          security: (typeof my_ajax_obj !== 'undefined' && my_ajax_obj.nonce) ? my_ajax_obj.nonce : '',
+          id: id
+        },
+        success: function (response) {
+          if (typeof response == 'string') {
+            response = JSON.parse(response);
+          }
+          if (response.success) {
+            location.reload();
+          } else {
+            alert('Failed to delete wallet.');
+          }
+        },
+        error: function () {
+          alert('An error occurred.');
+        }
+      });
+    }
   });
 
-  // coinremitter wallet Delete
-  jQuery(document).ready(function ($) {
-    $('.walletdelete_pop').on('click', function (e) {
-      e.preventDefault();
+  // Remove focus on close buttons so browser doesn't log aria-hidden focus warning
+  $('.btn-close, [data-bs-dismiss="modal"]').on('click', function () {
+    $(this).trigger('blur');
+  });
 
-      var upname = $(this).data('upname');
-      // var walletid = $(this).data('walletid');
-      var id = $('#coin_id').val();
-
-      if (confirm('It will remove ' + upname + ' wallet from your database only. It will not remove actual wallet from coinremitter.')) {
-        $.ajax({
-          url: ajaxurl,
-          type: 'POST',
-          data: {
-            action: 'coinremitter_wp_wallet_delete', // This is the action name to hook into in PHP
-            security: my_ajax_obj.nonce,
-            id: id
-          },
-          success: function (response) {
-            if (typeof response == 'string') {
-              response = JSON.parse(response)
-            }
-            if (response.success) {
-              location.reload();
-            } else {
-              alert('Failed to delete wallet.');
-            }
-          },
-          error: function () {
-            alert('An error occurred.');
-          }
-        });
-      }
-    });
-
-    $('.btn-close').on('click', function () {
-      location.reload();
-    });
+  // Reset modal state on close without reloading the entire page
+  $('#exampleModal, #update_wallet').on('hidden.bs.modal', function () {
+    $('#error-message-wallet, #add-success-message-wallet, #error-message-wallet-edit, #edit-success-message-wallet').empty();
+    $('.add-wallet-btn, .walletUpdateBtn').prop('disabled', false);
   });
 
 

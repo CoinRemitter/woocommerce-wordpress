@@ -4,7 +4,7 @@
 Plugin Name:        CoinRemitter Crypto Payment Gateway
 Plugin URI:         https://coinremitter.com/plugins
 Description:        <a href="https://coinremitter.com">coinremitter.com</a> CoinRemitter Crypto Payment Gateway.
-Version:            1.2.1
+Version:            1.2.2
 Author:             CoinRemitter
 Author URI:         https://coinremitter.com
 Requires Plugins:   woocommerce
@@ -41,7 +41,7 @@ if (!defined('COINREMITTER_SKEY')) {
     define('COINREMITTER_SKEY', 'coinremitterdata');
 }
 define('COINREMITTER_CURL', 'https://api.coinremitter.com/v1');
-DEFINE('COINREMITTER_PLUGIN_VERSION', '1.2.1');
+DEFINE('COINREMITTER_PLUGIN_VERSION', '1.2.2');
 DEFINE('WORDPRESS_VERSION', $wordpress_version);
 DEFINE('WOOOCOMMERCE_VERSION', $woocommerce_version);
 define('COINREMITTERWC', 'coinremitter-woocommerce');
@@ -62,14 +62,18 @@ function coinre_actions_call()
 {
     if (is_admin()) {
         // error_log('admin_data');
+
         // admin script
-        add_action('coinremitter_enqueue_script_admin', 'coinremitter_wp_admin_script');
+        add_action('admin_enqueue_scripts', 'coinremitter_wp_admin_script');
         
         // wallet add
         add_action('wp_ajax_coinremitter_wp_wallet_add', 'coinremitter_wp_wallet_add');
 
         // wallet edit
         add_action('wp_ajax_coinremitter_wp_wallet_edit', 'coinremitter_wp_wallet_edit');
+
+        // wallet get (fetch for edit modal)
+        add_action('wp_ajax_coinremitter_wp_wallet_get', 'coinremitter_wp_wallet_get');
 
         // wallet delete
         add_action('wp_ajax_coinremitter_wp_wallet_delete', 'coinremitter_wp_wallet_delete');

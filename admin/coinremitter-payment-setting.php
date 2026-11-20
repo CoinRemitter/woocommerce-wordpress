@@ -220,7 +220,7 @@ function coinremitter_wp_payment_gateways()
 
                     if ($CurrAPIKey && $CurrPassword) {
                         if ($total_amt > 0) {
-                            if ($multiplier == 0 || $multiplier == '')
+                            if ($multiplier <= 0 || $multiplier == '')
                                 $multiplier = 1;
 
                             if ($minimum_invoice_val == '' || $minimum_invoice_val == null)
@@ -274,7 +274,7 @@ function coinremitter_wp_payment_gateways()
                         $checked = ($v === $current_selected) ? ' checked' : '';
                         $wall_Coin_IM = cr_get_coin_logo_url($v);
 
-                        if ($multiplier == 0 || $multiplier == '') {
+                        if ($multiplier <= 0 || $multiplier == '') {
                             $multiplier = 1;
                         }
 
@@ -284,7 +284,7 @@ function coinremitter_wp_payment_gateways()
 
                         $sql_wallet = $wpdb->get_row($wpdb->prepare("SELECT * FROM $tablename WHERE LOWER(coin_symbol) = LOWER(%s)", $v));
                         $coin_name = isset($sql_wallet->coin_name) ? $sql_wallet->coin_name : strtoupper($v);
-                        $exchange_rate_multiplier = isset($sql_wallet->exchange_rate_multiplier) ? floatval($sql_wallet->exchange_rate_multiplier) : 1;
+                        $exchange_rate_multiplier = (isset($sql_wallet->exchange_rate_multiplier) && floatval($sql_wallet->exchange_rate_multiplier) > 0) ? floatval($sql_wallet->exchange_rate_multiplier) : 1;
                         $unit_fiat_amount = isset($sql_wallet->unit_fiat_amount) ? floatval($sql_wallet->unit_fiat_amount) : 0;
                         $total_amount = $total_amt * $exchange_rate_multiplier;
                         $currancy_type = get_woocommerce_currency();

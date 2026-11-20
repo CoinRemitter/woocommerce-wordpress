@@ -4,7 +4,7 @@ Tags: best crypto payment gateway,crypto payment processor,blockchain API,crypto
 Requires at least: 6.8
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable Tag: 1.2.1
+Stable Tag: 1.2.2
 License: GNU Version 3 or Any Later Version
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -109,6 +109,14 @@ Withdrawal is only available on our official website only. You can log in to you
 	You can link the test coin wallet. Coinremitter will give you 10 TCN as free credit for testing purposes. [Read More](https://blog.coinremitter.com/what-is-test-coin-tcn-and-how-to-use-it-during-integration/)
 
 == Changelog ==
+= 1.2.2 =
+* Security: Enhanced wallet security and prevented credential exposure in admin wallet management.
+* Fix: Added validation to block zero or negative order multipliers in wallet settings.
+* Fix: Improved admin modal behavior and fixed page reload on modal close.
+* Fix: Resolved stylesheet 404 error on order thank-you page and cleaned up asset URL paths.
+* Tweak: Optimized admin asset loading to run only on CoinRemitter admin pages.
+* Tweak: Code cleanup, improved response handling, and consolidated script dependencies.
+
 = 1.2.1 =
 * Security: Enforce order_key authorization on coinremitter_webhook_data to prevent unauthorized PII disclosure.
 * Fix: Address rotation idempotency and coin selection session isolation.
@@ -196,6 +204,9 @@ Withdrawal is only available on our official website only. You can log in to you
 * First version of the CoinRemitter Crypto Payment Gateway Plugin.
 
 == Upgrade Notice ==
+= 1.2.2 =
+Security and stability update: enhanced wallet management security, improved order multiplier validation, and fixed asset loading paths.
+
 = 1.2.1 =
 Security update for webhook data authorization, address idempotency, and automatic wallet encryption migration.
 
